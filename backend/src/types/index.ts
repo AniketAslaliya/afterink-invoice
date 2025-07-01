@@ -165,4 +165,14 @@ export interface IEmailTemplate {
     path?: string;
     content?: Buffer;
   }>;
+}
+
+// Express Request type augmentation for req.user
+import { Request } from 'express';
+declare global {
+  namespace Express {
+    interface Request {
+      user?: any; // You can replace 'any' with a more specific type if desired
+    }
+  }
 } 

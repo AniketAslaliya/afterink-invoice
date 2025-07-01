@@ -1,27 +1,67 @@
-import express from 'express';
-import { body } from 'express-validator';
+import express, { Request, Response } from 'express';
+import { body, validationResult } from 'express-validator';
 import { authenticate, authorize, authorizeOwnerOrAdmin } from '../middleware/auth';
+import Project from '../models/Project';
+import { IApiResponse } from '../types';
 
 const router = express.Router();
 
 // Get all projects with pagination and filtering
-router.get('/', authenticate, (req, res) => {
-  // TODO: Implement get all projects with pagination, filtering, and search
-  res.json({
-    success: true,
-    data: { projects: [], pagination: {} },
-    timestamp: new Date().toISOString(),
-  });
+router.get('/', authenticate, async (req: Request, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string) || '';
+    const filter = req.query.filter ? JSON.parse(req.query.filter as string) : {};
+    const query: any = { ...filter };
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { category: { $regex: search, $options: 'i' } },
+      ];
+    }
+    const total = await Project.countDocuments(query);
+    const projects = await Project.find(query)
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+    res.json({
+      success: true,
+      data: { projects, pagination: { page, limit, total, pages: Math.ceil(total / limit) } },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: { message: 'Failed to fetch projects', details: error },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  }
 });
 
 // Get specific project
-router.get('/:id', authenticate, authorizeOwnerOrAdmin(), (req, res) => {
-  // TODO: Implement get project by ID
-  res.json({
-    success: true,
-    data: { project: {} },
-    timestamp: new Date().toISOString(),
-  });
+router.get('/:id', authenticate, authorizeOwnerOrAdmin(), async (req: Request, res: Response) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        error: { message: 'Project not found' },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    }
+    res.json({
+      success: true,
+      data: { project },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: { message: 'Failed to fetch project', details: error },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  }
 });
 
 // Create new project
@@ -34,13 +74,30 @@ router.post('/',
     body('budget').isFloat({ min: 0 }),
     body('startDate').isISO8601().toDate(),
   ],
-  (req, res) => {
-    // TODO: Implement create project logic
-    res.json({
-      success: true,
-      data: { message: 'Project created successfully' },
-      timestamp: new Date().toISOString(),
-    });
+  async (req: Request, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: { message: 'Validation failed', details: errors.array() },
+          timestamp: new Date().toISOString(),
+        } as IApiResponse);
+      }
+      const project = new Project({ ...req.body, createdBy: req.user._id });
+      await project.save();
+      res.status(201).json({
+        success: true,
+        data: { project },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: { message: 'Failed to create project', details: error },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    }
   }
 );
 
@@ -53,24 +110,62 @@ router.put('/:id',
     body('budget').optional().isFloat({ min: 0 }),
     body('status').optional().isIn(['planning', 'active', 'review', 'completed', 'cancelled']),
   ],
-  (req, res) => {
-    // TODO: Implement update project logic
-    res.json({
-      success: true,
-      data: { message: 'Project updated successfully' },
-      timestamp: new Date().toISOString(),
-    });
+  async (req: Request, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: { message: 'Validation failed', details: errors.array() },
+          timestamp: new Date().toISOString(),
+        } as IApiResponse);
+      }
+      const project = await Project.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      if (!project) {
+        return res.status(404).json({
+          success: false,
+          error: { message: 'Project not found' },
+          timestamp: new Date().toISOString(),
+        } as IApiResponse);
+      }
+      res.json({
+        success: true,
+        data: { project },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: { message: 'Failed to update project', details: error },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    }
   }
 );
 
 // Delete project
-router.delete('/:id', authenticate, authorize('admin', 'manager'), (req, res) => {
-  // TODO: Implement delete project logic
-  res.json({
-    success: true,
-    data: { message: 'Project deleted successfully' },
-    timestamp: new Date().toISOString(),
-  });
+router.delete('/:id', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
+  try {
+    const project = await Project.findByIdAndDelete(req.params.id);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        error: { message: 'Project not found' },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    }
+    res.json({
+      success: true,
+      data: { message: 'Project deleted successfully', project },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: { message: 'Failed to delete project', details: error },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  }
 });
 
 // Add task to project
@@ -83,13 +178,38 @@ router.post('/:id/tasks',
     body('priority').optional().isIn(['low', 'medium', 'high', 'urgent']),
     body('dueDate').optional().isISO8601().toDate(),
   ],
-  (req, res) => {
-    // TODO: Implement add task logic
-    res.json({
-      success: true,
-      data: { message: 'Task added successfully' },
-      timestamp: new Date().toISOString(),
-    });
+  async (req: Request, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: { message: 'Validation failed', details: errors.array() },
+          timestamp: new Date().toISOString(),
+        } as IApiResponse);
+      }
+      const project = await Project.findById(req.params.id);
+      if (!project) {
+        return res.status(404).json({
+          success: false,
+          error: { message: 'Project not found' },
+          timestamp: new Date().toISOString(),
+        } as IApiResponse);
+      }
+      project.tasks.push({ ...req.body, createdAt: new Date() });
+      await project.save();
+      res.status(201).json({
+        success: true,
+        data: { project, message: 'Task added successfully' },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: { message: 'Failed to add task', details: error },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    }
   }
 );
 
@@ -101,22 +221,55 @@ router.put('/:id/tasks/:taskId',
     body('status').optional().isIn(['todo', 'in-progress', 'review', 'completed']),
     body('timeSpent').optional().isFloat({ min: 0 }),
   ],
-  (req, res) => {
-    // TODO: Implement update task logic
-    res.json({
-      success: true,
-      data: { message: 'Task updated successfully' },
-      timestamp: new Date().toISOString(),
-    });
+  async (req: Request, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: { message: 'Validation failed', details: errors.array() },
+          timestamp: new Date().toISOString(),
+        } as IApiResponse);
+      }
+      const project = await Project.findById(req.params.id);
+      if (!project) {
+        return res.status(404).json({
+          success: false,
+          error: { message: 'Project not found' },
+          timestamp: new Date().toISOString(),
+        } as IApiResponse);
+      }
+      const task = (project.tasks as any).id(req.params.taskId);
+      if (!task) {
+        return res.status(404).json({
+          success: false,
+          error: { message: 'Task not found' },
+          timestamp: new Date().toISOString(),
+        } as IApiResponse);
+      }
+      Object.assign(task, req.body);
+      await project.save();
+      res.json({
+        success: true,
+        data: { project, message: 'Task updated successfully' },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: { message: 'Failed to update task', details: error },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    }
   }
 );
 
-// Upload files to project
-router.post('/:id/files', authenticate, authorizeOwnerOrAdmin(), (req, res) => {
-  // TODO: Implement file upload logic
+// Upload files to project (placeholder)
+router.post('/:id/files', authenticate, authorizeOwnerOrAdmin(), async (req: Request, res: Response) => {
+  // Placeholder for file upload logic
   res.json({
     success: true,
-    data: { message: 'Files uploaded successfully' },
+    data: { message: 'Files uploaded successfully (not implemented)' },
     timestamp: new Date().toISOString(),
   });
 });

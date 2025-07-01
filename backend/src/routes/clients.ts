@@ -1,27 +1,71 @@
 import express from 'express';
-import { body } from 'express-validator';
+import { body, validationResult } from 'express-validator';
 import { authenticate, authorize, authorizeOwnerOrAdmin } from '../middleware/auth';
+import Client from '../models/Client';
+import Invoice from '../models/Invoice';
+import Project from '../models/Project';
+import { IApiResponse } from '../types';
 
 const router = express.Router();
 
 // Get all clients with pagination and filtering
-router.get('/', authenticate, (req, res) => {
-  // TODO: Implement get all clients with pagination, filtering, and search
-  res.json({
-    success: true,
-    data: { clients: [], pagination: {} },
-    timestamp: new Date().toISOString(),
-  });
+router.get('/', authenticate, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string) || '';
+    const filter = req.query.filter ? JSON.parse(req.query.filter as string) : {};
+    const query: any = { ...filter };
+    if (search) {
+      query.$or = [
+        { companyName: { $regex: search, $options: 'i' } },
+        { 'contactPerson.firstName': { $regex: search, $options: 'i' } },
+        { 'contactPerson.lastName': { $regex: search, $options: 'i' } },
+        { 'contactPerson.email': { $regex: search, $options: 'i' } },
+      ];
+    }
+    const total = await Client.countDocuments(query);
+    const clients = await Client.find(query)
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+    res.json({
+      success: true,
+      data: { clients, pagination: { page, limit, total, pages: Math.ceil(total / limit) } },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: { message: 'Failed to fetch clients', details: error },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  }
 });
 
 // Get specific client
-router.get('/:id', authenticate, authorizeOwnerOrAdmin(), (req, res) => {
-  // TODO: Implement get client by ID
-  res.json({
-    success: true,
-    data: { client: {} },
-    timestamp: new Date().toISOString(),
-  });
+router.get('/:id', authenticate, authorizeOwnerOrAdmin(), async (req, res) => {
+  try {
+    const client = await Client.findById(req.params.id);
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        error: { message: 'Client not found' },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    }
+    res.json({
+      success: true,
+      data: { client },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: { message: 'Failed to fetch client', details: error },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  }
 });
 
 // Create new client
@@ -39,13 +83,30 @@ router.post('/',
     body('address.zipCode').trim().notEmpty(),
     body('paymentTerms').isInt({ min: 1, max: 365 }),
   ],
-  (req, res) => {
-    // TODO: Implement create client logic
-    res.json({
-      success: true,
-      data: { message: 'Client created successfully' },
-      timestamp: new Date().toISOString(),
-    });
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: { message: 'Validation failed', details: errors.array() },
+          timestamp: new Date().toISOString(),
+        } as IApiResponse);
+      }
+      const client = new Client({ ...req.body, createdBy: req.user._id });
+      await client.save();
+      res.status(201).json({
+        success: true,
+        data: { client },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: { message: 'Failed to create client', details: error },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    }
   }
 );
 
@@ -60,44 +121,98 @@ router.put('/:id',
     body('contactPerson.email').optional().isEmail().normalizeEmail(),
     body('paymentTerms').optional().isInt({ min: 1, max: 365 }),
   ],
-  (req, res) => {
-    // TODO: Implement update client logic
-    res.json({
-      success: true,
-      data: { message: 'Client updated successfully' },
-      timestamp: new Date().toISOString(),
-    });
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: { message: 'Validation failed', details: errors.array() },
+          timestamp: new Date().toISOString(),
+        } as IApiResponse);
+      }
+      const client = await Client.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      if (!client) {
+        return res.status(404).json({
+          success: false,
+          error: { message: 'Client not found' },
+          timestamp: new Date().toISOString(),
+        } as IApiResponse);
+      }
+      res.json({
+        success: true,
+        data: { client },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: { message: 'Failed to update client', details: error },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    }
   }
 );
 
 // Delete client (soft delete)
-router.delete('/:id', authenticate, authorize('admin', 'manager'), (req, res) => {
-  // TODO: Implement soft delete client logic
-  res.json({
-    success: true,
-    data: { message: 'Client deactivated successfully' },
-    timestamp: new Date().toISOString(),
-  });
+router.delete('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const client = await Client.findByIdAndUpdate(req.params.id, { status: 'inactive' }, { new: true });
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        error: { message: 'Client not found' },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    }
+    res.json({
+      success: true,
+      data: { message: 'Client deactivated successfully', client },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: { message: 'Failed to deactivate client', details: error },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  }
 });
 
 // Get client's invoices
-router.get('/:id/invoices', authenticate, authorizeOwnerOrAdmin(), (req, res) => {
-  // TODO: Implement get client invoices
-  res.json({
-    success: true,
-    data: { invoices: [] },
-    timestamp: new Date().toISOString(),
-  });
+router.get('/:id/invoices', authenticate, authorizeOwnerOrAdmin(), async (req, res) => {
+  try {
+    const invoices = await Invoice.find({ clientId: req.params.id });
+    res.json({
+      success: true,
+      data: { invoices },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: { message: 'Failed to fetch client invoices', details: error },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  }
 });
 
 // Get client's projects
-router.get('/:id/projects', authenticate, authorizeOwnerOrAdmin(), (req, res) => {
-  // TODO: Implement get client projects
-  res.json({
-    success: true,
-    data: { projects: [] },
-    timestamp: new Date().toISOString(),
-  });
+router.get('/:id/projects', authenticate, authorizeOwnerOrAdmin(), async (req, res) => {
+  try {
+    const projects = await Project.find({ clientId: req.params.id });
+    res.json({
+      success: true,
+      data: { projects },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: { message: 'Failed to fetch client projects', details: error },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  }
 });
 
 export default router; 
