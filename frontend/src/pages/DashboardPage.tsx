@@ -1,8 +1,31 @@
+/**
+ * Dashboard Page Component
+ * 
+ * The main dashboard page that provides an overview of the user's business.
+ * Features include:
+ * - Real-time statistics (clients, invoices, projects, revenue)
+ * - Quick action buttons for common tasks
+ * - Recent activity feed
+ * - Responsive design with animated elements
+ * 
+ * This component fetches data from multiple API endpoints and presents
+ * a comprehensive business overview with interactive elements.
+ * 
+ * @author Afterink Team
+ * @version 1.0.0
+ */
+
 import React, { useEffect, useState } from 'react'
 import { Users, FileText, FolderOpen, DollarSign, TrendingUp, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { apiGet } from '../api'
 
+/**
+ * Statistics interface for dashboard metrics
+ * 
+ * Defines the structure for the main dashboard statistics
+ * that are displayed in the stat cards section.
+ */
 interface Stats {
   totalClients: number
   activeInvoices: number
@@ -11,14 +34,26 @@ interface Stats {
 }
 
 const DashboardPage: React.FC = () => {
+  // Authentication state for user information
   const { user } = useAuthStore()
+  
+  // Component state management
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // Modal state for quick actions
   const [showInvoiceModal, setShowInvoiceModal] = useState(false)
   const [showClientModal, setShowClientModal] = useState(false)
   const [showProjectModal, setShowProjectModal] = useState(false)
 
+  /**
+   * Data Fetching Effect
+   * 
+   * Fetches dashboard statistics from multiple API endpoints on component mount.
+   * Uses Promise.all for concurrent requests to improve performance.
+   * Calculates revenue from invoice data and handles loading/error states.
+   */
   useEffect(() => {
     setLoading(true)
     Promise.all([
@@ -27,17 +62,26 @@ const DashboardPage: React.FC = () => {
       apiGet('/projects')
     ])
       .then(([clientsRes, invoicesRes, projectsRes]) => {
+        // Calculate statistics from API responses
         setStats({
-          totalClients: clientsRes.data.clients.length,
-          activeInvoices: invoicesRes.data.invoices.length,
-          projects: projectsRes.data.projects.length,
-          revenue: invoicesRes.data.invoices.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0)
+          totalClients: clientsRes.length,
+          activeInvoices: invoicesRes.length,
+          projects: projectsRes.length,
+          revenue: invoicesRes.reduce((sum: number, inv: any) => 
+            sum + (inv.total || 0), 0)
         })
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
   }, [])
 
+  /**
+   * Statistics Cards Configuration
+   * 
+   * Defines the layout and styling for dashboard stat cards.
+   * Each card includes an icon, color scheme, and dynamic value.
+   * Uses conditional rendering to show loading state or actual data.
+   */
   const statCards = [
     {
       name: 'Total Clients',
@@ -73,7 +117,13 @@ const DashboardPage: React.FC = () => {
     },
   ]
 
-  // Placeholder for recent activities
+  /**
+   * Recent Activities Mock Data
+   * 
+   * Placeholder data for the recent activity feed.
+   * In a real application, this would be fetched from an API
+   * and would include actual user activities and timestamps.
+   */
   const recentActivities = [
     { id: 1, type: 'payment', message: 'Invoice #001 was paid', time: '2 hours ago', status: 'success' },
     { id: 2, type: 'client', message: 'New client added: ACME Corp', time: '4 hours ago', status: 'info' },
