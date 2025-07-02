@@ -75,7 +75,7 @@ const invoiceSchema = new Schema<IInvoiceDocument>({
   },
   subtotal: {
     type: Number,
-    required: [true, 'Subtotal is required'],
+    default: 0,
     min: [0, 'Subtotal must be non-negative'],
   },
   taxAmount: {
@@ -90,7 +90,7 @@ const invoiceSchema = new Schema<IInvoiceDocument>({
   },
   totalAmount: {
     type: Number,
-    required: [true, 'Total amount is required'],
+    default: 0,
     min: [0, 'Total amount must be non-negative'],
   },
   currency: {
@@ -154,8 +154,7 @@ const invoiceSchema = new Schema<IInvoiceDocument>({
   },
 });
 
-// Indexes for faster queries
-invoiceSchema.index({ invoiceNumber: 1 });
+// Indexes for faster queries (invoiceNumber already has unique index from schema)
 invoiceSchema.index({ clientId: 1 });
 invoiceSchema.index({ projectId: 1 });
 invoiceSchema.index({ status: 1 });

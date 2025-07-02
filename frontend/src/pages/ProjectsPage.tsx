@@ -26,6 +26,7 @@ const ProjectsPage: React.FC = () => {
     name: '',
     description: '',
     client: '',
+    category: 'Other',
     startDate: '',
     endDate: '',
     budget: '',
@@ -39,10 +40,28 @@ const ProjectsPage: React.FC = () => {
 
   const fetchProjects = async () => {
     try {
-      const projects = await apiGet('/projects')
-      setProjects(projects)
-    } catch (error) {
-      console.error('Error fetching projects:', error)
+      console.log('Fetching projects from API...')
+      const res = await apiGet('/projects')
+      console.log('Projects API Response:', res)
+      
+      // Handle different response structures
+      let projectsArray = [];
+      if (res && res.data && res.data.projects) {
+        projectsArray = res.data.projects;
+      } else if (res && Array.isArray(res.projects)) {
+        projectsArray = res.projects;
+      } else if (res && Array.isArray(res)) {
+        projectsArray = res;
+      } else {
+        console.warn('Unexpected projects response structure:', res);
+        projectsArray = []; // Default to empty array
+      }
+      
+      setProjects(projectsArray)
+    } catch (error: any) {
+      console.error('Fetch projects error:', error)
+      // For projects, we'll just set empty array and let the "no projects found" message show
+      setProjects([])
     } finally {
       setLoading(false)
     }
@@ -50,8 +69,24 @@ const ProjectsPage: React.FC = () => {
 
   const fetchClients = async () => {
     try {
-      const clients = await apiGet('/clients')
-      setClients(clients)
+      console.log('Fetching clients from API...')
+      const res = await apiGet('/clients')
+      console.log('Clients API Response:', res)
+      
+      // Handle different response structures
+      let clientsArray = [];
+      if (res && res.data && res.data.clients) {
+        clientsArray = res.data.clients;
+      } else if (res && Array.isArray(res.clients)) {
+        clientsArray = res.clients;
+      } else if (res && Array.isArray(res)) {
+        clientsArray = res;
+      } else {
+        console.warn('Unexpected clients response structure:', res);
+        clientsArray = []; // Default to empty array
+      }
+      
+      setClients(clientsArray)
     } catch (error) {
       console.error('Error fetching clients:', error)
     }
@@ -60,25 +95,49 @@ const ProjectsPage: React.FC = () => {
   const handleAddProject = async () => {
     try {
       const projectData = {
-        ...newProject,
-        budget: newProject.budget ? parseFloat(newProject.budget) : undefined,
-        endDate: newProject.endDate || undefined
+        name: newProject.name,
+        description: newProject.description,
+        clientId: newProject.client,
+        startDate: newProject.startDate,
+        endDate: newProject.endDate || undefined,
+        budget: newProject.budget ? parseFloat(newProject.budget) : 0,
+        status: newProject.status,
+        category: newProject.category
       }
       
-      const newProjectResponse = await apiPost('/projects', projectData)
-      setProjects([...projects, newProjectResponse])
+      console.log('Sending project data:', projectData)
+      const res = await apiPost('/projects', projectData)
+      console.log('Project API Response:', res)
+      
+      let projectObject;
+      if (res && res.data && res.data.project) {
+        projectObject = res.data.project;
+      } else if (res && res.project) {
+        projectObject = res.project;
+      } else if (res && res._id) {
+        projectObject = res;
+      } else {
+        console.error('Unexpected project response structure:', res);
+        throw new Error('Unexpected API response structure. Check console for details.');
+      }
+      
+      setProjects([projectObject, ...projects])
       setShowAddModal(false)
       setNewProject({
         name: '',
         description: '',
         client: '',
+        category: 'Other',
         startDate: '',
         endDate: '',
         budget: '',
         status: 'planning'
       })
-    } catch (error) {
+      
+      console.log('Project created successfully!')
+    } catch (error: any) {
       console.error('Error creating project:', error)
+      alert('Error creating project: ' + (error.message || 'Unknown error'))
     }
   }
 
@@ -119,6 +178,7 @@ const ProjectsPage: React.FC = () => {
         <button 
           onClick={() => setShowAddModal(true)}
           className="btn btn-primary flex items-center space-x-2"
+          data-testid="add-project-btn"
         >
           <Plus className="h-4 w-4" />
           <span>New Project</span>
@@ -128,8 +188,22 @@ const ProjectsPage: React.FC = () => {
       {projects.length === 0 ? (
         <div className="card">
           <div className="card-body text-center py-12">
-            <p className="text-secondary-800 mb-4">No projects found</p>
-            <p className="text-sm text-secondary-700">Create your first project to get started.</p>
+            <div className="text-lg mb-2">🚀 No projects found</div>
+            <p className="text-sm text-secondary-700 mb-4">
+              {localStorage.getItem('token') ? 
+                'Create your first project to get started!' : 
+                'Please log in to view and manage projects.'
+              }
+            </p>
+            {localStorage.getItem('token') && (
+              <button 
+                onClick={() => setShowAddModal(true)}
+                className="btn btn-primary"
+                data-testid="add-project-btn"
+              >
+                Create First Project
+              </button>
+            )}
           </div>
         </div>
       ) : (
@@ -207,101 +281,123 @@ const ProjectsPage: React.FC = () => {
 
       {/* Add Project Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold mb-4">Add New Project</h2>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md border border-gray-700">
+            <h2 className="text-lg font-semibold mb-4 text-white">Add New Project</h2>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Project Name *
                 </label>
                 <input
                   type="text"
                   value={newProject.name}
                   onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                   placeholder="Enter project name"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Description
                 </label>
                 <textarea
                   value={newProject.description}
                   onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                   placeholder="Enter project description"
                   rows={3}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Client
                 </label>
                 <select
                   value={newProject.client}
                   onChange={(e) => setNewProject({ ...newProject, client: e.target.value })}
-                  className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                 >
                   <option value="">Select a client</option>
                   {clients.map((client) => (
                     <option key={client._id} value={client._id}>
-                      {client.name}
+                      {client.companyName}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Category
+                </label>
+                <select
+                  value={newProject.category}
+                  onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                >
+                  <option value="Web Design">Web Design</option>
+                  <option value="Web Development">Web Development</option>
+                  <option value="Mobile App">Mobile App</option>
+                  <option value="Branding">Branding</option>
+                  <option value="Logo Design">Logo Design</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="SEO">SEO</option>
+                  <option value="Content Creation">Content Creation</option>
+                  <option value="Consulting">Consulting</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Start Date *
                 </label>
                 <input
                   type="date"
                   value={newProject.startDate}
                   onChange={(e) => setNewProject({ ...newProject, startDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   End Date
                 </label>
                 <input
                   type="date"
                   value={newProject.endDate}
                   onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Budget
                 </label>
                 <input
                   type="number"
                   value={newProject.budget}
                   onChange={(e) => setNewProject({ ...newProject, budget: e.target.value })}
-                  className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                   placeholder="0.00"
                   step="0.01"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Status
                 </label>
                 <select
                   value={newProject.status}
                   onChange={(e) => setNewProject({ ...newProject, status: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                 >
                   <option value="planning">Planning</option>
                   <option value="active">Active</option>
@@ -314,14 +410,14 @@ const ProjectsPage: React.FC = () => {
             <div className="flex justify-end space-x-3 mt-6">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 text-secondary-600 border border-secondary-300 rounded-md hover:bg-secondary-50"
+                className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-gray-800"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddProject}
                 disabled={!newProject.name || !newProject.startDate}
-                className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Add Project
               </button>

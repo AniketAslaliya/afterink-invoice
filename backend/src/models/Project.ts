@@ -16,7 +16,7 @@ const taskSchema = new Schema<ITask>({
     maxLength: [1000, 'Task description cannot exceed 1000 characters'],
   },
   assignedTo: {
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'User',
     required: [true, 'Task must be assigned to a user'],
   },
@@ -73,7 +73,7 @@ const projectFileSchema = new Schema<IProjectFile>({
     min: [0, 'File size must be non-negative'],
   },
   uploadedBy: {
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'User',
     required: [true, 'Uploaded by user is required'],
   },
@@ -96,7 +96,7 @@ const projectSchema = new Schema<IProjectDocument>({
     maxLength: [2000, 'Project description cannot exceed 2000 characters'],
   },
   clientId: {
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'Client',
     required: [true, 'Client is required'],
   },
@@ -147,13 +147,13 @@ const projectSchema = new Schema<IProjectDocument>({
     min: [0, 'Actual cost must be non-negative'],
   },
   assignedTo: [{
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'User',
   }],
   tasks: [taskSchema],
   files: [projectFileSchema],
   createdBy: {
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'User',
     required: [true, 'Created by user is required'],
   },

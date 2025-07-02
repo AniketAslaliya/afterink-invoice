@@ -7,6 +7,7 @@ import { Eye, EyeOff, LogIn } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../../store/authStore'
 
+
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -29,42 +30,59 @@ const LoginPage: React.FC = () => {
     resolver: zodResolver(loginSchema),
   })
 
-  const fillDemoCredentials = () => {
-    setValue('email', 'demo@afterink.com')
-    setValue('password', 'demo123')
-    toast.success('Demo credentials filled!')
-  }
-
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
     try {
       console.log('Login attempt:', data)
       
-      // Demo credentials validation
-      if (data.email === 'demo@afterink.com' && data.password === 'demo123') {
-        const mockUser = {
-          _id: 'demo-user-123',
-          firstName: 'John',
-          lastName: 'Doe',
+      // Make real API call to MongoDB backend
+      const res = await fetch(`http://localhost:5000/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           email: data.email,
-          role: 'admin' as const,
-          isActive: true,
-        }
+          password: data.password,
+        }),
+        credentials: 'include',
+      })
+      
+      console.log('Response status:', res.status)
+      
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error('Login error response:', errorText)
+        throw new Error(`HTTP ${res.status}: ${errorText}`)
+      }
+      
+      const response = await res.json()
+      console.log('Login response:', response)
+      
+      // Check if login was successful
+      if (response.success && response.data && response.data.user && response.data.tokens) {
+        const { user, tokens } = response.data
         
-        const mockTokens = {
-          accessToken: 'demo-access-token-123',
-          refreshToken: 'demo-refresh-token-123',
-        }
+        // Store user and tokens in auth store
+        login(user, tokens)
         
-        login(mockUser, mockTokens)
-        toast.success('Welcome to Afterink Studio Demo!')
+        // Store token in localStorage for API calls
+        localStorage.setItem('token', tokens.accessToken)
+        
+        toast.success(`Welcome back, ${user.firstName}!`)
         navigate('/dashboard')
       } else {
-        toast.error('Invalid credentials. Please use the demo credentials provided.')
+        toast.error('Invalid email or password. Please try again.')
       }
-    } catch (error) {
-      toast.error('Login failed. Please try again.')
+    } catch (error: any) {
       console.error('Login error:', error)
+      if (error.message.includes('Invalid email or password')) {
+        toast.error('Invalid email or password. Please check your credentials.')
+      } else if (error.message.includes('Failed to fetch')) {
+        toast.error('Unable to connect to server. Please try again later.')
+      } else {
+        toast.error('Login failed. Please try again.')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -83,21 +101,25 @@ const LoginPage: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 to-primary-600/10 rounded-xl blur-xl"></div>
         <div className="relative p-6 bg-gradient-to-br from-primary-100/20 to-primary-200/20 backdrop-blur-sm border border-primary-300/30 rounded-xl">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-primary-800">Demo Credentials</h3>
+            <h3 className="text-sm font-semibold text-primary-800">Admin Login</h3>
             <div className="w-6 h-6 bg-primary-500/20 rounded-lg flex items-center justify-center">
-              <Eye className="h-3 w-3 text-primary-600" />
+              <LogIn className="h-3 w-3 text-primary-600" />
             </div>
           </div>
           <div className="text-sm text-primary-700 space-y-2">
             <div className="flex justify-between items-center">
-              <span><strong>Email:</strong> demo@afterink.com</span>
+              <span><strong>Email:</strong> admin@afterink.com</span>
             </div>
             <div className="flex justify-between items-center">
-              <span><strong>Password:</strong> demo123</span>
+              <span><strong>Password:</strong> Password123</span>
             </div>
             <button
               type="button"
-              onClick={fillDemoCredentials}
+              onClick={() => {
+                setValue('email', 'admin@afterink.com')
+                setValue('password', 'Password123')
+                toast.success('Admin credentials filled!')
+              }}
               className="mt-3 w-full btn btn-outline !py-2 !px-4 !text-xs group"
             >
               <LogIn className="h-3 w-3 mr-2 group-hover:rotate-12 transition-transform" />

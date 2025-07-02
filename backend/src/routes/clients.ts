@@ -78,14 +78,16 @@ router.post('/',
     body('contactPerson.lastName').trim().notEmpty().isLength({ max: 50 }),
     body('contactPerson.email').isEmail().normalizeEmail(),
     body('contactPerson.phone').trim().notEmpty(),
-    body('address.street').trim().notEmpty(),
-    body('address.city').trim().notEmpty(),
-    body('address.state').trim().notEmpty(),
-    body('address.zipCode').trim().notEmpty(),
-    body('paymentTerms').isInt({ min: 1, max: 365 }),
+    body('address.street').optional().trim(),
+    body('address.city').optional().trim(),
+    body('address.state').optional().trim(),
+    body('address.zipCode').optional().trim(),
+    body('paymentTerms').optional().isInt({ min: 1, max: 365 }),
   ],
   async (req: Request, res: Response) => {
     try {
+      console.log('MongoDB server received client data:', req.body);
+      
       if (!req.user) {
         return res.status(401).json({
           success: false,
@@ -93,25 +95,65 @@ router.post('/',
           timestamp: new Date().toISOString(),
         } as IApiResponse);
       }
+      
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        console.log('Validation errors:', errors.array());
         return res.status(400).json({
           success: false,
           error: { message: 'Validation failed', details: errors.array() },
           timestamp: new Date().toISOString(),
         } as IApiResponse);
       }
-      const client = new Client({ ...req.body, createdBy: req.user!._id });
-      await client.save();
+      
+      // Prepare client data with defaults for optional fields
+      const clientData = {
+        ...req.body,
+        createdBy: req.user._id,
+        address: {
+          street: req.body.address?.street || '123 Main St',
+          city: req.body.address?.city || 'City',
+          state: req.body.address?.state || 'State',
+          zipCode: req.body.address?.zipCode || '12345',
+          country: req.body.address?.country || 'United States'
+        },
+        paymentTerms: req.body.paymentTerms || 30,
+        status: req.body.status || 'active'
+      };
+      
+      console.log('Creating client with data:', clientData);
+      
+      const client = new Client(clientData);
+      const savedClient = await client.save();
+      
+      console.log('MongoDB server created client:', savedClient);
+      
       res.status(201).json({
         success: true,
-        data: { client },
+        data: { client: savedClient },
         timestamp: new Date().toISOString(),
       } as IApiResponse);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('MongoDB server error creating client:', error);
+      
+      // Handle Mongoose validation errors
+      if (error.name === 'ValidationError') {
+        return res.status(400).json({
+          success: false,
+          error: { 
+            message: 'Validation failed', 
+            details: Object.values(error.errors).map((err: any) => ({
+              field: err.path,
+              message: err.message
+            }))
+          },
+          timestamp: new Date().toISOString(),
+        } as IApiResponse);
+      }
+      
       res.status(500).json({
         success: false,
-        error: { message: 'Failed to create client', details: error },
+        error: { message: 'Failed to create client', details: error.message },
         timestamp: new Date().toISOString(),
       } as IApiResponse);
     }

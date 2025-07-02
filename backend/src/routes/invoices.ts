@@ -78,6 +78,14 @@ router.post('/',
   ],
   async (req: Request, res: Response) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: { message: 'Authentication required' },
+          timestamp: new Date().toISOString(),
+        } as IApiResponse);
+      }
+      
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({

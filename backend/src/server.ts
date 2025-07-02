@@ -73,7 +73,7 @@ app.use(limiter);
  * Supports multiple origins and includes credentials for authentication.
  */
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true, // Allow cookies and authentication headers
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
