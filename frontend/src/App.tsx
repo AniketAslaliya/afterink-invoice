@@ -17,6 +17,7 @@ import ProjectsPage from '@pages/ProjectsPage'
 import ReportsPage from '@pages/ReportsPage'
 import SettingsPage from '@pages/SettingsPage'
 import NotFoundPage from '@pages/NotFoundPage'
+import ProfilePage from '@pages/ProfilePage'
 
 // Protected Route component
 interface ProtectedRouteProps {
@@ -78,6 +79,7 @@ function App() {
                   <Route path="projects" element={<ProjectsPage />} />
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
+                  <Route path="profile" element={<ProfilePage />} />
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>

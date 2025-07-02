@@ -25,6 +25,7 @@ const navigation = [
   { name: 'Projects', href: '/projects', icon: FolderOpen },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Profile', href: '/profile', icon: User },
 ]
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
