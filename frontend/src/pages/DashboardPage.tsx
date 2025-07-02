@@ -1,53 +1,79 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Users, FileText, FolderOpen, DollarSign, TrendingUp, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
+import { apiGet } from '../api'
+
+interface Stats {
+  totalClients: number
+  activeInvoices: number
+  projects: number
+  revenue: number
+}
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuthStore()
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  const [showClientModal, setShowClientModal] = useState(false)
+  const [showProjectModal, setShowProjectModal] = useState(false)
 
-  const stats = [
-    { 
-      name: 'Total Clients', 
-      value: '12', 
-      change: '+2.5%',
-      trend: 'up',
-      icon: Users, 
+  useEffect(() => {
+    setLoading(true)
+    Promise.all([
+      apiGet('/clients'),
+      apiGet('/invoices'),
+      apiGet('/projects')
+    ])
+      .then(([clientsRes, invoicesRes, projectsRes]) => {
+        setStats({
+          totalClients: clientsRes.data.clients.length,
+          activeInvoices: invoicesRes.data.invoices.length,
+          projects: projectsRes.data.projects.length,
+          revenue: invoicesRes.data.invoices.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0)
+        })
+      })
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const statCards = [
+    {
+      name: 'Total Clients',
+      value: stats ? stats.totalClients : '-',
+      icon: Users,
       color: 'text-blue-500',
       bgColor: 'from-blue-500/20 to-blue-600/20',
-      iconBg: 'bg-blue-500/20'
+      iconBg: 'bg-blue-500/20',
     },
-    { 
-      name: 'Active Invoices', 
-      value: '8', 
-      change: '+12.3%',
-      trend: 'up',
-      icon: FileText, 
+    {
+      name: 'Active Invoices',
+      value: stats ? stats.activeInvoices : '-',
+      icon: FileText,
       color: 'text-green-500',
       bgColor: 'from-green-500/20 to-green-600/20',
-      iconBg: 'bg-green-500/20'
+      iconBg: 'bg-green-500/20',
     },
-    { 
-      name: 'Projects', 
-      value: '5', 
-      change: '+8.1%',
-      trend: 'up',
-      icon: FolderOpen, 
+    {
+      name: 'Projects',
+      value: stats ? stats.projects : '-',
+      icon: FolderOpen,
       color: 'text-purple-500',
       bgColor: 'from-purple-500/20 to-purple-600/20',
-      iconBg: 'bg-purple-500/20'
+      iconBg: 'bg-purple-500/20',
     },
-    { 
-      name: 'Revenue', 
-      value: '$15,420', 
-      change: '+18.7%',
-      trend: 'up',
-      icon: DollarSign, 
+    {
+      name: 'Revenue',
+      value: stats ? `$${stats.revenue.toLocaleString()}` : '-',
+      icon: DollarSign,
       color: 'text-amber-500',
       bgColor: 'from-amber-500/20 to-amber-600/20',
-      iconBg: 'bg-amber-500/20'
+      iconBg: 'bg-amber-500/20',
     },
   ]
 
+  // Placeholder for recent activities
   const recentActivities = [
     { id: 1, type: 'payment', message: 'Invoice #001 was paid', time: '2 hours ago', status: 'success' },
     { id: 2, type: 'client', message: 'New client added: ACME Corp', time: '4 hours ago', status: 'info' },
@@ -72,7 +98,7 @@ const DashboardPage: React.FC = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
+        {statCards.map((stat, index) => {
           const Icon = stat.icon
           return (
             <div key={stat.name} className={`stat-card animate-float`} style={{ animationDelay: `${index * 0.1}s` }}>
@@ -84,7 +110,6 @@ const DashboardPage: React.FC = () => {
                   </div>
                   <div className="flex items-center space-x-1 text-green-500">
                     <TrendingUp className="h-4 w-4" />
-                    <span className="text-sm font-semibold">{stat.change}</span>
                   </div>
                 </div>
                 <div>
@@ -96,6 +121,35 @@ const DashboardPage: React.FC = () => {
           )
         })}
       </div>
+
+      {/* Quick Actions Modals (UI only) */}
+      {showInvoiceModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 w-full max-w-md shadow-lg relative">
+            <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-900" onClick={() => setShowInvoiceModal(false)}>&times;</button>
+            <h2 className="text-xl font-bold mb-4">Create New Invoice</h2>
+            <p className="text-secondary-700">(Form coming soon)</p>
+          </div>
+        </div>
+      )}
+      {showClientModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 w-full max-w-md shadow-lg relative">
+            <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-900" onClick={() => setShowClientModal(false)}>&times;</button>
+            <h2 className="text-xl font-bold mb-4">Add New Client</h2>
+            <p className="text-secondary-700">(Form coming soon)</p>
+          </div>
+        </div>
+      )}
+      {showProjectModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 w-full max-w-md shadow-lg relative">
+            <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-900" onClick={() => setShowProjectModal(false)}>&times;</button>
+            <h2 className="text-xl font-bold mb-4">Start New Project</h2>
+            <p className="text-secondary-700">(Form coming soon)</p>
+          </div>
+        </div>
+      )}
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -110,15 +164,15 @@ const DashboardPage: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-4">
-                <button className="btn btn-primary w-full group">
+                <button className="btn btn-primary w-full group" onClick={() => setShowInvoiceModal(true)}>
                   <FileText className="h-4 w-4 mr-2 group-hover:rotate-12 transition-transform" />
                   Create New Invoice
                 </button>
-                <button className="btn btn-outline w-full group">
+                <button className="btn btn-outline w-full group" onClick={() => setShowClientModal(true)}>
                   <Users className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
                   Add New Client
                 </button>
-                <button className="btn btn-outline w-full group">
+                <button className="btn btn-outline w-full group" onClick={() => setShowProjectModal(true)}>
                   <FolderOpen className="h-4 w-4 mr-2 group-hover:rotate-12 transition-transform" />
                   Start New Project
                 </button>
