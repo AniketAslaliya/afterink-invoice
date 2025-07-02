@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Search, Filter } from 'lucide-react'
+import { Plus, Search, Filter, Edit, Eye, FileText, Clock, CheckCircle, Pause, PlayCircle } from 'lucide-react'
 import { apiGet, apiPost, apiPut } from '../api'
 
 interface Project {
@@ -30,7 +30,7 @@ const ProjectsPage: React.FC = () => {
     startDate: '',
     endDate: '',
     budget: 0,
-    status: 'planning' as const
+    status: 'planning' as 'planning' | 'active' | 'completed' | 'on-hold'
   })
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -155,7 +155,7 @@ const ProjectsPage: React.FC = () => {
       startDate: project.startDate?.split('T')[0] || '',
       endDate: project.endDate?.split('T')[0] || '',
       budget: project.budget || 0,
-      status: 'planning'
+      status: project.status
     })
     setShowEditModal(true)
   }
@@ -539,26 +539,26 @@ const ProjectsPage: React.FC = () => {
             
             <div className="space-y-6 max-h-96 overflow-y-auto">
               <div className="grid grid-cols-2 gap-6">
-              <div>
+                <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Project Name *
-                </label>
-                <input
-                  type="text"
-                  value={newProject.name}
-                  onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                    Project Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={newProject.name}
+                    onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
-                  placeholder="Enter project name"
-                />
-              </div>
+                    placeholder="Enter project name"
+                  />
+                </div>
 
               <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Client
                   </label>
                   <select
-                    value={newProject.client}
-                    onChange={(e) => setNewProject({ ...newProject, client: e.target.value })}
+                    value={newProject.clientId}
+                    onChange={(e) => setNewProject({ ...newProject, clientId: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
                   >
                     <option value="">Select a client</option>
@@ -584,29 +584,6 @@ const ProjectsPage: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-              <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Category
-                </label>
-                <select
-                    value={newProject.category}
-                    onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
-                  >
-                    <option value="Web Design">Web Design</option>
-                    <option value="Web Development">Web Development</option>
-                    <option value="Mobile App">Mobile App</option>
-                    <option value="Branding">Branding</option>
-                    <option value="Logo Design">Logo Design</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="SEO">SEO</option>
-                    <option value="Content Creation">Content Creation</option>
-                    <option value="Consulting">Consulting</option>
-                    <option value="Other">Other</option>
-                </select>
-              </div>
-
               <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Status
@@ -621,7 +598,6 @@ const ProjectsPage: React.FC = () => {
                     <option value="completed">Completed</option>
                     <option value="on-hold">On Hold</option>
                   </select>
-                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-6">
@@ -657,7 +633,7 @@ const ProjectsPage: React.FC = () => {
                 <input
                   type="number"
                   value={newProject.budget}
-                  onChange={(e) => setNewProject({ ...newProject, budget: e.target.value })}
+                  onChange={(e) => setNewProject({ ...newProject, budget: parseFloat(e.target.value) || 0 })}
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
                   placeholder="0.00"
                   step="0.01"
@@ -716,8 +692,8 @@ const ProjectsPage: React.FC = () => {
                     Client
                   </label>
                   <select
-                    value={newProject.client}
-                    onChange={(e) => setNewProject({ ...newProject, client: e.target.value })}
+                    value={newProject.clientId}
+                    onChange={(e) => setNewProject({ ...newProject, clientId: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
                   >
                     <option value="">Select a client</option>
@@ -743,45 +719,21 @@ const ProjectsPage: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Category
-                  </label>
-                  <select
-                    value={newProject.category}
-                    onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
-                  >
-                    <option value="Web Design">Web Design</option>
-                    <option value="Web Development">Web Development</option>
-                    <option value="Mobile App">Mobile App</option>
-                    <option value="Branding">Branding</option>
-                    <option value="Logo Design">Logo Design</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="SEO">SEO</option>
-                    <option value="Content Creation">Content Creation</option>
-                    <option value="Consulting">Consulting</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-
-                <div>
+              <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Status
-                </label>
-                <select
-                  value={newProject.status}
-                  onChange={(e) => setNewProject({ ...newProject, status: e.target.value as any })}
+                  </label>
+                  <select
+                    value={newProject.status}
+                    onChange={(e) => setNewProject({ ...newProject, status: e.target.value as any })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
-                >
-                  <option value="planning">Planning</option>
-                  <option value="active">Active</option>
-                  <option value="completed">Completed</option>
-                  <option value="on-hold">On Hold</option>
-                </select>
+                  >
+                    <option value="planning">Planning</option>
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                    <option value="on-hold">On Hold</option>
+                  </select>
               </div>
-            </div>
 
               <div className="grid grid-cols-2 gap-6">
                 <div>
@@ -816,7 +768,7 @@ const ProjectsPage: React.FC = () => {
                 <input
                   type="number"
                   value={newProject.budget}
-                  onChange={(e) => setNewProject({ ...newProject, budget: e.target.value })}
+                  onChange={(e) => setNewProject({ ...newProject, budget: parseFloat(e.target.value) || 0 })}
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
                   placeholder="0.00"
                   step="0.01"
@@ -844,89 +796,79 @@ const ProjectsPage: React.FC = () => {
       )}
 
       {/* View Project Modal */}
-      {showViewModal && (
+      {showViewModal && selectedProject && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto">
-          <div className="bg-gray-900 rounded-xl p-8 w-full max-w-2xl shadow-lg relative mx-4 my-8 border border-gray-700">
+          <div className="bg-gray-900 rounded-xl p-8 w-full max-w-3xl shadow-lg relative mx-4 my-8 border border-gray-700">
             <button 
               className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none" 
               onClick={() => setShowViewModal(false)}
             >
               &times;
             </button>
-            <h2 className="text-2xl font-bold mb-6 text-white">Project Details</h2>
+            <h2 className="text-2xl font-bold mb-6 text-white">{selectedProject.name}</h2>
             
-            <div className="space-y-6 max-h-96 overflow-y-auto">
-              <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Project Name
-                  </label>
-                  <p className="text-white">{selectedProject?.name}</p>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Client</label>
+                  <p className="text-white text-lg">{selectedProject.client?.name || 'Unknown Client'}</p>
                 </div>
-
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Client
-                  </label>
-                  <p className="text-white">{selectedProject?.client?.name || 'Unknown Client'}</p>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Status</label>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedProject.status)}`}>
+                    {selectedProject.status}
+                  </span>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Description
-                  </label>
-                  <p className="text-white">{selectedProject?.description}</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Category
-                  </label>
-                  <p className="text-white">{selectedProject?.category}</p>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Budget</label>
+                  <p className="text-white text-lg">{formatCurrency(selectedProject.budget)}</p>
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-6">
+              
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Status
-                  </label>
-                  <p className="text-white">{selectedProject?.status?.charAt(0).toUpperCase() + selectedProject?.status?.slice(1) || 'Unknown'}</p>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Start Date</label>
+                  <p className="text-white">{formatDate(selectedProject.startDate)}</p>
                 </div>
-
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Budget
-                  </label>
-                  <p className="text-white">{formatCurrency(selectedProject?.budget)}</p>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">End Date</label>
+                  <p className="text-white">{selectedProject.endDate ? formatDate(selectedProject.endDate) : 'Not specified'}</p>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Start Date
-                  </label>
-                  <p className="text-white">{selectedProject?.startDate ? new Date(selectedProject.startDate).toLocaleDateString() : 'N/A'}</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    End Date
-                  </label>
-                  <p className="text-white">{selectedProject?.endDate ? new Date(selectedProject.endDate).toLocaleDateString() : 'N/A'}</p>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Created</label>
+                  <p className="text-white">{formatDate(selectedProject.createdAt)}</p>
                 </div>
               </div>
             </div>
-
-            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-700">
+            
+            {selectedProject.description && (
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-400 mb-2">Description</label>
+                <p className="text-gray-300 bg-gray-800 p-4 rounded-lg">{selectedProject.description}</p>
+              </div>
+            )}
+            
+            <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-700">
               <button
-                onClick={() => setShowViewModal(false)}
-                className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-gray-800"
+                onClick={() => {
+                  setShowViewModal(false)
+                  handleEditProject(selectedProject)
+                }}
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
               >
-                Close
+                <Edit className="h-4 w-4 inline mr-2" />
+                Edit Project
+              </button>
+              <button
+                onClick={() => handleCreateInvoice(selectedProject)}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              >
+                <FileText className="h-4 w-4 inline mr-2" />
+                Create Invoice
               </button>
             </div>
           </div>

@@ -46,7 +46,7 @@ const ClientsPage: React.FC = () => {
       email: '',
       phone: '',
       position: '',
-      countryCode: ''
+      countryCode: '+91'
     },
     address: {
       street: '',
@@ -127,7 +127,7 @@ const ClientsPage: React.FC = () => {
           email: client.contactPerson.email,
           phone: client.contactPerson.phone || '',
           position: client.contactPerson.position || '',
-          countryCode: client.contactPerson.countryCode || ''
+          countryCode: client.contactPerson.countryCode || '+91'
         },
       address: client.address || {
         street: '',
@@ -136,7 +136,10 @@ const ClientsPage: React.FC = () => {
         zipCode: '',
         country: ''
       },
-      status: client.status
+      status: client.status,
+      paymentTerms: client.paymentTerms || 30,
+      taxNumber: client.taxNumber || '',
+      notes: client.notes || ''
     })
     setShowEditModal(true)
   }
@@ -156,7 +159,8 @@ const ClientsPage: React.FC = () => {
           lastName: newClient.contactPerson.lastName,
           email: newClient.contactPerson.email,
           phone: newClient.contactPerson.phone,
-          position: newClient.contactPerson.position
+          position: newClient.contactPerson.position,
+          countryCode: newClient.contactPerson.countryCode
         },
         address: newClient.address,
         status: newClient.status
@@ -184,7 +188,8 @@ const ClientsPage: React.FC = () => {
           lastName: '',
           email: '',
           phone: '',
-          position: ''
+          position: '',
+          countryCode: '+91'
         },
         address: {
           street: '',
@@ -193,7 +198,10 @@ const ClientsPage: React.FC = () => {
           zipCode: '',
           country: ''
         },
-        status: 'active'
+        status: 'active',
+        paymentTerms: 30,
+        taxNumber: '',
+        notes: ''
       })
     } catch (error: any) {
       console.error('Error creating client:', error)
