@@ -11,6 +11,7 @@ interface Client {
     email: string; 
     phone?: string;
     position?: string;
+    countryCode?: string;
   };
   address?: {
     street: string;
@@ -21,28 +22,9 @@ interface Client {
   };
   status: 'active' | 'inactive' | 'prospect';
   createdAt?: string;
-}
-
-interface NewClient {
-  companyName: string;
-  contactPerson: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    countryCode: string;
-    position: string;
-  };
-  address: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  paymentTerms: number;
-  taxNumber: string;
-  notes: string;
+  paymentTerms?: number;
+  taxNumber?: string;
+  notes?: string;
 }
 
 const ClientsPage: React.FC = () => {
@@ -63,7 +45,8 @@ const ClientsPage: React.FC = () => {
       lastName: '',
       email: '',
       phone: '',
-      position: ''
+      position: '',
+      countryCode: ''
     },
     address: {
       street: '',
@@ -72,7 +55,10 @@ const ClientsPage: React.FC = () => {
       zipCode: '',
       country: ''
     },
-    status: 'active' as 'active' | 'inactive' | 'prospect'
+    status: 'active' as 'active' | 'inactive' | 'prospect',
+    paymentTerms: 30,
+    taxNumber: '',
+    notes: ''
   })
 
   useEffect(() => {
@@ -135,13 +121,14 @@ const ClientsPage: React.FC = () => {
     setSelectedClient(client)
     setNewClient({
       companyName: client.companyName,
-      contactPerson: {
-        firstName: client.contactPerson.firstName,
-        lastName: client.contactPerson.lastName,
-        email: client.contactPerson.email,
-        phone: client.contactPerson.phone || '',
-        position: client.contactPerson.position || ''
-      },
+              contactPerson: {
+          firstName: client.contactPerson.firstName,
+          lastName: client.contactPerson.lastName,
+          email: client.contactPerson.email,
+          phone: client.contactPerson.phone || '',
+          position: client.contactPerson.position || '',
+          countryCode: client.contactPerson.countryCode || ''
+        },
       address: client.address || {
         street: '',
         city: '',

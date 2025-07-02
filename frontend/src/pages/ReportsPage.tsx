@@ -294,15 +294,15 @@ const ReportsPage: React.FC = () => {
     return `${value.toFixed(1)}%`
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'paid': return 'text-green-400 bg-green-900/30'
-      case 'pending': return 'text-yellow-400 bg-yellow-900/30'
-      case 'overdue': return 'text-red-400 bg-red-900/30'
-      case 'draft': return 'text-gray-400 bg-gray-900/30'
-      default: return 'text-gray-400 bg-gray-900/30'
-    }
-  }
+  // const getStatusColor = (status: string) => {
+  //   switch (status) {
+  //     case 'paid': return 'text-green-400 bg-green-900/30'
+  //     case 'pending': return 'text-yellow-400 bg-yellow-900/30'
+  //     case 'overdue': return 'text-red-400 bg-red-900/30'
+  //     case 'draft': return 'text-gray-400 bg-gray-900/30'
+  //     default: return 'text-gray-400 bg-gray-900/30'
+  //   }
+  // }
 
   if (loading) {
     return (
@@ -468,7 +468,7 @@ const ReportsPage: React.FC = () => {
                 Invoice Status Distribution
               </h3>
               <div className="space-y-4">
-                {reportData.statusBreakdown.map((item, index) => (
+                {reportData.statusBreakdown.map((item, _) => (
                   <div key={item.status} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <div className={`w-3 h-3 rounded-full ${

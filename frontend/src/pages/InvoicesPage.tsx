@@ -701,14 +701,14 @@ const InvoicesPage: React.FC = () => {
   };
 
   // Generate proper invoice ID: YYYYMMDD + A + sequential number
-  const generateInvoiceId = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const sequence = (invoices.length + 1).toString().padStart(6, '0');
-    return `${year}${month}${day}A${sequence}`;
-  };
+  // const generateInvoiceId = () => {
+  //   const now = new Date();
+  //   const year = now.getFullYear();
+  //   const month = String(now.getMonth() + 1).padStart(2, '0');
+  //   const day = String(now.getDate()).padStart(2, '0');
+  //   const sequence = (invoices.length + 1).toString().padStart(6, '0');
+  //   return `${year}${month}${day}A${sequence}`;
+  // };
 
   // Filter and sort invoices
   const filteredInvoices = invoices

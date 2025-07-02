@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Star, Crown, Zap, Leaf, Anchor } from 'lucide-react';
+import { Check, Crown, Zap } from 'lucide-react';
 
 export interface InvoiceTemplate {
   id: string;
@@ -8,6 +8,11 @@ export interface InvoiceTemplate {
   preview: string;
   isPremium?: boolean;
   isNew?: boolean;
+  layout?: {
+    headerStyle?: string;
+    tableStyle?: string;
+    footerStyle?: string;
+  };
   colors: {
     primary: string;
     secondary: string;

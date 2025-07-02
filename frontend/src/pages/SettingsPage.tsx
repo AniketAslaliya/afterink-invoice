@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Save, Building, Bell, Shield, Palette, Globe, Clock, Eye, EyeOff, Key, Smartphone, Mail, Database, Lock } from 'lucide-react'
+import { Save, Building, Bell, Shield, Palette, Globe, Clock, Key, Smartphone, Mail, Database, Lock } from 'lucide-react'
 import { apiGet, apiPost } from '../api'
 
 interface AppSettings {

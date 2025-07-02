@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Calendar, DollarSign, User, Search, Filter, Briefcase, Clock, CheckCircle, Target } from 'lucide-react'
+import { Plus, Search, Filter } from 'lucide-react'
 import { apiGet, apiPost, apiPut } from '../api'
 
 interface Project {

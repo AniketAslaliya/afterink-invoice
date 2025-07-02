@@ -29,8 +29,7 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Eye,
-  Edit,
+
   Zap,
   Briefcase
 } from 'lucide-react';
@@ -54,7 +53,6 @@ interface DashboardStats {
 }
 
 const DashboardPage: React.FC = () => {
-  const { user } = useAuthStore();
   const navigate = useNavigate();
   
   const [stats, setStats] = useState<DashboardStats>({
