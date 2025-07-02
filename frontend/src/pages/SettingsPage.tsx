@@ -191,19 +191,19 @@ const SettingsPage: React.FC = () => {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <div>
+    <div>
             <h1 className="text-3xl font-bold text-white">Application Settings</h1>
             <p className="text-gray-400">Manage your business and application preferences</p>
           </div>
-          <button
-            onClick={handleSaveSettings}
-            disabled={saving}
+        <button
+          onClick={handleSaveSettings}
+          disabled={saving}
             className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <Save className="h-4 w-4" />
+        >
+          <Save className="h-4 w-4" />
             <span>{saving ? 'Saving...' : 'Save All Changes'}</span>
-          </button>
-        </div>
+        </button>
+      </div>
 
         {/* Success/Error Messages */}
         {success && (
@@ -219,8 +219,8 @@ const SettingsPage: React.FC = () => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar Navigation */}
-          <div className="lg:col-span-1">
+        {/* Sidebar Navigation */}
+        <div className="lg:col-span-1">
             <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
               <nav className="space-y-1">
                 {tabs.map((tab) => {
@@ -241,11 +241,11 @@ const SettingsPage: React.FC = () => {
                   )
                 })}
               </nav>
-            </div>
           </div>
+        </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-3">
+        {/* Main Content */}
+        <div className="lg:col-span-3">
             <div className="bg-gray-800 rounded-xl border border-gray-700">
               <div className="p-8">
                 {/* Business Settings */}
@@ -259,78 +259,78 @@ const SettingsPage: React.FC = () => {
                     {/* Company Details */}
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
+                <div>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
                             Company Name *
-                          </label>
-                          <input
-                            type="text"
+                      </label>
+                      <input
+                        type="text"
                             value={settings.business.companyName}
                             onChange={(e) => updateSettings('business', 'companyName', e.target.value)}
                             className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Enter company name"
-                          />
-                        </div>
-                        <div>
+                      />
+                    </div>
+                    <div>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
                             Website
-                          </label>
-                          <input
+                      </label>
+                      <input
                             type="url"
                             value={settings.business.website}
                             onChange={(e) => updateSettings('business', 'website', e.target.value)}
                             className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="https://example.com"
-                          />
-                        </div>
-                      </div>
+                      />
+                    </div>
+                  </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
                           Business Address
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.business.address}
+                        onChange={(e) => updateSettings('business', 'address', e.target.value)}
+                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Street address"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                          City
                         </label>
                         <input
                           type="text"
-                          value={settings.business.address}
-                          onChange={(e) => updateSettings('business', 'address', e.target.value)}
-                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Street address"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-2">
-                            City
-                          </label>
-                          <input
-                            type="text"
-                            value={settings.business.city}
-                            onChange={(e) => updateSettings('business', 'city', e.target.value)}
+                          value={settings.business.city}
+                          onChange={(e) => updateSettings('business', 'city', e.target.value)}
                             className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="City"
-                          />
-                        </div>
-                        <div>
+                        />
+                      </div>
+                      <div>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
-                            State
-                          </label>
-                          <input
-                            type="text"
-                            value={settings.business.state}
-                            onChange={(e) => updateSettings('business', 'state', e.target.value)}
+                          State
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.business.state}
+                          onChange={(e) => updateSettings('business', 'state', e.target.value)}
                             className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="State"
-                          />
-                        </div>
-                        <div>
+                        />
+                      </div>
+                      <div>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
-                            ZIP Code
-                          </label>
-                          <input
-                            type="text"
-                            value={settings.business.zipCode}
-                            onChange={(e) => updateSettings('business', 'zipCode', e.target.value)}
+                          ZIP Code
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.business.zipCode}
+                          onChange={(e) => updateSettings('business', 'zipCode', e.target.value)}
                             className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="ZIP"
                           />
@@ -420,13 +420,13 @@ const SettingsPage: React.FC = () => {
                             />
                           </div>
                         </div>
-                      </div>
                     </div>
                   </div>
-                )}
+                </div>
+              )}
 
                 {/* Notifications Settings */}
-                {activeTab === 'notifications' && (
+              {activeTab === 'notifications' && (
                   <div className="space-y-8">
                     <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
                       <Bell className="h-5 w-5 mr-2" />
@@ -434,12 +434,12 @@ const SettingsPage: React.FC = () => {
                     </h3>
 
                     {/* Email Notifications */}
-                    <div>
+                <div>
                       <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
                         <Mail className="h-5 w-5 mr-2" />
                         Email Notifications
                       </h4>
-                      <div className="space-y-4">
+                  <div className="space-y-4">
                         {[
                           { key: 'emailInvoices', label: 'New invoice created', desc: 'Get notified when invoices are generated' },
                           { key: 'emailPayments', label: 'Payment received', desc: 'Get notified when payments are processed' },
@@ -449,19 +449,19 @@ const SettingsPage: React.FC = () => {
                           { key: 'monthlyReports', label: 'Monthly reports', desc: 'Receive detailed monthly reports' }
                         ].map((item) => (
                           <div key={item.key} className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
-                            <div>
+                      <div>
                               <p className="text-white font-medium">{item.label}</p>
                               <p className="text-gray-400 text-sm">{item.desc}</p>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                              <input
-                                type="checkbox"
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
                                 checked={settings.notifications[item.key as keyof typeof settings.notifications] as boolean}
                                 onChange={(e) => updateSettings('notifications', item.key, e.target.checked)}
-                                className="sr-only peer"
-                              />
+                          className="sr-only peer"
+                        />
                               <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                            </label>
+                      </label>
                           </div>
                         ))}
                       </div>
@@ -479,17 +479,17 @@ const SettingsPage: React.FC = () => {
                           { key: 'smsNotifications', label: 'SMS notifications', desc: 'Receive important updates via SMS' }
                         ].map((item) => (
                           <div key={item.key} className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
-                            <div>
+                      <div>
                               <p className="text-white font-medium">{item.label}</p>
                               <p className="text-gray-400 text-sm">{item.desc}</p>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                              <input
-                                type="checkbox"
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
                                 checked={settings.notifications[item.key as keyof typeof settings.notifications] as boolean}
                                 onChange={(e) => updateSettings('notifications', item.key, e.target.checked)}
-                                className="sr-only peer"
-                              />
+                          className="sr-only peer"
+                        />
                               <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                             </label>
                           </div>
@@ -536,7 +536,7 @@ const SettingsPage: React.FC = () => {
                         <div>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
                             Language
-                          </label>
+                      </label>
                           <select
                             value={settings.preferences.language}
                             onChange={(e) => updateSettings('preferences', 'language', e.target.value)}
@@ -588,7 +588,7 @@ const SettingsPage: React.FC = () => {
                             <option value="24h">24 Hour</option>
                           </select>
                         </div>
-                        <div>
+                      <div>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
                             Timezone
                           </label>
@@ -623,25 +623,25 @@ const SettingsPage: React.FC = () => {
                             <div>
                               <p className="text-white font-medium">{item.label}</p>
                               <p className="text-gray-400 text-sm">{item.desc}</p>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                              <input
-                                type="checkbox"
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
                                 checked={settings.preferences[item.key as keyof typeof settings.preferences] as boolean}
                                 onChange={(e) => updateSettings('preferences', item.key, e.target.checked)}
-                                className="sr-only peer"
-                              />
+                          className="sr-only peer"
+                        />
                               <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                            </label>
+                      </label>
                           </div>
                         ))}
                       </div>
-                    </div>
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Security Settings */}
-                {activeTab === 'security' && (
+              {/* Security Settings */}
+              {activeTab === 'security' && (
                   <div className="space-y-8">
                     <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
                       <Shield className="h-5 w-5 mr-2" />
@@ -659,7 +659,7 @@ const SettingsPage: React.FC = () => {
                           <label className="block text-sm font-medium text-gray-300 mb-2">
                             Password Expiry (Days)
                           </label>
-                          <input
+                            <input
                             type="number"
                             value={settings.security.passwordExpiry}
                             onChange={(e) => updateSettings('security', 'passwordExpiry', parseInt(e.target.value))}
@@ -667,7 +667,7 @@ const SettingsPage: React.FC = () => {
                             min="30"
                             max="365"
                           />
-                        </div>
+                          </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
                             Session Timeout (Minutes)
@@ -715,7 +715,7 @@ const SettingsPage: React.FC = () => {
                     </div>
                   </div>
                 )}
-              </div>
+                </div>
             </div>
           </div>
         </div>

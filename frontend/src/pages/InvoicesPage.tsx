@@ -907,7 +907,7 @@ const InvoicesPage: React.FC = () => {
                       </option>
                     ))}
                   </select>
-                </div>
+          </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Project (Optional)
@@ -925,7 +925,7 @@ const InvoicesPage: React.FC = () => {
                       </option>
                     ))}
                   </select>
-                </div>
+        </div>
               </div>
 
               <div className="grid grid-cols-2 gap-6">
@@ -1928,23 +1928,23 @@ const InvoicesPage: React.FC = () => {
               {/* Invoice Items Table */}
               <div className="mb-10">
                 <table className="w-full border-collapse bg-white rounded-xl overflow-hidden shadow-sm">
-                  <thead>
+              <thead>
                     <tr style={{ backgroundColor: invoiceCustomization.colors.primary }}>
                       <th className="px-6 py-4 text-left text-white font-semibold">Description</th>
                       <th className="px-6 py-4 text-center text-white font-semibold">Qty</th>
                       <th className="px-6 py-4 text-right text-white font-semibold">Rate</th>
                       <th className="px-6 py-4 text-right text-white font-semibold">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                </tr>
+              </thead>
+              <tbody>
                     <tr className="border-b border-gray-200">
                       <td className="px-6 py-4 text-gray-800">Professional Services</td>
                       <td className="px-6 py-4 text-center text-gray-800">1</td>
                       <td className="px-6 py-4 text-right text-gray-800">{formatCurrency(selectedInvoice.totalAmount)}</td>
                       <td className="px-6 py-4 text-right font-semibold text-gray-800">{formatCurrency(selectedInvoice.totalAmount)}</td>
-                    </tr>
-                  </tbody>
-                </table>
+                  </tr>
+              </tbody>
+            </table>
               </div>
 
               {/* Total Section */}
@@ -2025,7 +2025,7 @@ const InvoicesPage: React.FC = () => {
                       </option>
                     ))}
                   </select>
-                </div>
+        </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Due Date *</label>
                   <input
@@ -2035,7 +2035,7 @@ const InvoicesPage: React.FC = () => {
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                     required
                   />
-                </div>
+      </div>
               </div>
 
               <div className="text-right">

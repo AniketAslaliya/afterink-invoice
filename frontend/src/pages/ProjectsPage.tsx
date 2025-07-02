@@ -234,7 +234,7 @@ const ProjectsPage: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-purple-600/10 rounded-3xl blur-3xl"></div>
         <div className="relative bg-gradient-to-r from-secondary-200/60 to-secondary-300/60 backdrop-blur-lg rounded-2xl p-8 border border-secondary-300/30">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
+    <div>
               <h1 className="text-3xl font-bold text-gradient-secondary">Projects</h1>
               <p className="text-secondary-700 mt-2">Manage your project portfolio and track progress</p>
             </div>
@@ -247,14 +247,14 @@ const ProjectsPage: React.FC = () => {
                 <Filter className="h-4 w-4 mr-2 group-hover:rotate-12 transition-transform" />
                 Filter
               </button>
-              <button 
+        <button 
                 className="btn btn-primary group" 
                 onClick={() => setShowCreateModal(true)}
                 data-testid="add-project-btn"
-              >
+        >
                 <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" />
                 New Project
-              </button>
+        </button>
             </div>
           </div>
         </div>
@@ -338,7 +338,7 @@ const ProjectsPage: React.FC = () => {
 
         <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 border border-gray-600">
           <div className="flex items-center justify-between">
-            <div>
+                      <div>
               <p className="text-orange-400 text-sm font-medium">On Hold</p>
               <p className="text-2xl font-bold text-white">{projects.filter(p => p.status === 'on-hold').length}</p>
             </div>
@@ -446,7 +446,7 @@ const ProjectsPage: React.FC = () => {
                           <p className="text-gray-400 text-sm">
                             Client: <span className="text-gray-300">{project.client?.name || 'Unknown Client'}</span>
                           </p>
-                        </div>
+                      </div>
                       </div>
 
                       {/* Status Badge */}
@@ -494,7 +494,7 @@ const ProjectsPage: React.FC = () => {
                           <span className="text-gray-300">Deadline: {new Date(project.endDate).toLocaleDateString()}</span>
                         </div>
                       )}
-                    </div>
+                      </div>
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2 pt-4 border-t border-gray-600">
@@ -509,18 +509,18 @@ const ProjectsPage: React.FC = () => {
                         onClick={() => handleEditProject(project)}
                       >
                         Edit
-                      </button>
+                        </button>
                       <button
                         className="bg-green-900 hover:bg-green-800 text-green-400 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
                         onClick={() => handleCreateInvoice(project)}
                       >
                         Invoice
-                      </button>
-                    </div>
+                        </button>
+                      </div>
                   </div>
                 );
               })}
-            </div>
+          </div>
           )}
         </div>
       </div>
@@ -539,20 +539,20 @@ const ProjectsPage: React.FC = () => {
             
             <div className="space-y-6 max-h-96 overflow-y-auto">
               <div className="grid grid-cols-2 gap-6">
-                <div>
+              <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Project Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={newProject.name}
-                    onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                  Project Name *
+                </label>
+                <input
+                  type="text"
+                  value={newProject.name}
+                  onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
-                    placeholder="Enter project name"
-                  />
-                </div>
+                  placeholder="Enter project name"
+                />
+              </div>
 
-                <div>
+              <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Client
                   </label>
@@ -585,11 +585,11 @@ const ProjectsPage: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-6">
-                <div>
+              <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Category
-                  </label>
-                  <select
+                </label>
+                <select
                     value={newProject.category}
                     onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
@@ -604,10 +604,10 @@ const ProjectsPage: React.FC = () => {
                     <option value="Content Creation">Content Creation</option>
                     <option value="Consulting">Consulting</option>
                     <option value="Other">Other</option>
-                  </select>
-                </div>
+                </select>
+              </div>
 
-                <div>
+              <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Status
                   </label>
@@ -627,26 +627,26 @@ const ProjectsPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Start Date *
-                  </label>
-                  <input
-                    type="date"
-                    value={newProject.startDate}
-                    onChange={(e) => setNewProject({ ...newProject, startDate: e.target.value })}
+                  Start Date *
+                </label>
+                <input
+                  type="date"
+                  value={newProject.startDate}
+                  onChange={(e) => setNewProject({ ...newProject, startDate: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
-                  />
-                </div>
+                />
+              </div>
 
-                <div>
+              <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    value={newProject.endDate}
-                    onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })}
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={newProject.endDate}
+                  onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
-                  />
+                />
                 </div>
               </div>
 
@@ -769,19 +769,19 @@ const ProjectsPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Status
-                  </label>
-                  <select
-                    value={newProject.status}
-                    onChange={(e) => setNewProject({ ...newProject, status: e.target.value as any })}
+                </label>
+                <select
+                  value={newProject.status}
+                  onChange={(e) => setNewProject({ ...newProject, status: e.target.value as any })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
-                  >
-                    <option value="planning">Planning</option>
-                    <option value="active">Active</option>
-                    <option value="completed">Completed</option>
-                    <option value="on-hold">On Hold</option>
-                  </select>
-                </div>
+                >
+                  <option value="planning">Planning</option>
+                  <option value="active">Active</option>
+                  <option value="completed">Completed</option>
+                  <option value="on-hold">On Hold</option>
+                </select>
               </div>
+            </div>
 
               <div className="grid grid-cols-2 gap-6">
                 <div>

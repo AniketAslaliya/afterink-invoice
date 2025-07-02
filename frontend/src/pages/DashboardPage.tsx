@@ -209,7 +209,7 @@ const DashboardPage: React.FC = () => {
                 Create Invoice
               </button>
             </div>
-          </div>
+        </div>
       </div>
 
         {/* Key Metrics */}
