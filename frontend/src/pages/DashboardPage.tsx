@@ -15,215 +15,162 @@
  * @version 1.0.0
  */
 
-import React, { useEffect, useState } from 'react'
-import { Users, FileText, FolderOpen, DollarSign, TrendingUp, Clock, CheckCircle, AlertCircle, Plus } from 'lucide-react'
-import { useAuthStore } from '../store/authStore'
-import { apiGet } from '../api'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  Users, 
+  FileText, 
+  DollarSign, 
+  PlusCircle,
+  ArrowRight,
+  BarChart3,
+  Target,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Eye,
+  Edit,
+  Zap,
+  Briefcase
+} from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
+import { apiGet } from '../api';
+import { useNavigate } from 'react-router-dom';
+// Dashboard layout is handled by App.tsx routing
 
-/**
- * Statistics interface for dashboard metrics
- * 
- * Defines the structure for the main dashboard statistics
- * that are displayed in the stat cards section.
- */
-interface Stats {
-  totalClients: number
-  activeInvoices: number
-  projects: number
-  revenue: number
-}
-
-interface Invoice {
-  _id: string;
-  invoiceNumber: string;
-  clientId: string;
-  status: string;
-  totalAmount: number;
-  dueDate: string;
+interface DashboardStats {
+  totalClients: number;
+  totalProjects: number;
+  totalInvoices: number;
+  totalRevenue: number;
+  pendingInvoices: number;
+  overdueInvoices: number;
+  paidInvoices: number;
+  monthlyRevenue: number;
+  monthlyGrowth: number;
+  averageInvoiceValue: number;
+  paymentRate: number;
 }
 
 const DashboardPage: React.FC = () => {
-  // Authentication state for user information
-  const { user } = useAuthStore()
-  const navigate = useNavigate()
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
   
-  // Component state management
-  const [stats, setStats] = useState<Stats | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [stats, setStats] = useState<DashboardStats>({
+    totalClients: 0,
+    totalProjects: 0,
+    totalInvoices: 0,
+    totalRevenue: 0,
+    pendingInvoices: 0,
+    overdueInvoices: 0,
+    paidInvoices: 0,
+    monthlyRevenue: 0,
+    monthlyGrowth: 0,
+    averageInvoiceValue: 0,
+    paymentRate: 0
+  });
 
-  /**
-   * Data Fetching Effect
-   * 
-   * Fetches dashboard statistics from multiple API endpoints on component mount.
-   * Uses Promise.all for concurrent requests to improve performance.
-   * Calculates revenue from invoice data and handles loading/error states.
-   */
+  const [recentInvoices, setRecentInvoices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    setLoading(true)
-    setError(null)
-    Promise.all([
-      apiGet('/clients').catch(() => []),
-      apiGet('/invoices').catch(() => []),
-      apiGet('/projects').catch(() => [])
-    ])
-      .then(([clientsRes, invoicesRes, projectsRes]) => {
-        console.log('Dashboard API responses:', { clientsRes, invoicesRes, projectsRes })
-        
-        // Handle different response structures
-        let clients = []
-        if (clientsRes && clientsRes.data && clientsRes.data.clients) {
-          clients = clientsRes.data.clients
-        } else if (clientsRes && Array.isArray(clientsRes.clients)) {
-          clients = clientsRes.clients
-        } else if (clientsRes && Array.isArray(clientsRes)) {
-          clients = clientsRes
-        }
+    fetchDashboardData();
+  }, []);
 
-        let invoices: Invoice[] = []
-        if (invoicesRes && invoicesRes.data && invoicesRes.data.invoices) {
-          invoices = invoicesRes.data.invoices
-        } else if (invoicesRes && Array.isArray(invoicesRes.invoices)) {
-          invoices = invoicesRes.invoices
-        } else if (invoicesRes && Array.isArray(invoicesRes)) {
-          invoices = invoicesRes
-        }
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [clientsRes, projectsRes, invoicesRes] = await Promise.all([
+      apiGet('/clients'),
+        apiGet('/projects'),
+        apiGet('/invoices')
+      ]);
 
-        let projects = []
-        if (projectsRes && projectsRes.data && projectsRes.data.projects) {
-          projects = projectsRes.data.projects
-        } else if (projectsRes && Array.isArray(projectsRes.projects)) {
-          projects = projectsRes.projects
-        } else if (projectsRes && Array.isArray(projectsRes)) {
-          projects = projectsRes
-        }
+      const clients = clientsRes.data;
+      const projects = projectsRes.data;
+      const invoices = invoicesRes.data;
 
-        // Calculate statistics from API responses with correct field names
+      // Calculate stats
+      const totalRevenue = invoices.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
+      const paidInvoices = invoices.filter((inv: any) => inv.status === 'paid');
+      const pendingInvoices = invoices.filter((inv: any) => inv.status === 'pending');
+      const overdueInvoices = invoices.filter((inv: any) => {
+        const dueDate = new Date(inv.dueDate);
+        return inv.status === 'pending' && dueDate < new Date();
+      });
+
+      // Monthly calculations
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const monthlyInvoices = invoices.filter((inv: any) => {
+        const invDate = new Date(inv.createdAt);
+        return invDate.getMonth() === currentMonth && invDate.getFullYear() === currentYear;
+      });
+      const monthlyRevenue = monthlyInvoices.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
+
+      // Previous month for growth calculation
+      const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+      const prevMonthInvoices = invoices.filter((inv: any) => {
+        const invDate = new Date(inv.createdAt);
+        return invDate.getMonth() === prevMonth && invDate.getFullYear() === prevYear;
+      });
+      const prevMonthRevenue = prevMonthInvoices.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
+      const monthlyGrowth = prevMonthRevenue > 0 ? ((monthlyRevenue - prevMonthRevenue) / prevMonthRevenue) * 100 : 0;
+
         setStats({
-          totalClients: clients.length,
-          activeInvoices: invoices.length,
-          projects: projects.length,
-          revenue: invoices.reduce((sum: number, inv: Invoice) => 
-            sum + (inv.totalAmount || 0), 0)
-        })
-      })
-      .catch(err => {
-        console.error('Dashboard data fetch error:', err)
-        if (err.message.includes('Access token') || err.message.includes('Failed to fetch') || err.message.includes('401')) {
-          setError('🔒 Please log in to view dashboard')
-        } else {
-          setError(err.message)
-        }
-      })
-      .finally(() => setLoading(false))
-  }, [])
+        totalClients: clients.length,
+        totalProjects: projects.length,
+        totalInvoices: invoices.length,
+        totalRevenue,
+        pendingInvoices: pendingInvoices.length,
+        overdueInvoices: overdueInvoices.length,
+        paidInvoices: paidInvoices.length,
+        monthlyRevenue,
+        monthlyGrowth,
+        averageInvoiceValue: invoices.length > 0 ? totalRevenue / invoices.length : 0,
+        paymentRate: invoices.length > 0 ? (paidInvoices.length / invoices.length) * 100 : 0
+      });
 
-  /**
-   * Navigation handlers for quick actions
-   */
-  const handleCreateInvoice = () => {
-    navigate('/invoices')
-    // Auto-trigger the "Add Invoice" button after navigation
-    setTimeout(() => {
-      const addButton = document.querySelector('[data-testid="add-invoice-btn"]') as HTMLButtonElement
-      if (addButton) {
-        addButton.click()
+      // Get recent invoices
+      const recent = invoices
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5);
+      setRecentInvoices(recent);
+
+    } catch (error: any) {
+      console.error('Error fetching dashboard data:', error);
+      if (error.message?.includes('Access token') || error.message?.includes('Failed to fetch') || error.message?.includes('401')) {
+        setError('🔒 Please log in to view dashboard');
+      } else {
+        setError(error.message || 'An error occurred');
       }
-    }, 100)
-  }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleAddClient = () => {
-    navigate('/clients')
-    // Auto-trigger the "Add Client" button after navigation
-    setTimeout(() => {
-      const addButton = document.querySelector('[data-testid="add-client-btn"]') as HTMLButtonElement
-      if (addButton) {
-        addButton.click()
-      }
-    }, 100)
-  }
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
-  const handleCreateProject = () => {
-    navigate('/projects')
-    // Auto-trigger the "Add Project" button after navigation
-    setTimeout(() => {
-      const addButton = document.querySelector('[data-testid="add-project-btn"]') as HTMLButtonElement
-      if (addButton) {
-        addButton.click()
-      }
-    }, 100)
-  }
-
-  /**
-   * Statistics Cards Configuration
-   * 
-   * Defines the layout and styling for dashboard stat cards.
-   * Each card includes an icon, color scheme, and dynamic value.
-   * Uses conditional rendering to show loading state or actual data.
-   */
-  const statCards = [
-    {
-      name: 'Total Clients',
-      value: stats ? stats.totalClients : '-',
-      icon: Users,
-      color: 'text-blue-400',
-      bgColor: 'from-blue-500/20 to-blue-600/20',
-      iconBg: 'bg-blue-500/20',
-      onClick: () => navigate('/clients')
-    },
-    {
-      name: 'Active Invoices',
-      value: stats ? stats.activeInvoices : '-',
-      icon: FileText,
-      color: 'text-green-400',
-      bgColor: 'from-green-500/20 to-green-600/20',
-      iconBg: 'bg-green-500/20',
-      onClick: () => navigate('/invoices')
-    },
-    {
-      name: 'Projects',
-      value: stats ? stats.projects : '-',
-      icon: FolderOpen,
-      color: 'text-purple-400',
-      bgColor: 'from-purple-500/20 to-purple-600/20',
-      iconBg: 'bg-purple-500/20',
-      onClick: () => navigate('/projects')
-    },
-    {
-      name: 'Revenue',
-      value: stats ? `$${stats.revenue.toLocaleString()}` : '-',
-      icon: DollarSign,
-      color: 'text-amber-400',
-      bgColor: 'from-amber-500/20 to-amber-600/20',
-      iconBg: 'bg-amber-500/20',
-      onClick: () => navigate('/reports')
-    },
-  ]
-
-  /**
-   * Recent Activities Mock Data
-   * 
-   * Placeholder data for the recent activity feed.
-   * In a real application, this would be fetched from an API
-   * and would include actual user activities and timestamps.
-   */
-  const recentActivities = [
-    { id: 1, type: 'payment', message: 'Invoice #001 was paid', time: '2 hours ago', status: 'success' },
-    { id: 2, type: 'client', message: 'New client added: ACME Corp', time: '4 hours ago', status: 'info' },
-    { id: 3, type: 'project', message: 'Project "Website Redesign" started', time: '6 hours ago', status: 'primary' },
-    { id: 4, type: 'invoice', message: 'Invoice #002 sent to client', time: '1 day ago', status: 'warning' },
-  ]
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="flex items-center space-x-2 text-blue-400">
-          <Clock className="h-6 w-6 animate-spin" />
-          <span>Loading dashboard...</span>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
       </div>
-    )
+    );
   }
 
   if (error && error.includes('🔒')) {
@@ -241,149 +188,261 @@ const DashboardPage: React.FC = () => {
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="space-y-8 p-6">
+    <div className="space-y-8 page-transition">
       {/* Header Section */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-600/10 rounded-3xl blur-3xl"></div>
-        <div className="relative bg-gradient-to-r from-gray-800/60 to-gray-700/60 backdrop-blur-lg rounded-2xl p-8 border border-gray-600/30">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
-            Welcome back, {user?.firstName}!
-          </h1>
-          <p className="text-lg text-gray-300">
-            Here's what's happening with your business today.
-          </p>
-        </div>
+        <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-2xl p-8 border border-gray-600 card-hover">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">Welcome Back! 👋</h1>
+              <p className="text-gray-300 text-lg">Here's what's happening with your business today</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleNavigation('/invoices')}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all shadow-lg hover:shadow-xl btn-hover"
+              >
+                <PlusCircle size={20} />
+                Create Invoice
+              </button>
+            </div>
+          </div>
       </div>
 
-      {/* Error Display */}
-      {error && !error.includes('🔒') && (
-        <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-4">
-          <p className="text-red-400">{error}</p>
-        </div>
-      )}
-
-      {/* Stats Grid */}
+        {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((stat, index) => {
-          const Icon = stat.icon
-          return (
-            <div 
-              key={stat.name} 
-              className={`relative bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-gray-600 cursor-pointer transition-all duration-300 hover:scale-105 animate-float`} 
-              style={{ animationDelay: `${index * 0.1}s` }}
-              onClick={stat.onClick}
-            >
-              <div className={`absolute inset-0 bg-gradient-to-br ${stat.bgColor} rounded-2xl opacity-30`}></div>
-              <div className="relative">
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`p-3 rounded-xl ${stat.iconBg} backdrop-blur-sm`}>
-                    <Icon className={`h-6 w-6 ${stat.color}`} />
-                  </div>
-                  <div className="flex items-center space-x-1 text-green-400">
-                    <TrendingUp className="h-4 w-4" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-400 mb-1">{stat.name}</p>
-                  <p className="text-3xl font-bold text-gray-100">{stat.value}</p>
-                </div>
+          {/* Total Revenue */}
+          <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 border border-gray-600 card-hover stagger-item">
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-green-600 p-3 rounded-xl">
+                <DollarSign className="text-white" size={24} />
               </div>
-            </div>
-          )
-        })}
-      </div>
+              <div className="text-right">
+                <p className="text-green-400 text-sm font-medium">Total Revenue</p>
+                <p className="text-2xl font-bold text-white">{formatCurrency(stats.totalRevenue)}</p>
+              </div>
+                  </div>
+            <div className="flex items-center gap-2">
+              {stats.monthlyGrowth >= 0 ? (
+                <TrendingUp className="text-green-400" size={16} />
+              ) : (
+                <TrendingDown className="text-red-400" size={16} />
+              )}
+              <span className={`text-sm font-medium ${stats.monthlyGrowth >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {Math.abs(stats.monthlyGrowth).toFixed(1)}% from last month
+              </span>
+                  </div>
+                </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Quick Actions */}
-        <div className="lg:col-span-1">
-          <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-100">Quick Actions</h3>
-              <div className="w-8 h-8 bg-blue-600/20 rounded-lg flex items-center justify-center">
-                <Plus className="h-4 w-4 text-blue-400" />
+          {/* Total Invoices */}
+          <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 border border-gray-600 card-hover stagger-item">
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-blue-600 p-3 rounded-xl">
+                <FileText className="text-white" size={24} />
+                </div>
+              <div className="text-right">
+                <p className="text-blue-400 text-sm font-medium">Total Invoices</p>
+                <p className="text-2xl font-bold text-white">{stats.totalInvoices}</p>
               </div>
             </div>
-            <div className="space-y-4">
-              <button 
-                className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors group"
-                onClick={handleCreateInvoice}
+            <div className="flex items-center gap-2">
+              <CheckCircle className="text-green-400" size={16} />
+              <span className="text-sm text-gray-300">
+                {stats.paidInvoices} paid, {stats.pendingInvoices} pending
+              </span>
+      </div>
+          </div>
+
+          {/* Active Clients */}
+          <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 border border-gray-600 card-hover stagger-item">
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-purple-600 p-3 rounded-xl">
+                <Users className="text-white" size={24} />
+              </div>
+              <div className="text-right">
+                <p className="text-purple-400 text-sm font-medium">Active Clients</p>
+                <p className="text-2xl font-bold text-white">{stats.totalClients}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Target className="text-purple-400" size={16} />
+              <span className="text-sm text-gray-300">
+                {stats.totalProjects} total projects
+              </span>
+        </div>
+          </div>
+
+          {/* Payment Rate */}
+          <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 border border-gray-600 card-hover stagger-item">
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-orange-600 p-3 rounded-xl">
+                <BarChart3 className="text-white" size={24} />
+              </div>
+              <div className="text-right">
+                <p className="text-orange-400 text-sm font-medium">Payment Rate</p>
+                <p className="text-2xl font-bold text-white">{stats.paymentRate.toFixed(1)}%</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Zap className="text-orange-400" size={16} />
+              <span className="text-sm text-gray-300">
+                Avg: {formatCurrency(stats.averageInvoiceValue)}
+              </span>
+        </div>
+          </div>
+        </div>
+
+        {/* Business Insights */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Invoice Status Overview */}
+          <div className="lg:col-span-2 bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-600">
+              <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">Invoice Status Overview</h3>
+              <button
+                onClick={() => handleNavigation('/invoices')}
+                className="text-blue-400 hover:text-blue-300 font-medium text-sm flex items-center gap-1"
               >
-                <FileText className="h-4 w-4 group-hover:rotate-12 transition-transform" />
-                <span>Create New Invoice</span>
+                View All <ArrowRight size={16} />
               </button>
-              <button 
-                className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gray-700 text-gray-100 border border-gray-600 rounded-lg hover:bg-gray-600 transition-colors group"
-                onClick={handleAddClient}
-              >
-                <Users className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                <span>Add New Client</span>
-              </button>
-              <button 
-                className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gray-700 text-gray-100 border border-gray-600 rounded-lg hover:bg-gray-600 transition-colors group"
-                onClick={handleCreateProject}
-              >
-                <FolderOpen className="h-4 w-4 group-hover:rotate-12 transition-transform" />
-                <span>Start New Project</span>
-              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-gray-700 rounded-xl p-4 border border-gray-600">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="text-green-400" size={20} />
+                  <div>
+                    <p className="text-green-400 text-sm font-medium">Paid</p>
+                    <p className="text-lg font-bold text-white">{stats.paidInvoices}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-700 rounded-xl p-4 border border-gray-600">
+                <div className="flex items-center gap-3">
+                  <Clock className="text-yellow-400" size={20} />
+                  <div>
+                    <p className="text-yellow-400 text-sm font-medium">Pending</p>
+                    <p className="text-lg font-bold text-white">{stats.pendingInvoices}</p>
             </div>
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="lg:col-span-2">
-          <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-100">Recent Activity</h3>
-              <div className="w-8 h-8 bg-green-600/20 rounded-lg flex items-center justify-center">
-                <CheckCircle className="h-4 w-4 text-green-400" />
+              <div className="bg-gray-700 rounded-xl p-4 border border-gray-600">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="text-red-400" size={20} />
+                  <div>
+                    <p className="text-red-400 text-sm font-medium">Overdue</p>
+                    <p className="text-lg font-bold text-white">{stats.overdueInvoices}</p>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => {
-                const statusColors = {
-                  success: 'bg-green-500',
-                  info: 'bg-blue-500',
-                  primary: 'bg-purple-500',
-                  warning: 'bg-amber-500'
-                }
-                
-                const statusIcons = {
-                  success: CheckCircle,
-                  info: Users,
-                  primary: FolderOpen,
-                  warning: AlertCircle
-                }
-                
-                const StatusIcon = statusIcons[activity.status as keyof typeof statusIcons]
-                
-                return (
-                  <div key={activity.id} className="flex items-start space-x-4 p-4 rounded-xl bg-gray-700/50 hover:bg-gray-700 transition-all duration-300 group">
-                    <div className={`p-2 rounded-lg ${statusColors[activity.status as keyof typeof statusColors]}/20 group-hover:scale-110 transition-transform`}>
-                      <StatusIcon className={`h-4 w-4 ${statusColors[activity.status as keyof typeof statusColors].replace('bg-', 'text-')}`} />
+
+            {/* Recent Invoices */}
+            <div>
+              <h4 className="text-lg font-semibold text-white mb-4">Recent Invoices</h4>
+              <div className="space-y-3">
+                {recentInvoices.length > 0 ? (
+                  recentInvoices.map((invoice) => (
+                    <div key={invoice._id} className="flex items-center justify-between p-4 bg-gray-700 rounded-xl hover:bg-gray-600 transition-colors border border-gray-600">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-3 h-3 rounded-full ${
+                          invoice.status === 'paid' ? 'bg-green-400' :
+                          invoice.status === 'pending' ? 'bg-yellow-400' : 'bg-red-400'
+                        }`}></div>
+                        <div>
+                          <p className="font-medium text-white">#{invoice.invoiceNumber}</p>
+                          <p className="text-sm text-gray-400">{invoice.client?.companyName}</p>
+                      </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-white">{formatCurrency(invoice.totalAmount)}</p>
+                        <p className="text-sm text-gray-400 capitalize">{invoice.status}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-100 group-hover:text-white">
-                        {activity.message}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      <TrendingUp className="h-4 w-4 text-gray-400" />
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <FileText className="mx-auto h-12 w-12 text-gray-500 mb-4" />
+                    <p className="text-gray-400">No invoices yet</p>
                   </div>
-                )
-              })}
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-600">
+            <h3 className="text-xl font-bold text-white mb-6">Quick Actions</h3>
+            <div className="space-y-4">
+              <button
+                onClick={() => handleNavigation('/invoices')}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-xl font-semibold flex items-center justify-between transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <FileText size={20} />
+                  <span>Create Invoice</span>
+                </div>
+                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              <button
+                onClick={() => handleNavigation('/clients')}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-xl font-semibold flex items-center justify-between transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <Users size={20} />
+                  <span>Add Client</span>
+                </div>
+                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              <button
+                onClick={() => handleNavigation('/projects')}
+                className="w-full bg-green-600 hover:bg-green-700 text-white p-4 rounded-xl font-semibold flex items-center justify-between transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <Briefcase size={20} />
+                  <span>New Project</span>
+                </div>
+                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              <button
+                onClick={() => handleNavigation('/reports')}
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white p-4 rounded-xl font-semibold flex items-center justify-between transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <BarChart3 size={20} />
+                  <span>View Reports</span>
+                </div>
+                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+
+            {/* Monthly Summary */}
+            <div className="mt-8 p-4 bg-gradient-to-r from-gray-700 to-gray-600 rounded-xl border border-gray-600">
+              <h4 className="font-semibold text-white mb-3">This Month</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-300">Revenue</span>
+                  <span className="font-semibold text-white">{formatCurrency(stats.monthlyRevenue)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-300">Growth</span>
+                  <span className={`font-semibold ${stats.monthlyGrowth >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {stats.monthlyGrowth >= 0 ? '+' : ''}{stats.monthlyGrowth.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  )
-}
+  );
+};
 
-export default DashboardPage 
+export default DashboardPage; 

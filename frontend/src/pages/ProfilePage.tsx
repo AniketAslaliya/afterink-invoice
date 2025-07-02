@@ -206,34 +206,34 @@ const ProfilePage: React.FC = () => {
                 Personal Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+        <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     First Name
                   </label>
-                  <input
+          <input
                     type="text"
-                    name="firstName"
-                    value={profile.firstName || ''}
-                    onChange={handleChange}
+            name="firstName"
+            value={profile.firstName || ''}
+            onChange={handleChange}
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter first name"
                     required
-                  />
-                </div>
-                <div>
+          />
+        </div>
+        <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Last Name
                   </label>
-                  <input
+          <input
                     type="text"
-                    name="lastName"
-                    value={profile.lastName || ''}
-                    onChange={handleChange}
+            name="lastName"
+            value={profile.lastName || ''}
+            onChange={handleChange}
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter last name"
                     required
-                  />
-                </div>
+          />
+        </div>
               </div>
             </div>
 
@@ -244,15 +244,15 @@ const ProfilePage: React.FC = () => {
                 Contact Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+        <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Email Address
                   </label>
-                  <input
+          <input
                     type="email"
-                    name="email"
-                    value={profile.email || ''}
-                    onChange={handleChange}
+            name="email"
+            value={profile.email || ''}
+            onChange={handleChange}
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter email address"
                     required
@@ -394,8 +394,8 @@ const ProfilePage: React.FC = () => {
                     value={new Date(profile.createdAt).toLocaleDateString()}
                     className="w-full px-4 py-3 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 cursor-not-allowed"
                     disabled
-                  />
-                </div>
+          />
+        </div>
               </div>
             </div>
 
@@ -417,9 +417,9 @@ const ProfilePage: React.FC = () => {
                     <span>Save Changes</span>
                   </>
                 )}
-              </button>
+        </button>
             </div>
-          </form>
+      </form>
         </div>
       </div>
     </div>

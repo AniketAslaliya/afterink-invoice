@@ -1,26 +1,25 @@
 import React from 'react';
+import { Check, Star, Crown, Zap, Leaf, Anchor } from 'lucide-react';
 
 export interface InvoiceTemplate {
   id: string;
   name: string;
   description: string;
   preview: string;
+  isPremium?: boolean;
+  isNew?: boolean;
   colors: {
     primary: string;
     secondary: string;
+    accent: string;
     text: string;
     background: string;
-    accent: string;
   };
   fonts: {
     heading: string;
     body: string;
   };
-  layout: {
-    headerStyle: 'minimal' | 'bold' | 'creative';
-    tableStyle: 'clean' | 'bordered' | 'modern';
-    footerStyle: 'simple' | 'detailed' | 'branded';
-  };
+  features: string[];
 }
 
 export interface InvoiceCustomization {
@@ -93,112 +92,115 @@ export const defaultTemplates: InvoiceTemplate[] = [
   {
     id: 'indian-professional',
     name: 'Indian Professional',
-    description: 'Modern design optimized for Indian businesses with elegant styling',
-    preview: '🇮🇳 Professional Indian business template with modern aesthetics',
+    description: 'Perfect for Indian businesses with INR focus',
+    preview: '/templates/indian-professional.png',
+    isNew: false,
     colors: {
-      primary: '#ff6b35',
-      secondary: '#004e89',
-      text: '#2c3e50',
-      background: '#ffffff',
-      accent: '#fff3e0'
+      primary: '#FF6B35',
+      secondary: '#1A365D',
+      accent: '#F7931E',
+      text: '#2D3748',
+      background: '#FFFFFF'
     },
     fonts: {
-      heading: 'Poppins, sans-serif',
-      body: 'Inter, sans-serif'
+      heading: 'Poppins',
+      body: 'Inter'
     },
-    layout: {
-      headerStyle: 'bold',
-      tableStyle: 'modern',
-      footerStyle: 'detailed'
-    }
+    features: ['GST Compliant', 'INR Optimized', 'Professional Layout']
   },
   {
     id: 'elegant-blue',
     name: 'Elegant Blue',
-    description: 'Sophisticated blue theme with clean typography',
-    preview: '💙 Clean and professional with sophisticated blue accents',
+    description: 'Sophisticated design with blue theme',
+    preview: '/templates/elegant-blue.png',
     colors: {
-      primary: '#1565c0',
-      secondary: '#42a5f5',
-      text: '#263238',
-      background: '#ffffff',
-      accent: '#e3f2fd'
+      primary: '#2563EB',
+      secondary: '#1E40AF',
+      accent: '#60A5FA',
+      text: '#1F2937',
+      background: '#FFFFFF'
     },
     fonts: {
-      heading: 'Merriweather, serif',
-      body: 'Open Sans, sans-serif'
+      heading: 'Merriweather',
+      body: 'Inter'
     },
-    layout: {
-      headerStyle: 'minimal',
-      tableStyle: 'clean',
-      footerStyle: 'simple'
-    }
+    features: ['Corporate Style', 'Modern Typography', 'Clean Layout']
   },
   {
     id: 'creative-gradient',
     name: 'Creative Gradient',
-    description: 'Modern gradient design with creative elements',
-    preview: '🌈 Eye-catching gradients with modern, creative styling',
+    description: 'Modern design with gradient elements',
+    preview: '/templates/creative-gradient.png',
+    isPremium: true,
     colors: {
-      primary: '#6366f1',
-      secondary: '#8b5cf6',
-      text: '#1f2937',
-      background: '#ffffff',
-      accent: '#f0f9ff'
+      primary: '#7C3AED',
+      secondary: '#5B21B6',
+      accent: '#A855F7',
+      text: '#374151',
+      background: '#FFFFFF'
     },
     fonts: {
-      heading: 'Roboto, sans-serif',
-      body: 'Lato, sans-serif'
+      heading: 'Roboto',
+      body: 'Open Sans'
     },
-    layout: {
-      headerStyle: 'creative',
-      tableStyle: 'modern',
-      footerStyle: 'branded'
-    }
+    features: ['Gradient Design', 'Creative Layout', 'Modern Appeal']
   },
   {
     id: 'minimalist-green',
     name: 'Minimalist Green',
-    description: 'Fresh green theme with minimalist approach',
-    preview: '🌿 Fresh and clean with natural green accents',
+    description: 'Fresh and clean with green accents',
+    preview: '/templates/minimalist-green.png',
+    isNew: true,
     colors: {
       primary: '#059669',
-      secondary: '#10b981',
-      text: '#374151',
-      background: '#ffffff',
-      accent: '#f0fdf4'
+      secondary: '#047857',
+      accent: '#10B981',
+      text: '#111827',
+      background: '#FFFFFF'
     },
     fonts: {
-      heading: 'Source Sans Pro, sans-serif',
-      body: 'Source Sans Pro, sans-serif'
+      heading: 'Source Sans Pro',
+      body: 'Inter'
     },
-    layout: {
-      headerStyle: 'minimal',
-      tableStyle: 'clean',
-      footerStyle: 'simple'
-    }
+    features: ['Eco-Friendly', 'Minimalist', 'Clean Design']
   },
   {
     id: 'corporate-navy',
     name: 'Corporate Navy',
-    description: 'Professional navy blue template for corporate use',
-    preview: '🏢 Traditional corporate style with navy blue branding',
+    description: 'Traditional business style',
+    preview: '/templates/corporate-navy.png',
     colors: {
-      primary: '#1e3a8a',
-      secondary: '#3b82f6',
-      text: '#1f2937',
-      background: '#ffffff',
-      accent: '#eff6ff'
+      primary: '#1E3A8A',
+      secondary: '#1E40AF',
+      accent: '#3B82F6',
+      text: '#1F2937',
+      background: '#FFFFFF'
     },
     fonts: {
-      heading: 'Playfair Display, serif',
-      body: 'Inter, sans-serif'
+      heading: 'Playfair Display',
+      body: 'Inter'
     },
-    layout: {
-      headerStyle: 'bold',
-      tableStyle: 'bordered',
-      footerStyle: 'detailed'
-    }
+    features: ['Traditional', 'Professional', 'Corporate']
+  },
+  {
+    id: 'modern-tech',
+    name: 'Modern Tech',
+    description: 'Perfect for tech companies and startups',
+    preview: '/templates/modern-tech.png',
+    isPremium: true,
+    isNew: true,
+    colors: {
+      primary: '#6366F1',
+      secondary: '#4F46E5',
+      accent: '#8B5CF6',
+      text: '#111827',
+      background: '#FFFFFF'
+    },
+    fonts: {
+      heading: 'Inter',
+      body: 'Inter'
+    },
+    features: ['Tech Focused', 'Modern', 'Startup Ready']
   }
 ];
 
@@ -477,4 +479,205 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   );
 };
 
-export default InvoicePreview; 
+interface InvoiceTemplatesProps {
+  selectedTemplate: string;
+  onTemplateSelect: (template: InvoiceTemplate) => void;
+  onClose: () => void;
+}
+
+const InvoiceTemplates: React.FC<InvoiceTemplatesProps> = ({
+  selectedTemplate,
+  onTemplateSelect,
+  onClose
+}) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-7xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+        {/* Header */}
+        <div className="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Choose Your Perfect Template</h2>
+              <p className="text-gray-600 mt-2">Select a professional invoice template that matches your brand</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 text-2xl font-semibold"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        {/* Templates Grid */}
+        <div className="p-8 overflow-y-auto max-h-[calc(90vh-120px)]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {defaultTemplates.map((template) => (
+              <div
+                key={template.id}
+                className={`relative group cursor-pointer transition-all duration-300 transform hover:scale-105 ${
+                  selectedTemplate === template.id
+                    ? 'ring-4 ring-blue-500 shadow-2xl'
+                    : 'hover:shadow-xl'
+                }`}
+                onClick={() => onTemplateSelect(template)}
+              >
+                {/* Template Card */}
+                <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
+                  {/* Preview Image */}
+                  <div className="relative h-64 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                    {/* Mock Invoice Preview */}
+                    <div 
+                      className="w-full h-full p-4 bg-white m-2 rounded-lg shadow-sm"
+                      style={{ 
+                        background: `linear-gradient(135deg, ${template.colors.background} 0%, ${template.colors.primary}10 100%)` 
+                      }}
+                    >
+                      {/* Header */}
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <div 
+                            className="w-12 h-8 rounded-md mb-2"
+                            style={{ backgroundColor: template.colors.primary }}
+                          ></div>
+                          <div className="space-y-1">
+                            <div className="w-20 h-2 bg-gray-300 rounded"></div>
+                            <div className="w-16 h-2 bg-gray-200 rounded"></div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div 
+                            className="text-lg font-bold mb-1"
+                            style={{ 
+                              color: template.colors.primary,
+                              fontFamily: template.fonts.heading
+                            }}
+                          >
+                            INVOICE
+                          </div>
+                          <div className="w-16 h-2 bg-gray-300 rounded ml-auto"></div>
+                        </div>
+                      </div>
+
+                      {/* Content Lines */}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between">
+                          <div className="w-24 h-2 bg-gray-300 rounded"></div>
+                          <div className="w-12 h-2 bg-gray-200 rounded"></div>
+                        </div>
+                        <div className="flex justify-between">
+                          <div className="w-20 h-2 bg-gray-300 rounded"></div>
+                          <div className="w-16 h-2 bg-gray-200 rounded"></div>
+                        </div>
+                        <div className="flex justify-between">
+                          <div className="w-28 h-2 bg-gray-300 rounded"></div>
+                          <div className="w-14 h-2 bg-gray-200 rounded"></div>
+                        </div>
+                      </div>
+
+                      {/* Total */}
+                      <div 
+                        className="w-full h-6 rounded mt-4"
+                        style={{ backgroundColor: `${template.colors.primary}20` }}
+                      ></div>
+                    </div>
+
+                    {/* Badges */}
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      {template.isPremium && (
+                        <span className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                          <Crown size={12} />
+                          Premium
+                        </span>
+                      )}
+                      {template.isNew && (
+                        <span className="bg-gradient-to-r from-green-400 to-emerald-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                          <Zap size={12} />
+                          New
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Selection Indicator */}
+                    {selectedTemplate === template.id && (
+                      <div className="absolute top-3 right-3 bg-blue-500 text-white rounded-full p-2">
+                        <Check size={16} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Template Info */}
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xl font-bold text-gray-900" style={{ fontFamily: template.fonts.heading }}>
+                        {template.name}
+                      </h3>
+                      {selectedTemplate === template.id && (
+                        <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                          Selected
+                        </span>
+                      )}
+                    </div>
+                    
+                    <p className="text-gray-600 mb-4 text-sm leading-relaxed">
+                      {template.description}
+                    </p>
+
+                    {/* Color Palette */}
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-xs font-medium text-gray-500 mr-2">Colors:</span>
+                      <div className="flex gap-1">
+                        <div 
+                          className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                          style={{ backgroundColor: template.colors.primary }}
+                        ></div>
+                        <div 
+                          className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                          style={{ backgroundColor: template.colors.secondary }}
+                        ></div>
+                        <div 
+                          className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                          style={{ backgroundColor: template.colors.accent }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Features */}
+                    <div className="flex flex-wrap gap-2">
+                      {template.features.map((feature, index) => (
+                        <span 
+                          key={index}
+                          className="bg-gray-100 text-gray-700 px-2 py-1 rounded-md text-xs font-medium"
+                        >
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-center gap-4 mt-12 pt-8 border-t border-gray-200">
+            <button
+              onClick={onClose}
+              className="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onClose}
+              className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
+            >
+              Use Selected Template
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default InvoiceTemplates; 
