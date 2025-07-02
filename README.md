@@ -1,38 +1,47 @@
 # Afterink Invoice & Client Management Platform
 
-A comprehensive web application for creative agencies to handle invoice generation, client management, project tracking, and business operations.
+A comprehensive web application for creative agencies and freelancers to handle invoice generation, client management, project tracking, and business operations with real-time analytics and reporting.
 
 ## 🚀 Features
 
+### ✨ Recently Completed Features
+- **Real-time Dashboard** - Live statistics with client, invoice, project, and revenue data
+- **Complete Client Management** - Add, edit, and manage client information with contact details
+- **Advanced Invoice System** - Create, track, and manage invoices with multiple status options
+- **Project Management** - Comprehensive project tracking with client assignment and budget management
+- **Business Analytics** - Detailed reports with revenue tracking, client statistics, and performance metrics
+- **User Profile Management** - Complete user profile system with settings and preferences
+- **Responsive Design** - Fully responsive interface optimized for all device sizes
+
 ### Core Modules
-- **Authentication & User Management** - Role-based access with JWT tokens
-- **Dashboard & Analytics** - Revenue tracking and business insights  
-- **Client Management System** - Complete client database with communication logs
-- **Invoice Management** - Professional invoices with PDF generation and email integration
-- **Project Management** - Task tracking, file management, and time tracking
-- **Financial Management** - Expense tracking, payment records, and reporting
-- **Reports & Analytics** - Comprehensive business analytics and export options
+- **Authentication & User Management** - JWT-based authentication with role-based access control
+- **Dashboard & Analytics** - Real-time business insights with interactive charts and statistics
+- **Client Management System** - Complete client database with contact information and history
+- **Invoice Management** - Professional invoice creation, tracking, and payment management
+- **Project Management** - Task tracking, client assignment, and budget management
+- **Financial Management** - Revenue tracking, expense management, and financial reporting
+- **Reports & Analytics** - Comprehensive business analytics with export capabilities
+- **Settings & Configuration** - User preferences, business settings, and notification management
 
 ### Tech Stack
 
 **Frontend:**
 - React 18 with TypeScript
-- Vite for build tooling
-- Tailwind CSS for styling
-- React Router for navigation
-- React Query for state management
-- React Hook Form with Zod validation
-- Framer Motion for animations
-- Recharts for data visualization
+- Vite for build tooling and development
+- Tailwind CSS for responsive styling
+- React Router for client-side routing
+- Zustand for state management
+- Lucide React for icons
+- Custom API utility for backend communication
 
 **Backend:**
-- Node.js with Express.js
-- TypeScript throughout
+- Node.js with Express.js framework
+- TypeScript for type safety
 - MongoDB with Mongoose ODM
 - JWT authentication with refresh tokens
-- Express Validator for input validation
-- Multer for file uploads
-- Nodemailer for email services
+- Express middleware for security and validation
+- Rate limiting and CORS protection
+- Comprehensive error handling
 
 ## 📋 Prerequisites
 
@@ -41,6 +50,7 @@ Before running this application, make sure you have:
 - Node.js (version 18 or higher)
 - MongoDB (local installation or MongoDB Atlas)
 - npm or yarn package manager
+- Git for version control
 
 ## 🛠️ Installation & Setup
 
@@ -86,18 +96,12 @@ JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-this-in-production
 JWT_EXPIRE_TIME=1h
 JWT_REFRESH_EXPIRE_TIME=7d
 
-# Email Configuration
-EMAIL_SERVICE=gmail
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
-EMAIL_FROM=noreply@afterink.com
+# CORS Configuration
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
 
-# File Upload Configuration
-UPLOAD_PATH=uploads
-MAX_FILE_SIZE=10485760
-ALLOWED_FILE_TYPES=jpg,jpeg,png,pdf,doc,docx
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
 
 # Company Information
 COMPANY_NAME=Afterink Studio
@@ -105,14 +109,12 @@ COMPANY_ADDRESS=Your Company Address
 COMPANY_PHONE=+1234567890
 COMPANY_EMAIL=info@afterink.com
 COMPANY_WEBSITE=https://afterink.com
+```
 
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=100
-
-# CORS Configuration
-FRONTEND_URL=http://localhost:3000
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
+#### Frontend Environment (.env in frontend folder)
+```env
+# API Configuration
+VITE_API_URL=http://localhost:5000/api
 ```
 
 ### 4. Database Setup
@@ -148,21 +150,16 @@ cd frontend
 npm run dev
 ```
 
+The application will be available at:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5000
+- API Documentation: http://localhost:5000/api
+- Health Check: http://localhost:5000/health
+
 ### Production Build
 
 #### Build Both Applications
 ```bash
-npm run build
-```
-
-#### Build Individually
-```bash
-# Backend
-cd backend
-npm run build
-
-# Frontend
-cd frontend
 npm run build
 ```
 
@@ -178,164 +175,170 @@ afterink-invoice/
 ├── backend/                    # Express.js backend
 │   ├── src/
 │   │   ├── config/            # Database and app configuration
+│   │   │   └── database.ts    # MongoDB connection setup
 │   │   ├── controllers/       # Route controllers
+│   │   │   └── auth.ts        # Authentication controller
 │   │   ├── middleware/        # Custom middleware
+│   │   │   ├── auth.ts        # JWT authentication middleware
+│   │   │   ├── errorHandler.ts # Global error handling
+│   │   │   └── notFound.ts    # 404 handler
 │   │   ├── models/           # Mongoose models
+│   │   │   ├── User.ts       # User model
+│   │   │   ├── Client.ts     # Client model
+│   │   │   ├── Invoice.ts    # Invoice model
+│   │   │   └── Project.ts    # Project model
 │   │   ├── routes/           # API routes
-│   │   ├── services/         # Business logic services
+│   │   │   ├── auth.ts       # Authentication routes
+│   │   │   ├── users.ts      # User management routes
+│   │   │   ├── clients.ts    # Client management routes
+│   │   │   ├── invoices.ts   # Invoice management routes
+│   │   │   └── projects.ts   # Project management routes
 │   │   ├── types/            # TypeScript type definitions
 │   │   ├── utils/            # Utility functions
+│   │   │   └── jwt.ts        # JWT utilities
 │   │   └── server.ts         # Entry point
 │   ├── package.json
 │   └── tsconfig.json
 ├── frontend/                   # React frontend
 │   ├── src/
 │   │   ├── components/       # Reusable UI components
+│   │   │   ├── auth/         # Authentication components
+│   │   │   └── layouts/      # Layout components
 │   │   ├── pages/           # Page components
-│   │   ├── hooks/           # Custom React hooks
-│   │   ├── services/        # API services
+│   │   │   ├── auth/        # Authentication pages
+│   │   │   ├── ClientsPage.tsx
+│   │   │   ├── DashboardPage.tsx
+│   │   │   ├── InvoicesPage.tsx
+│   │   │   ├── ProjectsPage.tsx
+│   │   │   ├── ReportsPage.tsx
+│   │   │   ├── SettingsPage.tsx
+│   │   │   └── ProfilePage.tsx
 │   │   ├── store/           # State management
-│   │   ├── types/           # TypeScript interfaces
-│   │   ├── utils/           # Helper functions
+│   │   │   └── authStore.ts # Authentication store
+│   │   ├── api.ts           # API utility functions
+│   │   ├── App.tsx          # Main application component
 │   │   └── main.tsx         # Entry point
 │   ├── package.json
-│   ├── vite.config.ts
-│   └── tailwind.config.js
-└── package.json               # Root package.json
+│   ├── tailwind.config.js
+│   └── vite.config.ts
+├── package.json               # Root package.json
+└── README.md                 # This file
 ```
 
-## 🔑 API Endpoints
+## 🔌 API Endpoints
 
 ### Authentication
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
-- `POST /api/auth/refresh` - Refresh access token
 - `POST /api/auth/logout` - User logout
+- `POST /api/auth/refresh` - Refresh JWT token
 - `POST /api/auth/forgot-password` - Password reset request
-- `POST /api/auth/reset-password` - Password reset confirmation
+- `POST /api/auth/reset-password` - Reset password
 
 ### Users
 - `GET /api/users/profile` - Get user profile
 - `PUT /api/users/profile` - Update user profile
-- `POST /api/users/upload-avatar` - Upload profile picture
-- `GET /api/users` - Get all users (admin only)
+- `POST /api/users/settings` - Update user settings
+- `POST /api/users/change-password` - Change password
 
 ### Clients
 - `GET /api/clients` - Get all clients
 - `POST /api/clients` - Create new client
-- `GET /api/clients/:id` - Get specific client
+- `GET /api/clients/:id` - Get client by ID
 - `PUT /api/clients/:id` - Update client
 - `DELETE /api/clients/:id` - Delete client
 
 ### Invoices
 - `GET /api/invoices` - Get all invoices
 - `POST /api/invoices` - Create new invoice
-- `GET /api/invoices/:id` - Get specific invoice
+- `GET /api/invoices/:id` - Get invoice by ID
 - `PUT /api/invoices/:id` - Update invoice
-- `POST /api/invoices/:id/send` - Send invoice via email
-- `GET /api/invoices/:id/pdf` - Generate invoice PDF
+- `DELETE /api/invoices/:id` - Delete invoice
 
 ### Projects
 - `GET /api/projects` - Get all projects
 - `POST /api/projects` - Create new project
-- `GET /api/projects/:id` - Get specific project
+- `GET /api/projects/:id` - Get project by ID
 - `PUT /api/projects/:id` - Update project
-- `POST /api/projects/:id/tasks` - Add task to project
-- `POST /api/projects/:id/files` - Upload project files
-
-## 🔒 Security Features
-
-- JWT authentication with refresh tokens
-- Password hashing with bcrypt
-- Input validation and sanitization
-- CORS protection
-- Rate limiting
-- Helmet.js security headers
-- File upload security
-
-## 🎨 UI/UX Features
-
-- Modern, responsive design
-- Dark/light mode support (planned)
-- Professional invoice templates
-- Interactive charts and analytics
-- Drag-and-drop file uploads
-- Real-time notifications
-- Progressive Web App capabilities (planned)
+- `DELETE /api/projects/:id` - Delete project
 
 ## 🧪 Testing
 
+### Backend Testing
 ```bash
-# Backend tests
 cd backend
 npm test
+```
 
-# Frontend tests
+### Frontend Testing
+```bash
 cd frontend
+npm test
+```
+
+### Run All Tests
+```bash
 npm test
 ```
 
 ## 📦 Deployment
 
-### Using Docker (Recommended)
-
-1. Create Dockerfile for backend and frontend
-2. Use docker-compose for multi-container setup
-3. Deploy to your preferred cloud provider
+### Using Docker
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
+```
 
 ### Manual Deployment
 
-1. Build the applications
-2. Set up production MongoDB
-3. Configure environment variables
-4. Deploy backend to Node.js hosting
-5. Deploy frontend to static hosting (Vercel, Netlify)
+1. **Build the applications:**
+```bash
+npm run build
+```
+
+2. **Set production environment variables**
+
+3. **Start the production server:**
+```bash
+npm start
+```
+
+### Environment Variables for Production
+
+Ensure all environment variables are properly set for production:
+- Use strong JWT secrets
+- Configure proper CORS origins
+- Set up production database connection
+- Configure email services if needed
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📄 License
+## 📝 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📞 Support
+## 🆘 Support
 
-For support and questions:
-- Email: support@afterink.com
-- Documentation: [docs.afterink.com](https://docs.afterink.com)
-- Issues: [GitHub Issues](https://github.com/afterink/invoice-platform/issues)
+If you encounter any issues or have questions:
 
-## 🗺️ Roadmap
+1. Check the [Issues](https://github.com/your-repo/afterink-invoice/issues) page
+2. Create a new issue if your problem isn't already reported
+3. Provide detailed information about your environment and the issue
 
-### Phase 1 (Current) - Foundation
-- [x] Project setup and configuration
-- [x] Authentication system
-- [x] Basic CRUD operations
-- [ ] Core UI components
+## 🙏 Acknowledgments
 
-### Phase 2 - Core Features
-- [ ] Invoice generation and PDF export
-- [ ] Client management
-- [ ] Project tracking
-- [ ] Email integration
-
-### Phase 3 - Advanced Features
-- [ ] Advanced reporting
-- [ ] Payment integration
-- [ ] Mobile responsiveness
-- [ ] Performance optimization
-
-### Phase 4 - Enterprise Features
-- [ ] Multi-tenancy
-- [ ] Advanced permissions
-- [ ] API rate limiting
-- [ ] Audit logging
+- React team for the amazing framework
+- Express.js community for the robust backend framework
+- MongoDB team for the flexible database
+- Tailwind CSS for the utility-first CSS framework
+- All contributors who helped improve this project
 
 ---
 
-Built with ❤️ by the Afterink Studio team 
+**Built with ❤️ by the Afterink Team** 
