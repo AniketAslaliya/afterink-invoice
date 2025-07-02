@@ -5,11 +5,12 @@ import Client from '../models/Client';
 import Invoice from '../models/Invoice';
 import Project from '../models/Project';
 import { IApiResponse } from '../types';
+import { Request, Response } from 'express';
 
 const router = express.Router();
 
 // Get all clients with pagination and filtering
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -44,7 +45,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // Get specific client
-router.get('/:id', authenticate, authorizeOwnerOrAdmin(), async (req, res) => {
+router.get('/:id', authenticate, authorizeOwnerOrAdmin(), async (req: Request, res: Response) => {
   try {
     const client = await Client.findById(req.params.id);
     if (!client) {
@@ -83,8 +84,15 @@ router.post('/',
     body('address.zipCode').trim().notEmpty(),
     body('paymentTerms').isInt({ min: 1, max: 365 }),
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: { message: 'Authentication required' },
+          timestamp: new Date().toISOString(),
+        } as IApiResponse);
+      }
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
@@ -93,7 +101,7 @@ router.post('/',
           timestamp: new Date().toISOString(),
         } as IApiResponse);
       }
-      const client = new Client({ ...req.body, createdBy: req.user._id });
+      const client = new Client({ ...req.body, createdBy: req.user!._id });
       await client.save();
       res.status(201).json({
         success: true,
@@ -121,7 +129,7 @@ router.put('/:id',
     body('contactPerson.email').optional().isEmail().normalizeEmail(),
     body('paymentTerms').optional().isInt({ min: 1, max: 365 }),
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -155,7 +163,7 @@ router.put('/:id',
 );
 
 // Delete client (soft delete)
-router.delete('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
   try {
     const client = await Client.findByIdAndUpdate(req.params.id, { status: 'inactive' }, { new: true });
     if (!client) {
@@ -180,7 +188,7 @@ router.delete('/:id', authenticate, authorize('admin', 'manager'), async (req, r
 });
 
 // Get client's invoices
-router.get('/:id/invoices', authenticate, authorizeOwnerOrAdmin(), async (req, res) => {
+router.get('/:id/invoices', authenticate, authorizeOwnerOrAdmin(), async (req: Request, res: Response) => {
   try {
     const invoices = await Invoice.find({ clientId: req.params.id });
     res.json({
@@ -198,7 +206,7 @@ router.get('/:id/invoices', authenticate, authorizeOwnerOrAdmin(), async (req, r
 });
 
 // Get client's projects
-router.get('/:id/projects', authenticate, authorizeOwnerOrAdmin(), async (req, res) => {
+router.get('/:id/projects', authenticate, authorizeOwnerOrAdmin(), async (req: Request, res: Response) => {
   try {
     const projects = await Project.find({ clientId: req.params.id });
     res.json({

@@ -1,3 +1,5 @@
+import { Types } from 'mongoose';
+
 export interface IUser {
   firstName: string;
   lastName: string;
@@ -39,7 +41,7 @@ export interface IClient {
   notes?: string;
   tags: string[];
   status: 'active' | 'inactive';
-  createdBy: string;
+  createdBy: Types.ObjectId | string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -54,8 +56,8 @@ export interface IInvoiceItem {
 
 export interface IInvoice {
   invoiceNumber: string;
-  clientId: string;
-  projectId?: string;
+  clientId: Types.ObjectId | string;
+  projectId?: Types.ObjectId | string;
   issueDate: Date;
   dueDate: Date;
   items: IInvoiceItem[];
@@ -70,7 +72,7 @@ export interface IInvoice {
   paymentDate?: Date;
   notes?: string;
   terms?: string;
-  createdBy: string;
+  createdBy: Types.ObjectId | string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -165,14 +167,4 @@ export interface IEmailTemplate {
     path?: string;
     content?: Buffer;
   }>;
-}
-
-// Express Request type augmentation for req.user
-import { Request } from 'express';
-declare global {
-  namespace Express {
-    interface Request {
-      user?: any; // You can replace 'any' with a more specific type if desired
-    }
-  }
 } 

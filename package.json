@@ -20,7 +20,8 @@
     "start:frontend": "cd frontend && npm start"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "supertest": "^7.1.1"
   },
   "keywords": [
     "invoice",

@@ -53,7 +53,7 @@ export const authenticate = async (
       // Attach user to request
       req.user = {
         ...decoded,
-        _id: user._id.toString(),
+        _id: (user as any)._id.toString(),
       };
 
       next();
@@ -158,7 +158,7 @@ export const optionalAuth = async (
       if (user && user.isActive) {
         req.user = {
           ...decoded,
-          _id: user._id.toString(),
+          _id: (user as any)._id.toString(),
         };
       }
     } catch (tokenError) {

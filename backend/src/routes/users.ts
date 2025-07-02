@@ -25,6 +25,13 @@ router.put('/profile',
   ],
   async (req: Request, res: Response) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: { message: 'Authentication required' },
+          timestamp: new Date().toISOString(),
+        } as IApiResponse);
+      }
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
@@ -33,7 +40,7 @@ router.put('/profile',
           timestamp: new Date().toISOString(),
         } as IApiResponse);
       }
-      const user = await User.findByIdAndUpdate(req.user._id, req.body, { new: true });
+      const user = await User.findByIdAndUpdate(req.user!._id, req.body, { new: true });
       if (!user) {
         return res.status(404).json({
           success: false,

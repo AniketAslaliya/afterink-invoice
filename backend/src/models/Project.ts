@@ -179,23 +179,23 @@ projectSchema.index({ startDate: -1 });
 projectSchema.index({ createdAt: -1 });
 
 // Virtual for project progress
-projectSchema.virtual('progress').get(function() {
+projectSchema.virtual('progress').get(function(this: any) {
   if (!this.tasks || this.tasks.length === 0) return 0;
-  const completedTasks = this.tasks.filter(task => task.status === 'completed').length;
+  const completedTasks = this.tasks.filter((task: any) => task.status === 'completed').length;
   return Math.round((completedTasks / this.tasks.length) * 100);
 });
 
 // Virtual for total time spent
-projectSchema.virtual('totalTimeSpent').get(function() {
+projectSchema.virtual('totalTimeSpent').get(function(this: any) {
   if (!this.tasks || this.tasks.length === 0) return 0;
-  return this.tasks.reduce((total, task) => total + (task.timeSpent || 0), 0);
+  return this.tasks.reduce((total: number, task: any) => total + (task.timeSpent || 0), 0);
 });
 
 // Virtual for overdue tasks
-projectSchema.virtual('overdueTasks').get(function() {
+projectSchema.virtual('overdueTasks').get(function(this: any) {
   if (!this.tasks || this.tasks.length === 0) return [];
   const today = new Date();
-  return this.tasks.filter(task => 
+  return this.tasks.filter((task: any) => 
     task.dueDate && 
     new Date(task.dueDate) < today && 
     task.status !== 'completed'
@@ -203,24 +203,23 @@ projectSchema.virtual('overdueTasks').get(function() {
 });
 
 // Virtual for budget utilization
-projectSchema.virtual('budgetUtilization').get(function() {
-  if (this.budget === 0) return 0;
-  return Math.round((this.actualCost / this.budget) * 100);
+projectSchema.virtual('budgetUtilization').get(function(this: any) {
+  if (!this.budget || this.budget === 0) return 0;
+  return Math.round(((this.actualCost || 0) / this.budget) * 100);
 });
 
 // Virtual for project duration
-projectSchema.virtual('duration').get(function() {
+projectSchema.virtual('duration').get(function(this: any) {
   const start = new Date(this.startDate);
   const end = this.endDate ? new Date(this.endDate) : new Date();
   return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 });
 
 // Pre-save middleware to update project status based on tasks
-projectSchema.pre('save', function(next) {
+projectSchema.pre('save', function(this: any, next) {
   if (this.tasks && this.tasks.length > 0) {
-    const completedTasks = this.tasks.filter(task => task.status === 'completed').length;
+    const completedTasks = this.tasks.filter((task: any) => task.status === 'completed').length;
     const totalTasks = this.tasks.length;
-    
     // Auto-update status based on task completion
     if (completedTasks === totalTasks && this.status === 'active') {
       this.status = 'review';
@@ -228,12 +227,10 @@ projectSchema.pre('save', function(next) {
       this.status = 'active';
     }
   }
-  
   // Set end date when project is completed
   if (this.status === 'completed' && !this.endDate) {
     this.endDate = new Date();
   }
-  
   next();
 });
 

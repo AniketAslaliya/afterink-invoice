@@ -1,7 +1,11 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 import { IInvoice, IInvoiceItem } from '../types';
 
-interface IInvoiceDocument extends IInvoice, Document {}
+interface IInvoiceDocument extends IInvoice, Document {
+  clientId: Types.ObjectId;
+  projectId?: Types.ObjectId;
+  createdBy: Types.ObjectId;
+}
 
 const invoiceItemSchema = new Schema<IInvoiceItem>({
   description: {
@@ -162,7 +166,7 @@ invoiceSchema.index({ createdBy: 1 });
 invoiceSchema.index({ createdAt: -1 });
 
 // Virtual for days overdue
-invoiceSchema.virtual('daysOverdue').get(function() {
+invoiceSchema.virtual('daysOverdue').get(function(this: any) {
   if (this.status === 'paid' || this.status === 'cancelled') return 0;
   const today = new Date();
   const dueDate = new Date(this.dueDate);
@@ -173,31 +177,31 @@ invoiceSchema.virtual('daysOverdue').get(function() {
 });
 
 // Virtual for remaining amount
-invoiceSchema.virtual('remainingAmount').get(function() {
-  return this.totalAmount - this.paidAmount;
+invoiceSchema.virtual('remainingAmount').get(function(this: any) {
+  return (this.totalAmount || 0) - (this.paidAmount || 0);
 });
 
 // Pre-save middleware to calculate totals
-invoiceSchema.pre('save', function(next) {
+invoiceSchema.pre('save', function(this: any, next) {
   // Calculate subtotal
-  this.subtotal = this.items.reduce((sum, item) => sum + item.amount, 0);
+  this.subtotal = (this.items || []).reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
   
   // Calculate tax amount
-  this.taxAmount = this.items.reduce((sum, item) => {
-    return sum + (item.amount * item.taxRate / 100);
+  this.taxAmount = (this.items || []).reduce((sum: number, item: any) => {
+    return sum + ((item.amount || 0) * (item.taxRate || 0) / 100);
   }, 0);
   
   // Calculate total amount
-  this.totalAmount = this.subtotal + this.taxAmount - this.discountAmount;
+  this.totalAmount = (this.subtotal || 0) + (this.taxAmount || 0) - (this.discountAmount || 0);
   
   // Update payment status based on paid amount
-  if (this.paidAmount >= this.totalAmount) {
+  if ((this.paidAmount || 0) >= (this.totalAmount || 0)) {
     this.paymentStatus = 'paid';
     this.status = 'paid';
     if (!this.paymentDate) {
       this.paymentDate = new Date();
     }
-  } else if (this.paidAmount > 0) {
+  } else if ((this.paidAmount || 0) > 0) {
     this.paymentStatus = 'partial';
   } else {
     this.paymentStatus = 'unpaid';

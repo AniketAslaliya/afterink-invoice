@@ -1,16 +1,18 @@
-import jwt from 'jsonwebtoken';
+import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import { IAuthPayload } from '../types';
 
 export const generateAccessToken = (payload: IAuthPayload): string => {
-  return jwt.sign(payload, process.env.JWT_SECRET!, {
-    expiresIn: process.env.JWT_EXPIRE_TIME || '1h',
-  });
+  const secret: Secret = process.env.JWT_SECRET as Secret;
+  if (!secret) throw new Error('JWT_SECRET is not defined');
+  const options: SignOptions = { expiresIn: (process.env.JWT_EXPIRE_TIME || '1h') as any };
+  return jwt.sign(payload, secret, options);
 };
 
 export const generateRefreshToken = (payload: IAuthPayload): string => {
-  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET!, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRE_TIME || '7d',
-  });
+  const secret: Secret = process.env.JWT_REFRESH_SECRET as Secret;
+  if (!secret) throw new Error('JWT_REFRESH_SECRET is not defined');
+  const options: SignOptions = { expiresIn: (process.env.JWT_REFRESH_EXPIRE_TIME || '7d') as any };
+  return jwt.sign(payload, secret, options);
 };
 
 export const verifyAccessToken = (token: string): IAuthPayload => {

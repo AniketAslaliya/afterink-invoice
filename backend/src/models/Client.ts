@@ -134,20 +134,19 @@ clientSchema.index({ tags: 1 });
 clientSchema.index({ createdAt: -1 });
 
 // Virtual for full contact name
-clientSchema.virtual('contactPerson.fullName').get(function() {
-  return `${this.contactPerson.firstName} ${this.contactPerson.lastName}`;
+clientSchema.virtual('contactPerson.fullName').get(function(this: any) {
+  return `${this.contactPerson?.firstName || ''} ${this.contactPerson?.lastName || ''}`.trim();
 });
 
 // Virtual for complete address
-clientSchema.virtual('address.full').get(function() {
-  const addr = this.address;
-  return `${addr.street}, ${addr.city}, ${addr.state} ${addr.zipCode}, ${addr.country}`;
+clientSchema.virtual('address.full').get(function(this: any) {
+  const addr = this.address || {};
+  return `${addr.street || ''}, ${addr.city || ''}, ${addr.state || ''} ${addr.zipCode || ''}, ${addr.country || ''}`.replace(/, +/g, ', ').replace(/, $/, '');
 });
 
 // Pre-save middleware to handle billing address
-clientSchema.pre('save', function(next) {
-  // If billing address is not provided, use the main address
-  if (!this.billingAddress || Object.keys(this.billingAddress).every(key => !this.billingAddress[key])) {
+clientSchema.pre('save', function(this: any, next) {
+  if (!this.billingAddress || Object.keys(this.billingAddress).every((key: string) => !this.billingAddress[key])) {
     this.billingAddress = { ...this.address };
   }
   next();
