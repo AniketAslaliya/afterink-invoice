@@ -68,8 +68,8 @@ const ClientsPage: React.FC = () => {
   const fetchClients = async () => {
     try {
       setLoading(true)
-      const res = await apiGet('/clients')
-      setClients(res.data.clients || [])
+      const _res = await apiGet('/clients')
+      setClients(_res.data.clients || [])
       setError(null)
     } catch (err: any) {
       console.error('Fetch clients error:', err)

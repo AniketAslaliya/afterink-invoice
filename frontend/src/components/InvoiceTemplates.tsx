@@ -243,15 +243,15 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     }
   };
 
-  const headerClass = template.layout.headerStyle === 'bold' 
+  const headerClass = template.layout?.headerStyle === 'bold' 
     ? 'border-b-4 pb-6 mb-8' 
-    : template.layout.headerStyle === 'creative'
+    : template.layout?.headerStyle === 'creative'
     ? 'relative overflow-hidden pb-8 mb-8'
     : 'border-b pb-6 mb-8';
 
-  const tableClass = template.layout.tableStyle === 'bordered'
+  const tableClass = template.layout?.tableStyle === 'bordered'
     ? 'border border-gray-300'
-    : template.layout.tableStyle === 'modern'
+    : template.layout?.tableStyle === 'modern'
     ? 'rounded-lg overflow-hidden shadow-sm'
     : '';
 
@@ -269,7 +269,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
         className={headerClass}
         style={{ borderColor: customization.colors.primary }}
       >
-        {template.layout.headerStyle === 'creative' && (
+        {template.layout?.headerStyle === 'creative' && (
           <div 
             className="absolute top-0 right-0 w-32 h-32 opacity-10"
             style={{ backgroundColor: customization.colors.accent }}
@@ -384,7 +384,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
             {invoice.items.map((item, index) => (
               <tr 
                 key={index} 
-                className={`border-b ${template.layout.tableStyle === 'bordered' ? 'border-gray-300' : 'border-gray-100'}`}
+                className={`border-b ${template.layout?.tableStyle === 'bordered' ? 'border-gray-300' : 'border-gray-100'}`}
               >
                 <td className="p-3">{item.description}</td>
                 <td className="p-3 text-center">{item.quantity}</td>
@@ -451,12 +451,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
       </div>
 
       {/* Footer */}
-      {template.layout.footerStyle !== 'simple' && (
+      {template.layout?.footerStyle !== 'simple' && (
         <div 
           className="mt-12 pt-6 border-t text-center"
           style={{ borderColor: customization.colors.accent }}
         >
-          {template.layout.footerStyle === 'branded' && (
+          {template.layout?.footerStyle === 'branded' && (
             <div className="mb-4">
               <p 
                 className="font-medium"
@@ -467,17 +467,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
             </div>
           )}
           
-          <div className="text-sm" style={{ color: customization.colors.secondary }}>
-            {customization.footerText && (
-              <p className="mb-2">{customization.footerText}</p>
-            )}
-            {template.layout.footerStyle === 'detailed' && (
-              <p>
-                {customization.companyName} • {customization.companyPhone} • {customization.companyEmail}
-                {customization.companyWebsite && ` • ${customization.companyWebsite}`}
-              </p>
-            )}
-          </div>
+          <p className="text-sm" style={{ color: customization.colors.secondary }}>
+            {customization.footerText || 'Powered by Afterink Invoice'}
+          </p>
         </div>
       )}
     </div>
