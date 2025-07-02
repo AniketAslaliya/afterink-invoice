@@ -43,13 +43,18 @@ const PORT = process.env.PORT || 5000;
  * 
  * Implements rate limiting to prevent abuse and protect against DDoS attacks.
  * Limits each IP to a maximum number of requests per time window.
+ * More relaxed limits for development environment.
  */
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes default
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // 100 requests per window
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000'), // 1 minute default
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '1000'), // 1000 requests per window for development
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: (req) => {
+    // Skip rate limiting for development
+    return process.env.NODE_ENV === 'development';
+  }
 });
 
 /**

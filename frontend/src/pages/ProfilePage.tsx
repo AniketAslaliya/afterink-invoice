@@ -9,6 +9,7 @@ interface UserProfile {
   lastName: string;
   email: string;
   phone?: string;
+  countryCode?: string;
   address?: string;
   city?: string;
   state?: string;
@@ -63,7 +64,7 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (!profile) return;
     setProfile({ ...profile, [e.target.name]: e.target.value });
     // Clear success message when user starts editing
@@ -84,6 +85,7 @@ const ProfilePage: React.FC = () => {
         lastName: profile.lastName,
         email: profile.email,
         phone: profile.phone || '',
+        countryCode: profile.countryCode || '+91',
         address: profile.address || '',
         city: profile.city || '',
         state: profile.state || '',
@@ -260,14 +262,33 @@ const ProfilePage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Phone Number
                   </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={profile.phone || ''}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter phone number"
-                  />
+                  <div className="flex space-x-2">
+                    <select
+                      name="countryCode"
+                      value={profile.countryCode || '+91'}
+                      onChange={handleChange}
+                      className="w-28 px-3 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    >
+                      <option value="+91">🇮🇳 +91</option>
+                      <option value="+1">🇺🇸 +1</option>
+                      <option value="+44">🇬🇧 +44</option>
+                      <option value="+61">🇦🇺 +61</option>
+                      <option value="+33">🇫🇷 +33</option>
+                      <option value="+49">🇩🇪 +49</option>
+                      <option value="+81">🇯🇵 +81</option>
+                      <option value="+86">🇨🇳 +86</option>
+                      <option value="+971">🇦🇪 +971</option>
+                      <option value="+65">🇸🇬 +65</option>
+                    </select>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={profile.phone || ''}
+                      onChange={handleChange}
+                      className="flex-1 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter phone number (without country code)"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

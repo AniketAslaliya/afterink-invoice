@@ -89,8 +89,8 @@ const defaultTemplates: InvoiceTemplate[] = [
       accent: '#f1f5f9'
     },
     fonts: {
-      heading: 'Inter, sans-serif',
-      body: 'Inter, sans-serif'
+          heading: 'Poppins, sans-serif',
+    body: 'Inter, sans-serif'
     }
   },
   {
@@ -128,27 +128,27 @@ const defaultTemplates: InvoiceTemplate[] = [
 ];
 
 const defaultCustomization: InvoiceCustomization = {
-  template: 'modern-minimal',
+  template: 'indian-professional',
   companyName: 'Afterink Studio',
   companyAddress: '123 Business Street, Suite 100, City, State 12345',
-  companyPhone: '+1 (555) 123-4567',
+  companyPhone: '+91 98765 43210',
   companyEmail: 'hello@afterink.com',
   companyWebsite: 'www.afterink.com',
   colors: {
-    primary: '#2563eb',
-    secondary: '#64748b',
-    text: '#1e293b',
+    primary: '#ff6b35',
+    secondary: '#004e89',
+    text: '#2c3e50',
     background: '#ffffff',
-    accent: '#f1f5f9'
+    accent: '#fff3e0'
   },
   fonts: {
-    heading: 'Inter, sans-serif',
+    heading: 'Poppins, sans-serif',
     body: 'Inter, sans-serif'
   },
   showLogo: false,
   showCompanyDetails: true,
   footerText: 'Thank you for choosing our services!',
-  currency: 'USD'
+  currency: 'INR'
 };
 
 /**
@@ -174,7 +174,7 @@ const InvoicesPage: React.FC = () => {
       amount: 0,
       taxRate: 0
     }] as InvoiceItem[],
-    currency: 'USD',
+    currency: 'INR',
     notes: '',
     terms: 'Payment is due within 30 days of invoice date.'
   });
@@ -316,7 +316,7 @@ const InvoicesPage: React.FC = () => {
           amount: 0,
           taxRate: 0
         }],
-        currency: 'USD',
+        currency: 'INR',
         notes: '',
         terms: 'Payment is due within 30 days of invoice date.'
       })
@@ -763,6 +763,7 @@ const InvoicesPage: React.FC = () => {
                     onChange={(e) => setNewInvoice({ ...newInvoice, currency: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                   >
+                    <option value="INR">INR</option>
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
                     <option value="GBP">GBP</option>
@@ -1106,6 +1107,7 @@ const InvoicesPage: React.FC = () => {
                         }))}
                         className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-gray-100"
                       >
+                        <option value="INR">INR (₹)</option>
                         <option value="USD">USD ($)</option>
                         <option value="EUR">EUR (€)</option>
                         <option value="GBP">GBP (£)</option>

@@ -8,6 +8,7 @@ interface UserSettings {
     lastName: string
     email: string
     phone: string
+    countryCode: string
     timezone: string
   }
   business: {
@@ -42,6 +43,7 @@ const SettingsPage: React.FC = () => {
       lastName: '',
       email: '',
       phone: '',
+      countryCode: '+91',
       timezone: 'UTC'
     },
     business: {
@@ -62,7 +64,7 @@ const SettingsPage: React.FC = () => {
       weeklyReports: true
     },
     preferences: {
-      defaultCurrency: 'USD',
+      defaultCurrency: 'INR',
       dateFormat: 'MM/DD/YYYY',
       theme: 'light',
       language: 'en'
@@ -90,6 +92,7 @@ const SettingsPage: React.FC = () => {
           lastName: user.lastName || '',
           email: user.email || '',
           phone: user.phone || '',
+          countryCode: user.countryCode || '+91',
           timezone: user.timezone || 'UTC'
         }
       }))
@@ -226,12 +229,31 @@ const SettingsPage: React.FC = () => {
                       <label className="block text-sm font-medium text-secondary-700 mb-1">
                         Phone
                       </label>
-                      <input
-                        type="tel"
-                        value={settings.profile.phone}
-                        onChange={(e) => updateSettings('profile', 'phone', e.target.value)}
-                        className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      />
+                      <div className="flex space-x-2">
+                        <select
+                          value={settings.profile.countryCode}
+                          onChange={(e) => updateSettings('profile', 'countryCode', e.target.value)}
+                          className="w-24 px-2 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                        >
+                          <option value="+91">🇮🇳 +91</option>
+                          <option value="+1">🇺🇸 +1</option>
+                          <option value="+44">🇬🇧 +44</option>
+                          <option value="+61">🇦🇺 +61</option>
+                          <option value="+33">🇫🇷 +33</option>
+                          <option value="+49">🇩🇪 +49</option>
+                          <option value="+81">🇯🇵 +81</option>
+                          <option value="+86">🇨🇳 +86</option>
+                          <option value="+971">🇦🇪 +971</option>
+                          <option value="+65">🇸🇬 +65</option>
+                        </select>
+                        <input
+                          type="tel"
+                          value={settings.profile.phone}
+                          onChange={(e) => updateSettings('profile', 'phone', e.target.value)}
+                          className="flex-1 px-3 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          placeholder="Phone number (without country code)"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -247,6 +269,7 @@ const SettingsPage: React.FC = () => {
                           onChange={(e) => updateSettings('preferences', 'defaultCurrency', e.target.value)}
                           className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                         >
+                          <option value="INR">INR - Indian Rupee</option>
                           <option value="USD">USD - US Dollar</option>
                           <option value="EUR">EUR - Euro</option>
                           <option value="GBP">GBP - British Pound</option>

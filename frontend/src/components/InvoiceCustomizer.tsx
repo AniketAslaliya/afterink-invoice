@@ -102,21 +102,21 @@ const defaultTemplates: InvoiceTemplate[] = [
 ];
 
 const defaultCustomization: InvoiceCustomization = {
-  template: 'modern-minimal',
+  template: 'indian-professional',
   companyName: 'Afterink Studio',
   companyAddress: '123 Business Street, Suite 100, City, State 12345',
-  companyPhone: '+1 (555) 123-4567',
+  companyPhone: '+91 98765 43210',
   companyEmail: 'hello@afterink.com',
   companyWebsite: 'www.afterink.com',
   colors: {
-    primary: '#2563eb',
-    secondary: '#64748b',
-    text: '#1e293b',
+    primary: '#ff6b35',
+    secondary: '#004e89',
+    text: '#2c3e50',
     background: '#ffffff',
-    accent: '#f1f5f9'
+    accent: '#fff3e0'
   },
   fonts: {
-    heading: 'Inter, sans-serif',
+    heading: 'Poppins, sans-serif',
     body: 'Inter, sans-serif'
   },
   showLogo: true,
@@ -124,7 +124,7 @@ const defaultCustomization: InvoiceCustomization = {
   showPaymentTerms: true,
   paymentTermsText: 'Payment is due within 30 days of invoice date. Late payments may incur additional charges.',
   footerText: 'Thank you for choosing our services!',
-  currency: 'USD',
+  currency: 'INR',
   dateFormat: 'MM/DD/YYYY'
 };
 
@@ -498,6 +498,7 @@ const InvoiceCustomizer: React.FC<InvoiceCustomizerProps> = ({
                       }))}
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-gray-100"
                     >
+                      <option value="INR">INR (₹)</option>
                       <option value="USD">USD ($)</option>
                       <option value="EUR">EUR (€)</option>
                       <option value="GBP">GBP (£)</option>

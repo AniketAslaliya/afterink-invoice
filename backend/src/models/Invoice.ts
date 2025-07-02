@@ -97,10 +97,10 @@ const invoiceSchema = new Schema<IInvoiceDocument>({
     type: String,
     required: [true, 'Currency is required'],
     enum: {
-      values: ['USD', 'EUR', 'GBP', 'CAD', 'AUD'],
-      message: 'Currency must be one of: USD, EUR, GBP, CAD, AUD',
+      values: ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR'],
+      message: 'Currency must be one of: USD, EUR, GBP, CAD, AUD, INR',
     },
-    default: 'USD',
+    default: 'INR',
   },
   status: {
     type: String,

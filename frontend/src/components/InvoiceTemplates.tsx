@@ -91,20 +91,42 @@ export interface Invoice {
 
 export const defaultTemplates: InvoiceTemplate[] = [
   {
-    id: 'modern-minimal',
-    name: 'Modern Minimal',
-    description: 'Clean, minimalist design with subtle colors',
-    preview: '🎨 Clean lines, white space, subtle accent colors',
+    id: 'indian-professional',
+    name: 'Indian Professional',
+    description: 'Modern design optimized for Indian businesses with elegant styling',
+    preview: '🇮🇳 Professional Indian business template with modern aesthetics',
     colors: {
-      primary: '#2563eb',
-      secondary: '#64748b',
-      text: '#1e293b',
+      primary: '#ff6b35',
+      secondary: '#004e89',
+      text: '#2c3e50',
       background: '#ffffff',
-      accent: '#f1f5f9'
+      accent: '#fff3e0'
     },
     fonts: {
-      heading: 'Inter, sans-serif',
+      heading: 'Poppins, sans-serif',
       body: 'Inter, sans-serif'
+    },
+    layout: {
+      headerStyle: 'bold',
+      tableStyle: 'modern',
+      footerStyle: 'detailed'
+    }
+  },
+  {
+    id: 'elegant-blue',
+    name: 'Elegant Blue',
+    description: 'Sophisticated blue theme with clean typography',
+    preview: '💙 Clean and professional with sophisticated blue accents',
+    colors: {
+      primary: '#1565c0',
+      secondary: '#42a5f5',
+      text: '#263238',
+      background: '#ffffff',
+      accent: '#e3f2fd'
+    },
+    fonts: {
+      heading: 'Merriweather, serif',
+      body: 'Open Sans, sans-serif'
     },
     layout: {
       headerStyle: 'minimal',
@@ -113,47 +135,69 @@ export const defaultTemplates: InvoiceTemplate[] = [
     }
   },
   {
-    id: 'professional-corporate',
-    name: 'Professional Corporate',
-    description: 'Traditional business style with strong branding',
-    preview: '🏢 Bold headers, structured layout, corporate colors',
+    id: 'creative-gradient',
+    name: 'Creative Gradient',
+    description: 'Modern gradient design with creative elements',
+    preview: '🌈 Eye-catching gradients with modern, creative styling',
     colors: {
-      primary: '#1f2937',
-      secondary: '#374151',
-      text: '#111827',
-      background: '#ffffff',
-      accent: '#f9fafb'
-    },
-    fonts: {
-      heading: 'Georgia, serif',
-      body: 'Arial, sans-serif'
-    },
-    layout: {
-      headerStyle: 'bold',
-      tableStyle: 'bordered',
-      footerStyle: 'detailed'
-    }
-  },
-  {
-    id: 'creative-modern',
-    name: 'Creative Modern',
-    description: 'Vibrant and creative with modern typography',
-    preview: '🎨 Colorful accents, modern fonts, creative layout',
-    colors: {
-      primary: '#7c3aed',
-      secondary: '#a855f7',
+      primary: '#6366f1',
+      secondary: '#8b5cf6',
       text: '#1f2937',
       background: '#ffffff',
-      accent: '#faf5ff'
+      accent: '#f0f9ff'
     },
     fonts: {
-      heading: 'Poppins, sans-serif',
-      body: 'Roboto, sans-serif'
+      heading: 'Roboto, sans-serif',
+      body: 'Lato, sans-serif'
     },
     layout: {
       headerStyle: 'creative',
       tableStyle: 'modern',
       footerStyle: 'branded'
+    }
+  },
+  {
+    id: 'minimalist-green',
+    name: 'Minimalist Green',
+    description: 'Fresh green theme with minimalist approach',
+    preview: '🌿 Fresh and clean with natural green accents',
+    colors: {
+      primary: '#059669',
+      secondary: '#10b981',
+      text: '#374151',
+      background: '#ffffff',
+      accent: '#f0fdf4'
+    },
+    fonts: {
+      heading: 'Source Sans Pro, sans-serif',
+      body: 'Source Sans Pro, sans-serif'
+    },
+    layout: {
+      headerStyle: 'minimal',
+      tableStyle: 'clean',
+      footerStyle: 'simple'
+    }
+  },
+  {
+    id: 'corporate-navy',
+    name: 'Corporate Navy',
+    description: 'Professional navy blue template for corporate use',
+    preview: '🏢 Traditional corporate style with navy blue branding',
+    colors: {
+      primary: '#1e3a8a',
+      secondary: '#3b82f6',
+      text: '#1f2937',
+      background: '#ffffff',
+      accent: '#eff6ff'
+    },
+    fonts: {
+      heading: 'Playfair Display, serif',
+      body: 'Inter, sans-serif'
+    },
+    layout: {
+      headerStyle: 'bold',
+      tableStyle: 'bordered',
+      footerStyle: 'detailed'
     }
   }
 ];

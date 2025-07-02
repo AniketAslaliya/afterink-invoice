@@ -5,8 +5,37 @@ import { apiGet, apiPost } from '../api'
 interface Client {
   _id: string;
   companyName: string;
-  contactPerson: { firstName: string; lastName: string; email: string };
+  contactPerson: { 
+    firstName: string; 
+    lastName: string; 
+    email: string; 
+    phone?: string;
+    countryCode?: string;
+    position?: string;
+  };
   status: string;
+}
+
+interface NewClient {
+  companyName: string;
+  contactPerson: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    countryCode: string;
+    position: string;
+  };
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  paymentTerms: number;
+  taxNumber: string;
+  notes: string;
 }
 
 const ClientsPage: React.FC = () => {
@@ -15,15 +44,16 @@ const ClientsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [newClient, setNewClient] = useState({
+  const [newClient, setNewClient] = useState<NewClient>({
     companyName: '',
-    contactPerson: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      position: ''
-    },
+            contactPerson: {
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          countryCode: '+91',
+          position: ''
+        },
     address: {
       street: '',
       city: '',
@@ -71,7 +101,7 @@ const ClientsPage: React.FC = () => {
           firstName: newClient.contactPerson.firstName || 'Contact',
           lastName: newClient.contactPerson.lastName || 'Person', 
           email: newClient.contactPerson.email,
-          phone: newClient.contactPerson.phone,
+          phone: `${newClient.contactPerson.countryCode}${newClient.contactPerson.phone}`,
           position: newClient.contactPerson.position || ''
         },
         address: {
@@ -108,6 +138,7 @@ const ClientsPage: React.FC = () => {
           lastName: '',
           email: '',
           phone: '',
+          countryCode: '+91',
           position: ''
         },
         address: {
@@ -252,17 +283,38 @@ const ClientsPage: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-300 mb-1">
                       Phone *
                     </label>
-                    <input
-                      type="tel"
-                      value={newClient.contactPerson.phone}
-                      onChange={(e) => setNewClient({ 
-                        ...newClient, 
-                        contactPerson: { ...newClient.contactPerson, phone: e.target.value }
-                      })}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                      placeholder="Phone number"
-                      required
-                    />
+                    <div className="flex space-x-2">
+                      <select
+                        value={newClient.contactPerson.countryCode}
+                        onChange={(e) => setNewClient({ 
+                          ...newClient, 
+                          contactPerson: { ...newClient.contactPerson, countryCode: e.target.value }
+                        })}
+                        className="w-24 px-2 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-sm"
+                      >
+                        <option value="+91">🇮🇳 +91</option>
+                        <option value="+1">🇺🇸 +1</option>
+                        <option value="+44">🇬🇧 +44</option>
+                        <option value="+61">🇦🇺 +61</option>
+                        <option value="+33">🇫🇷 +33</option>
+                        <option value="+49">🇩🇪 +49</option>
+                        <option value="+81">🇯🇵 +81</option>
+                        <option value="+86">🇨🇳 +86</option>
+                        <option value="+971">🇦🇪 +971</option>
+                        <option value="+65">🇸🇬 +65</option>
+                      </select>
+                      <input
+                        type="tel"
+                        value={newClient.contactPerson.phone}
+                        onChange={(e) => setNewClient({ 
+                          ...newClient, 
+                          contactPerson: { ...newClient.contactPerson, phone: e.target.value }
+                        })}
+                        className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                        placeholder="Phone number (without country code)"
+                        required
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">
