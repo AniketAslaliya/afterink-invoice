@@ -27,9 +27,9 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.7",
-    "puppeteer": "^21.6.1",
     "stripe": "^14.9.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "@types/node": "^20.19.2"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -40,7 +40,6 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/morgan": "^1.9.9",
     "@types/multer": "^1.4.11",
-    "@types/node": "^20.19.2",
     "@types/nodemailer": "^6.4.14",
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^6.13.2",
