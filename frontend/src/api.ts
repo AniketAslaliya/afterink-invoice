@@ -146,6 +146,9 @@ async function apiPost(path: string, data: any) {
 
 async function apiPut(path: string, data: any) {
   try {
+    console.log(`Making PUT request to: ${API_BASE_URL}${path}`);
+    console.log('Request data:', data);
+    
     const makeRequest = async (token: string) => {
       return fetch(`${API_BASE_URL}${path}`, {
         method: 'PUT',
@@ -166,9 +169,36 @@ async function apiPut(path: string, data: any) {
       res = await makeRequest(newToken);
     }
     
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    console.log('Response status:', res.status);
+    console.log('Response ok:', res.ok);
+    
+    const responseText = await res.text();
+    console.log('Response text:', responseText);
+    
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${responseText}`);
+    }
+    
+    try {
+      const result = JSON.parse(responseText);
+      
+      // Handle both demo server format (direct object) and MongoDB server format ({ success: true, data: {...} })
+      if (result.success && result.data) {
+        console.log('Detected MongoDB server response format');
+        return result.data;
+      } else if (result._id) {
+        console.log('Detected demo server response format');
+        return result;
+      } else {
+        console.log('Using response as-is');
+        return result;
+      }
+    } catch (parseError) {
+      console.error('Failed to parse JSON response:', parseError);
+      throw new Error('Invalid JSON response from server');
+    }
   } catch (error: any) {
+    console.error('API PUT Error:', error);
     if (error.message.includes('refresh')) {
       localStorage.removeItem('token');
       localStorage.removeItem('afterink-auth');

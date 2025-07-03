@@ -367,16 +367,19 @@ const InvoicesPage: React.FC = () => {
     return projects.filter(project => project.clientId === newInvoice.clientId)
   }
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number, currency?: string) => {
+    // Use the provided currency or fall back to customization currency
+    const currencyToUse = currency || invoiceCustomization.currency;
+    
     // Use appropriate locale based on currency
-    const locale = invoiceCustomization.currency === 'INR' ? 'en-IN' : 
-                   invoiceCustomization.currency === 'USD' ? 'en-US' :
-                   invoiceCustomization.currency === 'EUR' ? 'en-DE' :
-                   invoiceCustomization.currency === 'GBP' ? 'en-GB' : 'en-IN';
+    const locale = currencyToUse === 'INR' ? 'en-IN' : 
+                   currencyToUse === 'USD' ? 'en-US' :
+                   currencyToUse === 'EUR' ? 'en-DE' :
+                   currencyToUse === 'GBP' ? 'en-GB' : 'en-IN';
     
     return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: invoiceCustomization.currency,
+      currency: currencyToUse,
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     }).format(amount);
@@ -603,8 +606,8 @@ const InvoicesPage: React.FC = () => {
               <tr>
                 <td>Professional Services</td>
                 <td style="text-align: center;">1</td>
-                <td style="text-align: right;">${formatCurrency(invoice.totalAmount || 0)}</td>
-                <td style="text-align: right; font-weight: 600;">${formatCurrency(invoice.totalAmount || 0)}</td>
+                                        <td style="text-align: right;">{formatCurrency(invoice.totalAmount || 0, invoice.currency)}</td>
+                        <td style="text-align: right; font-weight: 600;">{formatCurrency(invoice.totalAmount || 0, invoice.currency)}</td>
               </tr>
             </tbody>
           </table>
@@ -613,15 +616,15 @@ const InvoicesPage: React.FC = () => {
             <div class="total-box">
               <div class="total-row subtotal">
                 <span>Subtotal:</span>
-                <span>${formatCurrency(invoice.totalAmount || 0)}</span>
+                <span>${formatCurrency(invoice.totalAmount || 0, invoice.currency)}</span>
               </div>
               <div class="total-row">
                 <span>Tax:</span>
-                <span>${formatCurrency(0)}</span>
+                <span>${formatCurrency(0, invoice.currency)}</span>
               </div>
               <div class="total-row final">
                 <span>Total:</span>
-                <span>${formatCurrency(invoice.totalAmount || 0)}</span>
+                <span>${formatCurrency(invoice.totalAmount || 0, invoice.currency)}</span>
               </div>
             </div>
           </div>
@@ -757,7 +760,7 @@ const InvoicesPage: React.FC = () => {
         amount: invoice.totalAmount,
         taxRate: 0
       }],
-      currency: 'INR',
+      currency: invoice.currency || 'INR',
       notes: invoice.notes || '',
       terms: invoice.terms || 'Payment is due within 30 days of invoice date.'
     });
@@ -772,10 +775,14 @@ const InvoicesPage: React.FC = () => {
       setSubmitting(true);
       const invoiceData = {
         ...newInvoice,
-        totalAmount: calculateTotal()
+        totalAmount: calculateTotal(),
+        currency: newInvoice.currency
       };
       
-      await apiPut(`/invoices/${selectedInvoice._id}`, invoiceData);
+      console.log('Updating invoice with data:', invoiceData);
+      
+      const result = await apiPut(`/invoices/${selectedInvoice._id}`, invoiceData);
+      console.log('Update result:', result);
       
       // Refresh invoices from server to get updated data
       dispatch(fetchInvoices());
@@ -1602,7 +1609,7 @@ const InvoicesPage: React.FC = () => {
                         
                         <div className="hidden lg:block">
                           <p className="text-gray-400 text-sm">Amount</p>
-                          <p className="font-bold text-white text-lg">{formatCurrency(inv.totalAmount || 0)}</p>
+                          <p className="font-bold text-white text-lg">{formatCurrency(inv.totalAmount || 0, inv.currency)}</p>
                         </div>
                       </div>
 
@@ -1666,7 +1673,7 @@ const InvoicesPage: React.FC = () => {
                           <p className="text-gray-400 text-sm">Due: {new Date(inv.dueDate).toLocaleDateString()}</p>
                         </div>
                         <div>
-                          <p className="font-bold text-white">{formatCurrency(inv.totalAmount || 0)}</p>
+                          <p className="font-bold text-white">{formatCurrency(inv.totalAmount || 0, inv.currency)}</p>
                         </div>
                       </div>
                     </div>
@@ -1718,7 +1725,7 @@ const InvoicesPage: React.FC = () => {
                   </div>
                   <div>
                     <span className="text-gray-400">Total Amount:</span>
-                    <span className="text-white ml-2 font-semibold">{formatCurrency(selectedInvoice.totalAmount)}</span>
+                    <span className="text-white ml-2 font-semibold">{formatCurrency(selectedInvoice.totalAmount, selectedInvoice.currency)}</span>
                   </div>
                   <div>
                     <span className="text-gray-400">Due Date:</span>
@@ -1739,7 +1746,7 @@ const InvoicesPage: React.FC = () => {
                   step="0.01"
                   max={selectedInvoice.totalAmount}
                 />
-                <p className="text-xs text-gray-400 mt-1">Maximum: {formatCurrency(selectedInvoice.totalAmount)}</p>
+                                    <p className="text-xs text-gray-400 mt-1">Maximum: {formatCurrency(selectedInvoice.totalAmount, selectedInvoice.currency)}</p>
               </div>
 
               {/* Payment Method */}
@@ -2122,7 +2129,7 @@ const InvoicesPage: React.FC = () => {
                               Amount
                             </label>
                             <div className="px-3 py-2 bg-gray-700 border border-gray-500 rounded-md text-white text-sm text-center">
-                              {formatCurrency(item.quantity * item.rate * (1 + (item.taxRate || 0) / 100))}
+                              {formatCurrency(item.quantity * item.rate * (1 + (item.taxRate || 0) / 100), newInvoice.currency)}
                             </div>
                           </div>
                         </div>
@@ -2163,7 +2170,7 @@ const InvoicesPage: React.FC = () => {
 
               <div className="text-right">
                 <div className="text-lg font-semibold text-white">
-                  Total: {formatCurrency(calculateTotal())}
+                  Total: {formatCurrency(calculateTotal(), newInvoice.currency)}
                 </div>
               </div>
             </div>
