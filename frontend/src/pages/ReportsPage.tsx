@@ -135,6 +135,11 @@ const ReportsPage: React.FC = () => {
         clients = clientsResponse
       }
 
+      console.log('Raw invoices response:', invoicesResponse)
+      console.log('Raw clients response:', clientsResponse)
+      console.log('Parsed invoices:', invoices)
+      console.log('Parsed clients:', clients)
+
       let projects: Project[] = []
       if (projectsResponse && projectsResponse.data && projectsResponse.data.projects) {
         projects = projectsResponse.data.projects
@@ -242,23 +247,48 @@ const ReportsPage: React.FC = () => {
       const clientRevenueMap = new Map()
       const clientInvoiceMap = new Map()
       
+      console.log('Processing invoices for client stats:', invoices.length)
+      console.log('Available clients:', clients.length)
+      
       invoices.forEach((inv: Invoice) => {
         let clientName = 'Unknown Client'
         
+        // First try to get client name from the populated client object
         if (inv.client?.companyName) {
           clientName = inv.client.companyName
+        } else if (inv.client?.name) {
+          // Fallback to name field if companyName doesn't exist
+          clientName = inv.client.name
         } else {
+          // Fallback to finding client by ID
           const client = clients.find(c => c._id === inv.clientId)
           if (client?.companyName) {
             clientName = client.companyName
+          } else if (client?.name) {
+            clientName = client.name
+          } else {
+            // If still no client name, use clientId as fallback
+            clientName = `Client ${inv.clientId ? inv.clientId.slice(-6) : 'Unknown'}`
           }
         }
         
+        console.log(`Invoice ${inv.invoiceNumber}: clientName = ${clientName}, status = ${inv.status}, amount = ${inv.totalAmount}`)
+        
+        // Track revenue for paid invoices
         if (inv.status === 'paid') {
-          clientRevenueMap.set(clientName, (clientRevenueMap.get(clientName) || 0) + (inv.totalAmount || 0))
+          const currentRevenue = clientRevenueMap.get(clientName) || 0
+          const invoiceRevenue = currencyToINR(inv.totalAmount || 0, inv.currency || 'INR')
+          clientRevenueMap.set(clientName, currentRevenue + invoiceRevenue)
+          console.log(`Added revenue for ${clientName}: ${invoiceRevenue} (total: ${currentRevenue + invoiceRevenue})`)
         }
-        clientInvoiceMap.set(clientName, (clientInvoiceMap.get(clientName) || 0) + 1)
+        
+        // Track total invoices for this client
+        const currentInvoices = clientInvoiceMap.get(clientName) || 0
+        clientInvoiceMap.set(clientName, currentInvoices + 1)
       })
+
+      console.log('Client revenue map:', Object.fromEntries(clientRevenueMap))
+      console.log('Client invoice map:', Object.fromEntries(clientInvoiceMap))
 
       const clientStats = Array.from(clientRevenueMap.entries())
         .map(([client, revenue]) => ({
@@ -268,7 +298,9 @@ const ReportsPage: React.FC = () => {
           avgValue: (revenue as number) / (clientInvoiceMap.get(client) || 1)
         }))
         .sort((a, b) => b.revenue - a.revenue)
-        .slice(0, 5) // Top 5 clients
+        .slice(0, 10) // Show top 10 clients instead of 5
+
+      console.log('Generated client stats:', clientStats)
 
       // Status breakdown for pie chart
       const statusCounts = {
@@ -636,24 +668,77 @@ const ReportsPage: React.FC = () => {
               <Users className="h-5 w-5 mr-2" />
               Top Clients by Revenue
             </h3>
-            <div className="space-y-4">
-              {reportData.clientStats.map((client, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-gray-900/50 rounded-xl">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                      {client.client.charAt(0).toUpperCase()}
+            
+            {reportData.clientStats.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="h-16 w-16 text-gray-500 mx-auto mb-4" />
+                <p className="text-gray-400 text-lg mb-2">No Client Data Available</p>
+                <p className="text-gray-500 text-sm">Client insights will appear here once you have invoices with paid status.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reportData.clientStats.map((client, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-gray-900/50 rounded-xl hover:bg-gray-900/70 transition-colors">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                        {client.client.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="text-white font-semibold">{client.client}</div>
+                        <div className="text-gray-400 text-sm">{client.invoices} invoice{client.invoices !== 1 ? 's' : ''}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-white font-semibold">{client.client}</div>
-                      <div className="text-gray-400 text-sm">{client.invoices} invoices</div>
+                    <div className="text-right">
+                      <div className="text-white font-bold">{formatCurrency(client.revenue)}</div>
+                      <div className="text-gray-400 text-sm">Avg: {formatCurrency(client.avgValue)}</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-white font-bold">{formatCurrency(client.revenue)}</div>
-                    <div className="text-gray-400 text-sm">Avg: {formatCurrency(client.avgValue)}</div>
-                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Client Summary Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-gradient-to-br from-blue-900/30 to-blue-800/30 rounded-2xl p-6 border border-blue-700/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-400 text-sm font-medium">Total Clients</p>
+                  <p className="text-2xl font-bold text-white">{reportData.totalClients}</p>
                 </div>
-              ))}
+                <div className="bg-blue-600 p-3 rounded-xl">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-green-900/30 to-green-800/30 rounded-2xl p-6 border border-green-700/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-400 text-sm font-medium">Active Clients</p>
+                  <p className="text-2xl font-bold text-white">{reportData.clientStats.length}</p>
+                </div>
+                <div className="bg-green-600 p-3 rounded-xl">
+                  <Target className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-900/30 to-purple-800/30 rounded-2xl p-6 border border-purple-700/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-400 text-sm font-medium">Avg Revenue/Client</p>
+                  <p className="text-2xl font-bold text-white">
+                    {reportData.clientStats.length > 0 
+                      ? formatCurrency(reportData.clientStats.reduce((sum, client) => sum + client.revenue, 0) / reportData.clientStats.length)
+                      : formatCurrency(0)
+                    }
+                  </p>
+                </div>
+                <div className="bg-purple-600 p-3 rounded-xl">
+                  <TrendingUp className="h-6 w-6 text-white" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
