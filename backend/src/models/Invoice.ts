@@ -127,6 +127,27 @@ const invoiceSchema = new Schema<IInvoiceDocument>({
     type: Date,
     default: null,
   },
+  paymentAmount: {
+    type: Number,
+    default: 0,
+    min: [0, 'Payment amount must be non-negative'],
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['bank_transfer', 'upi', 'paypal', 'card', 'cheque', 'cash'],
+    default: null,
+  },
+  transactionId: {
+    type: String,
+    trim: true,
+    default: null,
+  },
+  paymentNotes: {
+    type: String,
+    trim: true,
+    maxLength: [500, 'Payment notes cannot exceed 500 characters'],
+    default: null,
+  },
   notes: {
     type: String,
     trim: true,

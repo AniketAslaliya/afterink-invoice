@@ -117,9 +117,16 @@ router.post('/',
           timestamp: new Date().toISOString(),
         } as IApiResponse);
       }
-      // Generate invoice number (simple example: INV-YYYYMMDD-HHMMSS)
+      // Generate invoice number if not provided
+      let invoiceNumber = req.body.invoiceNumber;
+      if (!invoiceNumber) {
+        // Get the count of existing invoices to generate next number
+        const invoiceCount = await Invoice.countDocuments();
+        const nextNumber = (invoiceCount + 1).toString().padStart(4, '0');
+        invoiceNumber = `A${nextNumber}`;
+      }
+      
       const now = new Date();
-      const invoiceNumber = `INV-${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}-${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}${now.getSeconds().toString().padStart(2,'0')}`;
       const invoice = new Invoice({ ...req.body, invoiceNumber, createdBy: req.user._id, issueDate: now });
       await invoice.save();
       res.status(201).json({
@@ -214,6 +221,64 @@ router.post('/:id/send', authenticate, authorizeOwnerOrAdmin(), async (req: Requ
     data: { message: 'Invoice sent successfully (not implemented)' },
     timestamp: new Date().toISOString(),
   });
+});
+
+// Update payment status
+router.post('/:id/payment', authenticate, authorizeOwnerOrAdmin(), async (req: Request, res: Response) => {
+  try {
+    const { status, paymentAmount, paymentMethod, transactionId, paymentDate, paymentNotes } = req.body;
+    
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) {
+      return res.status(404).json({
+        success: false,
+        error: { message: 'Invoice not found' },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    }
+
+    // Update invoice with payment information
+    const updatedInvoice = await Invoice.findByIdAndUpdate(
+      req.params.id,
+      {
+        status,
+        paymentAmount,
+        paymentMethod,
+        transactionId,
+        paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
+        paymentNotes,
+        updatedAt: new Date()
+      },
+      { new: true }
+    ).populate('clientId').populate('projectId');
+
+    if (!updatedInvoice) {
+      return res.status(404).json({
+        success: false,
+        error: { message: 'Failed to update invoice' },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+    }
+
+    // Remap clientId to client and projectId to project
+    const invoiceObj = updatedInvoice.toObject() as Record<string, any>;
+    invoiceObj.client = invoiceObj.clientId;
+    invoiceObj.project = invoiceObj.projectId;
+    delete invoiceObj.clientId;
+    delete invoiceObj.projectId;
+
+    res.json({
+      success: true,
+      data: { invoice: invoiceObj, message: 'Payment updated successfully' },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: { message: 'Failed to update payment', details: error },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  }
 });
 
 // Generate invoice PDF (real implementation)

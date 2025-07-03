@@ -38,8 +38,8 @@ const LoginPage: React.FC = () => {
       
       // Use the API utility function which has the correct production URL
       const response = await apiPost('/auth/login', {
-        email: data.email,
-        password: data.password,
+          email: data.email,
+          password: data.password,
       })
       
       console.log('Login response:', response)
