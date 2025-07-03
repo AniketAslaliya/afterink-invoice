@@ -1844,27 +1844,29 @@ const InvoicesPage: React.FC = () => {
       {/* Invoice View Modal */}
       {showViewModal && selectedInvoice && (
         <div 
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto modal-backdrop"
+          className="fixed inset-0 bg-black/60 flex items-start justify-center z-50 overflow-y-auto modal-backdrop p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowViewModal(false);
             }
           }}
         >
-          <div className="bg-white rounded-2xl w-full max-w-5xl shadow-2xl relative mx-4 my-8 max-h-[90vh] overflow-y-auto modal-content"
+          <div className="bg-white rounded-2xl w-full max-w-6xl shadow-2xl relative my-4 modal-content invoice-view-modal"
                onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white z-10 px-8 py-4 border-b border-gray-200 rounded-t-2xl flex justify-between items-center">
+            {/* Header - Sticky */}
+            <div className="modal-header rounded-t-2xl flex justify-between items-center shadow-sm">
               <div>
-                <h2 className="text-2xl font-bold text-gray-800">Invoice Preview</h2>
-                <p className="text-gray-600">#{selectedInvoice.invoiceNumber}</p>
+                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Invoice Preview</h2>
+                <p className="text-gray-600 text-sm md:text-base">#{selectedInvoice.invoiceNumber}</p>
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 md:space-x-3">
                 <button
                   onClick={() => handleDownloadInvoice(selectedInvoice)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                  className="px-3 py-2 md:px-4 md:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1 md:space-x-2 text-sm md:text-base"
                 >
                   <Download size={16} />
-                  <span>Download PDF</span>
+                  <span className="hidden sm:inline">Download PDF</span>
+                  <span className="sm:hidden">PDF</span>
                 </button>
                 <button 
                   className="text-gray-400 hover:text-gray-600 text-2xl leading-none w-8 h-8 flex items-center justify-center cursor-pointer" 
@@ -1879,32 +1881,38 @@ const InvoicesPage: React.FC = () => {
                 </button>
               </div>
             </div>
-            <div className="p-12 bg-white" style={{ fontFamily: invoiceCustomization.fonts.body }}>
-              <InvoicePreview
-                invoice={{
-                  _id: selectedInvoice._id,
-                  invoiceNumber: selectedInvoice.invoiceNumber,
-                  client: selectedInvoice.client || { companyName: 'Unknown Client', contactPerson: { firstName: '', lastName: '', email: '' }, address: { street: '', city: '', state: '', zipCode: '', country: '' } },
-                  project: selectedInvoice.project || undefined,
-                  items: selectedInvoice.items || [{ description: 'Professional Services', quantity: 1, rate: selectedInvoice.totalAmount, amount: selectedInvoice.totalAmount, taxRate: 0 }],
-                  subtotal: selectedInvoice.totalAmount || 0,
-                  taxAmount: 0,
-                  totalAmount: selectedInvoice.totalAmount || 0,
-                  dueDate: selectedInvoice.dueDate,
-                  status: selectedInvoice.status || 'draft',
-                  notes: selectedInvoice.notes || '',
-                  terms: selectedInvoice.terms || '',
-                  createdAt: selectedInvoice.createdAt || new Date().toISOString(),
-                }}
-                customization={{
-                  ...invoiceCustomization,
-                  showPaymentTerms: invoiceCustomization.showPaymentTerms !== undefined ? invoiceCustomization.showPaymentTerms : true,
-                  paymentTermsText: invoiceCustomization.paymentTermsText || 'Payment is due within 30 days of invoice date. Late payments may incur additional charges.',
-                  dateFormat: invoiceCustomization.dateFormat || 'DD/MM/YYYY',
-                  termsAndConditions: invoiceCustomization.termsAndConditions || '',
-                }}
-                template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
-              />
+            
+            {/* Content - Scrollable */}
+            <div className="modal-body bg-white" style={{ fontFamily: invoiceCustomization.fonts.body }}>
+              <div className="invoice-preview-container">
+                <div className="flex justify-center">
+                  <InvoicePreview
+                  invoice={{
+                    _id: selectedInvoice._id,
+                    invoiceNumber: selectedInvoice.invoiceNumber,
+                    client: selectedInvoice.client || { companyName: 'Unknown Client', contactPerson: { firstName: '', lastName: '', email: '' }, address: { street: '', city: '', state: '', zipCode: '', country: '' } },
+                    project: selectedInvoice.project || undefined,
+                    items: selectedInvoice.items || [{ description: 'Professional Services', quantity: 1, rate: selectedInvoice.totalAmount, amount: selectedInvoice.totalAmount, taxRate: 0 }],
+                    subtotal: selectedInvoice.totalAmount || 0,
+                    taxAmount: 0,
+                    totalAmount: selectedInvoice.totalAmount || 0,
+                    dueDate: selectedInvoice.dueDate,
+                    status: selectedInvoice.status || 'draft',
+                    notes: selectedInvoice.notes || '',
+                    terms: selectedInvoice.terms || '',
+                    createdAt: selectedInvoice.createdAt || new Date().toISOString(),
+                  }}
+                  customization={{
+                    ...invoiceCustomization,
+                    showPaymentTerms: invoiceCustomization.showPaymentTerms !== undefined ? invoiceCustomization.showPaymentTerms : true,
+                    paymentTermsText: invoiceCustomization.paymentTermsText || 'Payment is due within 30 days of invoice date. Late payments may incur additional charges.',
+                    dateFormat: invoiceCustomization.dateFormat || 'DD/MM/YYYY',
+                    termsAndConditions: invoiceCustomization.termsAndConditions || '',
+                  }}
+                  template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
+                />
+                </div>
+              </div>
             </div>
           </div>
         </div>
