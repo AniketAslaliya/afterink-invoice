@@ -8,6 +8,7 @@ interface Project {
   _id: string
   name: string
   description?: string
+  category?: string
   client: {
     _id: string
     name: string
@@ -30,6 +31,7 @@ const ProjectsPage: React.FC = () => {
     name: '',
     description: '',
     clientId: '',
+    category: 'Web Development',
     startDate: '',
     endDate: '',
     budget: 0,
@@ -85,6 +87,7 @@ const ProjectsPage: React.FC = () => {
         name: '',
         clientId: '',
         description: '',
+        category: 'Web Development',
         startDate: '',
         endDate: '',
         budget: 0,
@@ -125,6 +128,7 @@ const ProjectsPage: React.FC = () => {
       name: project.name,
       clientId: project.client._id,
       description: project.description || '',
+      category: project.category || 'Web Development',
       startDate: project.startDate?.split('T')[0] || '',
       endDate: project.endDate?.split('T')[0] || '',
       budget: project.budget || 0,
@@ -571,6 +575,28 @@ const ProjectsPage: React.FC = () => {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Category *
+                </label>
+                <select
+                  value={newProject.category}
+                  onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
+                >
+                  <option value="Web Design">Web Design</option>
+                  <option value="Web Development">Web Development</option>
+                  <option value="Mobile App">Mobile App</option>
+                  <option value="Branding">Branding</option>
+                  <option value="Logo Design">Logo Design</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="SEO">SEO</option>
+                  <option value="Content Creation">Content Creation</option>
+                  <option value="Consulting">Consulting</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Status
                   </label>
@@ -706,6 +732,28 @@ const ProjectsPage: React.FC = () => {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Category *
+                </label>
+                <select
+                  value={newProject.category}
+                  onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
+                >
+                  <option value="Web Design">Web Design</option>
+                  <option value="Web Development">Web Development</option>
+                  <option value="Mobile App">Mobile App</option>
+                  <option value="Branding">Branding</option>
+                  <option value="Logo Design">Logo Design</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="SEO">SEO</option>
+                  <option value="Content Creation">Content Creation</option>
+                  <option value="Consulting">Consulting</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Status
                   </label>
@@ -798,6 +846,11 @@ const ProjectsPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">Client</label>
                   <p className="text-white text-lg">{selectedProject.client?.name || 'Unknown Client'}</p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Category</label>
+                  <p className="text-white text-lg">{selectedProject.category || 'Not specified'}</p>
                 </div>
                 
                 <div>
