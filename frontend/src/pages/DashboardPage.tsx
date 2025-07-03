@@ -136,17 +136,17 @@ const DashboardPage: React.FC = () => {
               </div>
               <div className="text-right">
                 <p className="text-green-400 text-sm font-medium">Total Revenue</p>
-                <p className="text-2xl font-bold text-white">{formatCurrency(stats.totalRevenue)}</p>
+                <p className="text-2xl font-bold text-white">{formatCurrency(stats ? stats.totalRevenue : 0)}</p>
               </div>
                   </div>
             <div className="flex items-center gap-2">
-              {stats.monthlyGrowth >= 0 ? (
+              {stats ? (stats.monthlyGrowth >= 0 ? (
                 <TrendingUp className="text-green-400" size={16} />
               ) : (
                 <TrendingDown className="text-red-400" size={16} />
-              )}
-              <span className={`text-sm font-medium ${stats.monthlyGrowth >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {Math.abs(stats.monthlyGrowth).toFixed(1)}% from last month
+              )) : null}
+              <span className={`text-sm font-medium ${stats ? (stats.monthlyGrowth >= 0 ? 'text-green-400' : 'text-red-400') : ''}`}>
+                {Math.abs(typeof stats?.monthlyGrowth === 'number' ? stats.monthlyGrowth : 0).toFixed(1)}% from last month
               </span>
                   </div>
                 </div>
@@ -159,13 +159,13 @@ const DashboardPage: React.FC = () => {
                 </div>
               <div className="text-right">
                 <p className="text-blue-400 text-sm font-medium">Total Invoices</p>
-                <p className="text-2xl font-bold text-white">{stats.totalInvoices}</p>
+                <p className="text-2xl font-bold text-white">{stats ? stats.totalInvoices : 0}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="text-green-400" size={16} />
               <span className="text-sm text-gray-300">
-                {stats.paidInvoices} paid, {stats.pendingInvoices} pending
+                {stats ? (stats.paidInvoices + ', ' + stats.pendingInvoices) : ''}
               </span>
       </div>
           </div>
@@ -178,13 +178,13 @@ const DashboardPage: React.FC = () => {
               </div>
               <div className="text-right">
                 <p className="text-purple-400 text-sm font-medium">Active Clients</p>
-                <p className="text-2xl font-bold text-white">{stats.totalClients}</p>
+                <p className="text-2xl font-bold text-white">{stats ? stats.totalClients : 0}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Target className="text-purple-400" size={16} />
               <span className="text-sm text-gray-300">
-                {stats.totalProjects} total projects
+                {stats ? (stats.totalProjects + ' total projects') : ''}
               </span>
         </div>
           </div>
@@ -197,13 +197,13 @@ const DashboardPage: React.FC = () => {
               </div>
               <div className="text-right">
                 <p className="text-orange-400 text-sm font-medium">Payment Rate</p>
-                <p className="text-2xl font-bold text-white">{stats.paymentRate.toFixed(1)}%</p>
+                <p className="text-2xl font-bold text-white">{typeof stats?.paymentRate === 'number' ? stats.paymentRate.toFixed(1) : '0.0'}%</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Zap className="text-orange-400" size={16} />
               <span className="text-sm text-gray-300">
-                Avg: {formatCurrency(stats.averageInvoiceValue)}
+                Avg: {typeof stats?.averageInvoiceValue === 'number' ? stats.averageInvoiceValue.toFixed(1) : '0.0'}
               </span>
         </div>
           </div>
@@ -229,7 +229,7 @@ const DashboardPage: React.FC = () => {
                   <CheckCircle className="text-green-400" size={20} />
                   <div>
                     <p className="text-green-400 text-sm font-medium">Paid</p>
-                    <p className="text-lg font-bold text-white">{stats.paidInvoices}</p>
+                    <p className="text-lg font-bold text-white">{stats ? stats.paidInvoices : 0}</p>
                   </div>
                 </div>
               </div>
@@ -239,7 +239,7 @@ const DashboardPage: React.FC = () => {
                   <Clock className="text-yellow-400" size={20} />
                   <div>
                     <p className="text-yellow-400 text-sm font-medium">Pending</p>
-                    <p className="text-lg font-bold text-white">{stats.pendingInvoices}</p>
+                    <p className="text-lg font-bold text-white">{stats ? stats.pendingInvoices : 0}</p>
             </div>
           </div>
         </div>
@@ -249,7 +249,7 @@ const DashboardPage: React.FC = () => {
                   <AlertCircle className="text-red-400" size={20} />
                   <div>
                     <p className="text-red-400 text-sm font-medium">Overdue</p>
-                    <p className="text-lg font-bold text-white">{stats.overdueInvoices}</p>
+                    <p className="text-lg font-bold text-white">{stats ? stats.overdueInvoices : 0}</p>
                   </div>
                 </div>
               </div>
@@ -259,7 +259,7 @@ const DashboardPage: React.FC = () => {
             <div>
               <h4 className="text-lg font-semibold text-white mb-4">Recent Invoices</h4>
               <div className="space-y-3">
-                {stats.totalInvoices > 0 ? (
+                {stats ? (stats.totalInvoices > 0 ? (
                   <div className="flex items-center justify-between p-4 bg-gray-700 rounded-xl hover:bg-gray-600 transition-colors border border-gray-600">
                     <div className="flex items-center gap-4">
                       <div className={`w-3 h-3 rounded-full ${
@@ -281,7 +281,7 @@ const DashboardPage: React.FC = () => {
                     <FileText className="mx-auto h-12 w-12 text-gray-500 mb-4" />
                     <p className="text-gray-400">No invoices yet</p>
                   </div>
-                )}
+                )) : null}
               </div>
             </div>
           </div>
@@ -341,12 +341,12 @@ const DashboardPage: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-300">Revenue</span>
-                  <span className="font-semibold text-white">{formatCurrency(stats.monthlyRevenue)}</span>
+                  <span className="font-semibold text-white">{formatCurrency(stats ? stats.monthlyRevenue : 0)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-300">Growth</span>
-                  <span className={`font-semibold ${stats.monthlyGrowth >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {stats.monthlyGrowth >= 0 ? '+' : ''}{stats.monthlyGrowth.toFixed(1)}%
+                  <span className={`font-semibold ${stats ? (stats.monthlyGrowth >= 0 ? 'text-green-400' : 'text-red-400') : ''}`}>
+                    {stats ? (stats.monthlyGrowth >= 0 ? '+' : '') + (typeof stats?.monthlyGrowth === 'number' ? stats.monthlyGrowth.toFixed(1) : '0.0') : ''}%
                   </span>
                 </div>
               </div>

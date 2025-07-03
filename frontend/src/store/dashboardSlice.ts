@@ -14,10 +14,24 @@ export const fetchDashboardStats = createAsyncThunk('dashboard/fetchDashboardSta
   };
 });
 
+const initialStats = {
+  totalClients: 0,
+  totalProjects: 0,
+  totalInvoices: 0,
+  totalRevenue: 0,
+  pendingInvoices: 0,
+  overdueInvoices: 0,
+  paidInvoices: 0,
+  monthlyRevenue: 0,
+  monthlyGrowth: 0,
+  averageInvoiceValue: 0,
+  paymentRate: 0,
+};
+
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState: {
-    stats: null as { clients: any; projects: any; invoices: any } | null,
+    stats: initialStats,
     loading: false,
     error: null as string | null,
   },
@@ -30,7 +44,53 @@ const dashboardSlice = createSlice({
       })
       .addCase(fetchDashboardStats.fulfilled, (state, action) => {
         state.loading = false;
-        state.stats = action.payload;
+        const { clients, projects, invoices } = action.payload;
+        // Defensive: always arrays
+        const safeClients = Array.isArray(clients) ? clients : [];
+        const safeProjects = Array.isArray(projects) ? projects : [];
+        const safeInvoices = Array.isArray(invoices) ? invoices : [];
+
+        // Calculate stats
+        const totalRevenue = safeInvoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
+        const paidInvoices = safeInvoices.filter(inv => inv.status === 'paid');
+        const pendingInvoices = safeInvoices.filter(inv => inv.status === 'pending');
+        const overdueInvoices = safeInvoices.filter(inv => {
+          const dueDate = new Date(inv.dueDate);
+          return inv.status === 'pending' && dueDate < new Date();
+        });
+
+        // Monthly calculations
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        const monthlyInvoices = safeInvoices.filter(inv => {
+          const invDate = new Date(inv.createdAt);
+          return invDate.getMonth() === currentMonth && invDate.getFullYear() === currentYear;
+        });
+        const monthlyRevenue = monthlyInvoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
+
+        // Previous month for growth calculation
+        const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        const prevMonthInvoices = safeInvoices.filter(inv => {
+          const invDate = new Date(inv.createdAt);
+          return invDate.getMonth() === prevMonth && invDate.getFullYear() === prevYear;
+        });
+        const prevMonthRevenue = prevMonthInvoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
+        const monthlyGrowth = prevMonthRevenue > 0 ? ((monthlyRevenue - prevMonthRevenue) / prevMonthRevenue) * 100 : 0;
+
+        state.stats = {
+          totalClients: safeClients.length,
+          totalProjects: safeProjects.length,
+          totalInvoices: safeInvoices.length,
+          totalRevenue: isNaN(totalRevenue) ? 0 : totalRevenue,
+          pendingInvoices: pendingInvoices.length,
+          overdueInvoices: overdueInvoices.length,
+          paidInvoices: paidInvoices.length,
+          monthlyRevenue: isNaN(monthlyRevenue) ? 0 : monthlyRevenue,
+          monthlyGrowth: isNaN(monthlyGrowth) ? 0 : monthlyGrowth,
+          averageInvoiceValue: safeInvoices.length > 0 ? totalRevenue / safeInvoices.length : 0,
+          paymentRate: safeInvoices.length > 0 ? (paidInvoices.length / safeInvoices.length) * 100 : 0,
+        };
       })
       .addCase(fetchDashboardStats.rejected, (state, action) => {
         state.loading = false;
