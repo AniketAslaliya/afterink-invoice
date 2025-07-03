@@ -84,6 +84,7 @@ app.use(cors({
     'http://localhost:3001',
     'http://localhost:5173',
     'http://frontend:5173',
+    'https://afterinkinvoice.vercel.app',
   ],
   credentials: true, // Allow cookies and authentication headers
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
