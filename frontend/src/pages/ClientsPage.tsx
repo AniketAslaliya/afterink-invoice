@@ -70,7 +70,7 @@ const ClientsPage: React.FC = () => {
 
   // Filter and sort clients based on search criteria
   const filteredClients = clients
-    .filter(client => {
+    .filter((client: Client) => {
       const matchesSearch = searchTerm === '' || 
         client.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         client.contactPerson.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -81,7 +81,7 @@ const ClientsPage: React.FC = () => {
       
       return matchesSearch && matchesStatus
     })
-    .sort((a, b) => {
+    .sort((a: Client, b: Client) => {
       switch (sortBy) {
         case 'company-az':
           return a.companyName.localeCompare(b.companyName)
@@ -598,7 +598,7 @@ const ClientsPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-400 text-sm font-medium">Active</p>
-              <p className="text-2xl font-bold text-white">{clients.filter(c => c.status === 'active').length}</p>
+              <p className="text-2xl font-bold text-white">{clients.filter((c: Client) => c.status === 'active').length}</p>
             </div>
             <div className="bg-green-600 p-3 rounded-xl">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -612,7 +612,7 @@ const ClientsPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-yellow-400 text-sm font-medium">Prospects</p>
-              <p className="text-2xl font-bold text-white">{clients.filter(c => c.status === 'prospect').length}</p>
+              <p className="text-2xl font-bold text-white">{clients.filter((c: Client) => c.status === 'prospect').length}</p>
             </div>
             <div className="bg-yellow-600 p-3 rounded-xl">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -627,7 +627,7 @@ const ClientsPage: React.FC = () => {
             <div>
               <p className="text-purple-400 text-sm font-medium">New This Month</p>
               <p className="text-2xl font-bold text-white">
-                {clients.filter(c => {
+                {clients.filter((c: Client) => {
                   // For demo, just show some number since we don't have creation dates
                   return true;
                 }).length}
@@ -709,7 +709,7 @@ const ClientsPage: React.FC = () => {
           
           {!loading && !error && clients.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {filteredClients.map(client => {
+              {filteredClients.map((client: Client) => {
                 const statusColors: Record<string, string> = {
                   'active': 'bg-green-900 text-green-400 border-green-700',
                   'inactive': 'bg-gray-700 text-gray-300 border-gray-600',

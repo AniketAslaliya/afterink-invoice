@@ -286,7 +286,7 @@ const ProjectsPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-400 text-sm font-medium">Active</p>
-              <p className="text-2xl font-bold text-white">{projects.filter(p => p.status === 'active').length}</p>
+              <p className="text-2xl font-bold text-white">{projects.filter((p: Project) => p.status === 'active').length}</p>
             </div>
             <div className="bg-green-600 p-3 rounded-xl">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -300,7 +300,7 @@ const ProjectsPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-yellow-400 text-sm font-medium">Planning</p>
-              <p className="text-2xl font-bold text-white">{projects.filter(p => p.status === 'planning').length}</p>
+              <p className="text-2xl font-bold text-white">{projects.filter((p: Project) => p.status === 'planning').length}</p>
             </div>
             <div className="bg-yellow-600 p-3 rounded-xl">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -314,7 +314,7 @@ const ProjectsPage: React.FC = () => {
           <div className="flex items-center justify-between">
                       <div>
               <p className="text-orange-400 text-sm font-medium">On Hold</p>
-              <p className="text-2xl font-bold text-white">{projects.filter(p => p.status === 'on-hold').length}</p>
+              <p className="text-2xl font-bold text-white">{projects.filter((p: Project) => p.status === 'on-hold').length}</p>
             </div>
             <div className="bg-orange-600 p-3 rounded-xl">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -392,7 +392,7 @@ const ProjectsPage: React.FC = () => {
           
           {!loading && !error && projects.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {projects.map(project => {
+              {projects.map((project: Project) => {
                 const statusColors: Record<string, string> = {
                   'active': 'bg-green-900 text-green-400 border-green-700',
                   'completed': 'bg-blue-900 text-blue-400 border-blue-700',

@@ -166,7 +166,7 @@ const InvoicesPage: React.FC = () => {
 
   const invoices = useAppSelector((state: any) => state.invoices.invoices);
   const loading = useAppSelector((state: any) => state.invoices.loading);
-  const error = useAppSelector((state: any) => state.invoices.error);
+  const [error, setError] = useState<string | null>(null);
   const dispatch = useAppDispatch();
 
   // Fetch invoices from backend on mount
@@ -295,7 +295,11 @@ const InvoicesPage: React.FC = () => {
         throw new Error('Unexpected API response structure. Check console for details.');
       }
       
-      dispatch(fetchInvoices());
+      dispatch(fetchInvoices(invoices.map((inv: Invoice) => 
+        inv._id === invoiceObject._id 
+          ? { ...inv, ...invoiceObject }
+          : inv
+      )));
       setShowAddModal(false)
       // Reset form
       setNewInvoice({
@@ -653,7 +657,7 @@ const InvoicesPage: React.FC = () => {
 
   // Filter and sort invoices
   const filteredInvoices = invoices
-    .filter(invoice => {
+    .filter((invoice: Invoice) => {
       const matchesSearch = searchTerm === '' || 
         invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         invoice.client?.companyName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -669,7 +673,7 @@ const InvoicesPage: React.FC = () => {
       
       return matchesSearch && matchesStatus && matchesDate;
     })
-    .sort((a, b) => {
+    .sort((a: Invoice, b: Invoice) => {
       switch (sortBy) {
         case 'amount-high':
           return b.totalAmount - a.totalAmount;
@@ -701,7 +705,7 @@ const InvoicesPage: React.FC = () => {
       await apiPost(`/invoices/${invoice._id}/payment`, paymentInfo);
       
       // Update local state
-      dispatch(fetchInvoices(invoices.map(inv => 
+      dispatch(fetchInvoices(invoices.map((inv: Invoice) => 
         inv._id === invoice._id 
           ? { ...inv, ...paymentInfo }
           : inv
@@ -1403,7 +1407,7 @@ const InvoicesPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-400 text-sm font-medium">Paid</p>
-              <p className="text-2xl font-bold text-white">{invoices.filter(inv => inv.status === 'paid').length}</p>
+              <p className="text-2xl font-bold text-white">{invoices.filter((inv: Invoice) => inv.status === 'paid').length}</p>
             </div>
             <div className="bg-green-600 p-3 rounded-xl">
               <CheckCircle className="text-white" size={24} />
@@ -1415,7 +1419,7 @@ const InvoicesPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-yellow-400 text-sm font-medium">Pending</p>
-              <p className="text-2xl font-bold text-white">{invoices.filter(inv => inv.status === 'pending').length}</p>
+              <p className="text-2xl font-bold text-white">{invoices.filter((inv: Invoice) => inv.status === 'pending').length}</p>
             </div>
             <div className="bg-yellow-600 p-3 rounded-xl">
               <Clock className="text-white" size={24} />
@@ -1428,7 +1432,7 @@ const InvoicesPage: React.FC = () => {
             <div>
               <p className="text-red-400 text-sm font-medium">Overdue</p>
               <p className="text-2xl font-bold text-white">
-                {invoices.filter(inv => {
+                {invoices.filter((inv: Invoice) => {
                   const dueDate = new Date(inv.dueDate);
                   return inv.status === 'pending' && dueDate < new Date();
                 }).length}
@@ -1515,7 +1519,7 @@ const InvoicesPage: React.FC = () => {
           
           {!loading && !error && filteredInvoices.length > 0 && (
             <div className="space-y-4">
-              {filteredInvoices.map(inv => {
+              {filteredInvoices.map((inv: Invoice) => {
                 const isOverdue = new Date(inv.dueDate) < new Date() && inv.status === 'pending';
                 const statusColors: Record<string, string> = {
                   'paid': 'bg-green-900 text-green-400 border-green-700',
