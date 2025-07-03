@@ -368,9 +368,17 @@ const InvoicesPage: React.FC = () => {
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    // Use appropriate locale based on currency
+    const locale = invoiceCustomization.currency === 'INR' ? 'en-IN' : 
+                   invoiceCustomization.currency === 'USD' ? 'en-US' :
+                   invoiceCustomization.currency === 'EUR' ? 'en-DE' :
+                   invoiceCustomization.currency === 'GBP' ? 'en-GB' : 'en-IN';
+    
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: invoiceCustomization.currency
+      currency: invoiceCustomization.currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -824,8 +832,16 @@ const InvoicesPage: React.FC = () => {
 
       {/* Add Invoice Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto modal-backdrop">
-          <div className="bg-gray-900 rounded-xl p-8 w-full max-w-4xl shadow-lg relative mx-4 my-8 border border-gray-700 modal-content">
+        <div 
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto modal-backdrop"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowAddModal(false);
+            }
+          }}
+        >
+          <div className="bg-gray-900 rounded-xl p-8 w-full max-w-4xl shadow-lg relative mx-4 my-8 border border-gray-700 modal-content max-h-[90vh] overflow-y-auto"
+               onClick={(e) => e.stopPropagation()}>
             <button 
               className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none" 
               onClick={() => setShowAddModal(false)}
@@ -1644,8 +1660,16 @@ const InvoicesPage: React.FC = () => {
 
       {/* Payment Update Modal */}
       {showPaymentModal && selectedInvoice && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto">
-          <div className="bg-gray-900 rounded-xl p-8 w-full max-w-2xl shadow-lg relative mx-4 my-8 border border-gray-700">
+        <div 
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto modal-backdrop"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowPaymentModal(false);
+            }
+          }}
+        >
+          <div className="bg-gray-900 rounded-xl p-8 w-full max-w-2xl shadow-lg relative mx-4 my-8 border border-gray-700 max-h-[90vh] overflow-y-auto"
+               onClick={(e) => e.stopPropagation()}>
             <button 
               className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none" 
               onClick={() => setShowPaymentModal(false)}
@@ -1787,8 +1811,16 @@ const InvoicesPage: React.FC = () => {
 
       {/* Invoice View Modal */}
       {showViewModal && selectedInvoice && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto modal-backdrop">
-          <div className="bg-white rounded-2xl w-full max-w-5xl shadow-2xl relative mx-4 my-8 max-h-[95vh] overflow-y-auto modal-content">
+        <div 
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto modal-backdrop"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowViewModal(false);
+            }
+          }}
+        >
+          <div className="bg-white rounded-2xl w-full max-w-5xl shadow-2xl relative mx-4 my-8 max-h-[90vh] overflow-y-auto modal-content"
+               onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-white z-10 px-8 py-4 border-b border-gray-200 rounded-t-2xl flex justify-between items-center">
               <div>
                 <h2 className="text-2xl font-bold text-gray-800">Invoice Preview</h2>
@@ -1843,8 +1875,16 @@ const InvoicesPage: React.FC = () => {
 
       {/* Invoice Edit Modal */}
       {showEditModal && selectedInvoice && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto modal-backdrop">
-          <div className="bg-gray-900 rounded-xl p-8 w-full max-w-4xl shadow-lg relative mx-4 my-8 border border-gray-700 modal-content">
+        <div 
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto modal-backdrop"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowEditModal(false);
+            }
+          }}
+        >
+          <div className="bg-gray-900 rounded-xl p-8 w-full max-w-4xl shadow-lg relative mx-4 my-8 border border-gray-700 modal-content max-h-[90vh] overflow-y-auto"
+               onClick={(e) => e.stopPropagation()}>
             <button 
               className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none" 
               onClick={() => setShowEditModal(false)}
