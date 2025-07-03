@@ -1,7 +1,7 @@
 // Simple API utility for frontend
 // Updated for Vercel deployment - Force new commit
 
-const API_BASE_URL = 'https://afterink-invoice.onrender.com/api'; // Production API URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://afterink-invoice.onrender.com/api'; // Use environment variable or fallback
 
 function getAuthToken() {
   return localStorage.getItem('token');
