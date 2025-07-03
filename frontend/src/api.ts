@@ -1,8 +1,6 @@
 // Simple API utility for frontend
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://afterink-invoice.onrender.com/api'  // Your actual Render backend URL
-  : '/api'; // Use Vite proxy for local/dev
+const API_BASE_URL = 'https://afterink-invoice.onrender.com/api'; // Production API URL
 
 function getAuthToken() {
   return localStorage.getItem('token');
