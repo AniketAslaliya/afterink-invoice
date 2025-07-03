@@ -1,4 +1,5 @@
 // Simple API utility for frontend
+// Updated for Vercel deployment - Force new commit
 
 const API_BASE_URL = 'https://afterink-invoice.onrender.com/api'; // Production API URL
 
