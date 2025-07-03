@@ -149,6 +149,7 @@ router.put('/:id',
   authenticate, 
   authorizeOwnerOrAdmin(),
   [
+    body('invoiceNumber').optional().trim().notEmpty().withMessage('Invoice number cannot be empty'),
     body('items').optional().isArray({ min: 1 }),
     body('items.*.description').optional().trim().notEmpty(),
     body('items.*.quantity').optional().isFloat({ min: 0.01 }),
@@ -165,6 +166,23 @@ router.put('/:id',
           timestamp: new Date().toISOString(),
         } as IApiResponse);
       }
+
+      // Check if invoice number is being updated and if it's unique
+      if (req.body.invoiceNumber) {
+        const existingInvoice = await Invoice.findOne({ 
+          invoiceNumber: req.body.invoiceNumber,
+          _id: { $ne: req.params.id } // Exclude current invoice from check
+        });
+        
+        if (existingInvoice) {
+          return res.status(400).json({
+            success: false,
+            error: { message: 'Invoice number already exists. Please choose a different number.' },
+            timestamp: new Date().toISOString(),
+          } as IApiResponse);
+        }
+      }
+
       const invoice = await Invoice.findByIdAndUpdate(req.params.id, req.body, { new: true });
       if (!invoice) {
         return res.status(404).json({

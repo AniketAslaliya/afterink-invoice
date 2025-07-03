@@ -2001,10 +2001,10 @@ const InvoicesPage: React.FC = () => {
                     type="text"
                     value={newInvoice.invoiceNumber}
                     onChange={(e) => setNewInvoice({ ...newInvoice, invoiceNumber: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-                    disabled
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    placeholder="Enter invoice number"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Invoice number cannot be changed</p>
+                  <p className="text-xs text-gray-400 mt-1">Make sure the invoice number is unique</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
