@@ -191,9 +191,9 @@ const ProjectsPage: React.FC = () => {
 
   const formatCurrency = (amount?: number) => {
     if (!amount) return 'N/A'
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'INR'
     }).format(amount)
   }
 

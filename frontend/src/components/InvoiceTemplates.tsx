@@ -248,7 +248,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   // Format currency: always use INR for Indian clients
   const formatCurrency = (amount: number) => {
     const currency = isIndianClient ? 'INR' : (customization.currency || 'USD');
-    return new Intl.NumberFormat('en-US', {
+    const locale = isIndianClient ? 'en-IN' : 'en-US';
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency,
     }).format(amount);
