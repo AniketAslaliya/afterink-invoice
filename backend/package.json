@@ -29,7 +29,8 @@
     "nodemailer": "^6.9.7",
     "stripe": "^14.9.0",
     "typescript": "^5.3.3",
-    "@types/node": "^20.19.2"
+    "@types/node": "^20.19.2",
+    "@types/pdfkit": "^0.14.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
