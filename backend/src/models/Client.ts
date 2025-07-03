@@ -109,6 +109,11 @@ const clientSchema = new Schema<IClientDocument>({
     },
     default: 'active',
   },
+  customClientId: {
+    type: String,
+    unique: true,
+    trim: true,
+  },
   createdBy: {
     type: Schema.Types.ObjectId,
     ref: 'User',

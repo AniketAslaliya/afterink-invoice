@@ -24,10 +24,18 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
     const projects = await Project.find(query)
       .skip((page - 1) * limit)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .populate('clientId');
+    // Remap clientId to client for each project
+    const projectsWithClient = projects.map(project => {
+      const obj = project.toObject() as Record<string, any>;
+      obj.client = obj.clientId;
+      delete obj.clientId;
+      return obj;
+    });
     res.json({
       success: true,
-      data: { projects, pagination: { page, limit, total, pages: Math.ceil(total / limit) } },
+      data: { projects: projectsWithClient, pagination: { page, limit, total, pages: Math.ceil(total / limit) } },
       timestamp: new Date().toISOString(),
     } as IApiResponse);
   } catch (error) {

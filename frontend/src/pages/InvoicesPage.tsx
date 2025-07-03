@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Search, Filter, Trash2, Download, Palette, Save, FileText, CheckCircle, Clock, AlertCircle, Eye, Edit, DollarSign } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../api';
+import { InvoicePreview, defaultTemplates } from '../components/InvoiceTemplates';
+import { useAppSelector, useAppDispatch } from '../store';
+import { fetchInvoices } from '../store/invoicesSlice';
 
 // Type for Invoice
 interface Invoice {
@@ -12,6 +15,10 @@ interface Invoice {
   dueDate: string;
   client?: Client;
   project?: Project;
+  items?: InvoiceItem[];
+  notes?: string;
+  terms?: string;
+  createdAt?: string;
 }
 
 interface InvoiceItem {
@@ -74,58 +81,11 @@ interface InvoiceCustomization {
   showCompanyDetails: boolean;
   footerText: string;
   currency: string;
+  showPaymentTerms?: boolean;
+  paymentTermsText?: string;
+  dateFormat?: string;
+  termsAndConditions?: string;
 }
-
-const defaultTemplates: InvoiceTemplate[] = [
-  {
-    id: 'modern-minimal',
-    name: 'Modern Minimal',
-    description: 'Clean, minimalist design with subtle colors',
-    colors: {
-      primary: '#2563eb',
-      secondary: '#64748b',
-      text: '#1e293b',
-      background: '#ffffff',
-      accent: '#f1f5f9'
-    },
-    fonts: {
-          heading: 'Poppins, sans-serif',
-    body: 'Inter, sans-serif'
-    }
-  },
-  {
-    id: 'professional-corporate',
-    name: 'Professional Corporate',
-    description: 'Traditional business style with strong branding',
-    colors: {
-      primary: '#1f2937',
-      secondary: '#374151',
-      text: '#111827',
-      background: '#ffffff',
-      accent: '#f9fafb'
-    },
-    fonts: {
-      heading: 'Georgia, serif',
-      body: 'Arial, sans-serif'
-    }
-  },
-  {
-    id: 'creative-modern',
-    name: 'Creative Modern',
-    description: 'Vibrant and creative with modern typography',
-    colors: {
-      primary: '#7c3aed',
-      secondary: '#a855f7',
-      text: '#1f2937',
-      background: '#ffffff',
-      accent: '#faf5ff'
-    },
-    fonts: {
-      heading: 'Poppins, sans-serif',
-      body: 'Roboto, sans-serif'
-    }
-  }
-];
 
 const defaultCustomization: InvoiceCustomization = {
   template: 'indian-professional',
@@ -156,9 +116,6 @@ const defaultCustomization: InvoiceCustomization = {
  * Allows searching, filtering, and adding new invoices.
  */
 const InvoicesPage: React.FC = () => {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
@@ -207,10 +164,14 @@ const InvoicesPage: React.FC = () => {
     return saved ? JSON.parse(saved) : defaultCustomization;
   });
 
+  const invoices = useAppSelector((state: any) => state.invoices.invoices);
+  const loading = useAppSelector((state: any) => state.invoices.loading);
+  const error = useAppSelector((state: any) => state.invoices.error);
+  const dispatch = useAppDispatch();
 
   // Fetch invoices from backend on mount
   useEffect(() => {
-    fetchInvoices()
+    dispatch(fetchInvoices());
     fetchClients()
     fetchProjects()
     
@@ -245,26 +206,6 @@ const InvoicesPage: React.FC = () => {
       sessionStorage.removeItem('preselectedProject');
     }
   }, [])
-
-  const fetchInvoices = async () => {
-    try {
-      setLoading(true)
-      const res = await apiGet('/invoices')
-      setInvoices(res.data.invoices || [])
-      setError(null)
-    } catch (err: any) {
-      console.error('Fetch invoices error:', err)
-      // Check if it's an authentication error
-      if (err.message.includes('Access token') || err.message.includes('Failed to fetch') || err.message.includes('401')) {
-        setError('authentication')
-      } else {
-        setError(err.message)
-      }
-      setInvoices([]) // Set empty array so we can show "no invoices" message
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const fetchClients = async () => {
     try {
@@ -354,7 +295,7 @@ const InvoicesPage: React.FC = () => {
         throw new Error('Unexpected API response structure. Check console for details.');
       }
       
-      setInvoices([invoiceObject, ...invoices])
+      dispatch(fetchInvoices());
       setShowAddModal(false)
       // Reset form
       setNewInvoice({
@@ -760,11 +701,11 @@ const InvoicesPage: React.FC = () => {
       await apiPost(`/invoices/${invoice._id}/payment`, paymentInfo);
       
       // Update local state
-      setInvoices(invoices.map(inv => 
+      dispatch(fetchInvoices(invoices.map(inv => 
         inv._id === invoice._id 
           ? { ...inv, ...paymentInfo }
           : inv
-      ));
+      )));
       
       setShowPaymentModal(false);
       setPaymentData({
@@ -823,7 +764,7 @@ const InvoicesPage: React.FC = () => {
       await apiPut(`/api/invoices/${selectedInvoice._id}`, invoiceData);
       
       // Refresh invoices from server to get updated data
-      await fetchInvoices();
+      dispatch(fetchInvoices());
       
       setShowEditModal(false);
       setSelectedInvoice(null);
@@ -1850,146 +1791,32 @@ const InvoicesPage: React.FC = () => {
                 </button>
               </div>
             </div>
-            
-            {/* Professional A4 Invoice Template */}
             <div className="p-12 bg-white" style={{ fontFamily: invoiceCustomization.fonts.body }}>
-              {/* Header Section */}
-              <div className="flex justify-between items-start mb-12">
-                <div className="flex-1">
-                  {invoiceCustomization.showLogo && invoiceCustomization.companyLogo && (
-                    <img src={invoiceCustomization.companyLogo} alt="Company Logo" className="h-20 mb-6" />
-                  )}
-                  <h1 className="text-4xl font-bold mb-4" style={{ 
-                    color: invoiceCustomization.colors.primary,
-                    fontFamily: invoiceCustomization.fonts.heading 
-                  }}>
-                    {invoiceCustomization.companyName}
-                  </h1>
-                  <div className="text-gray-600 leading-relaxed">
-                    <p className="mb-1">{invoiceCustomization.companyAddress}</p>
-                    <p className="mb-1">{invoiceCustomization.companyPhone}</p>
-                    <p className="mb-1">{invoiceCustomization.companyEmail}</p>
-                    {invoiceCustomization.companyWebsite && <p>{invoiceCustomization.companyWebsite}</p>}
-                  </div>
-                </div>
-                
-                <div className="text-right">
-                  <div className="bg-gray-50 rounded-xl p-6 border-l-4" style={{ borderLeftColor: invoiceCustomization.colors.primary }}>
-                    <h2 className="text-3xl font-bold text-gray-800 mb-4" style={{ fontFamily: invoiceCustomization.fonts.heading }}>
-                      INVOICE
-                    </h2>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 font-medium">Invoice Number:</span>
-                        <span className="font-semibold">#{selectedInvoice.invoiceNumber}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 font-medium">Issue Date:</span>
-                        <span className="font-semibold">{new Date().toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 font-medium">Due Date:</span>
-                        <span className="font-semibold">{new Date(selectedInvoice.dueDate).toLocaleDateString()}</span>
-                      </div>
-                      <div className="mt-4">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          selectedInvoice.status === 'paid' ? 'bg-green-100 text-green-800' :
-                          selectedInvoice.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {selectedInvoice.status.toUpperCase()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bill To Section */}
-              <div className="mb-10">
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h3 className="text-xl font-bold mb-4 text-gray-800" style={{ color: invoiceCustomization.colors.primary }}>
-                    Bill To:
-                  </h3>
-                  <div className="text-gray-700">
-                    <p className="text-xl font-semibold mb-2">{selectedInvoice.client?.companyName || 'Unknown Client'}</p>
-                    <p className="mb-1">{selectedInvoice.client?.contactPerson?.firstName} {selectedInvoice.client?.contactPerson?.lastName}</p>
-                    <p className="mb-1">{selectedInvoice.client?.contactPerson?.email}</p>
-                    {selectedInvoice.project && (
-                      <p className="mt-3 text-sm">
-                        <span className="font-medium">Project: </span>
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">{selectedInvoice.project.name}</span>
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Invoice Items Table */}
-              <div className="mb-10">
-                <table className="w-full border-collapse bg-white rounded-xl overflow-hidden shadow-sm">
-              <thead>
-                    <tr style={{ backgroundColor: invoiceCustomization.colors.primary }}>
-                      <th className="px-6 py-4 text-left text-white font-semibold">Description</th>
-                      <th className="px-6 py-4 text-center text-white font-semibold">Qty</th>
-                      <th className="px-6 py-4 text-right text-white font-semibold">Rate</th>
-                      <th className="px-6 py-4 text-right text-white font-semibold">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                    <tr className="border-b border-gray-200">
-                      <td className="px-6 py-4 text-gray-800">Professional Services</td>
-                      <td className="px-6 py-4 text-center text-gray-800">1</td>
-                      <td className="px-6 py-4 text-right text-gray-800">{formatCurrency(selectedInvoice.totalAmount)}</td>
-                      <td className="px-6 py-4 text-right font-semibold text-gray-800">{formatCurrency(selectedInvoice.totalAmount)}</td>
-                  </tr>
-              </tbody>
-            </table>
-              </div>
-
-              {/* Total Section */}
-              <div className="flex justify-end mb-10">
-                <div className="w-80">
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <div className="flex justify-between py-2 text-gray-600">
-                      <span>Subtotal:</span>
-                      <span>{formatCurrency(selectedInvoice.totalAmount)}</span>
-                    </div>
-                    <div className="flex justify-between py-2 text-gray-600">
-                      <span>Tax (0%):</span>
-                      <span>{formatCurrency(0)}</span>
-                    </div>
-                    <hr className="my-4" />
-                    <div className="flex justify-between py-3 text-xl font-bold" style={{ color: invoiceCustomization.colors.primary }}>
-                      <span>Total:</span>
-                      <span>{formatCurrency(selectedInvoice.totalAmount)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Terms & Footer */}
-              <div className="border-t border-gray-200 pt-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                  <div>
-                    <h4 className="font-semibold text-gray-800 mb-3">Payment Terms:</h4>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      Payment is due within 30 days of invoice date. Late payments may incur additional charges.
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-800 mb-3">Payment Methods:</h4>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      Bank Transfer, UPI, PayPal, Credit/Debit Cards accepted.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="text-center py-6 border-t border-gray-200">
-                  <p className="text-gray-600 mb-2">{invoiceCustomization.footerText}</p>
-                  <p className="text-sm text-gray-500">Generated by {invoiceCustomization.companyName}</p>
-                </div>
-              </div>
+              <InvoicePreview
+                invoice={{
+                  _id: selectedInvoice._id,
+                  invoiceNumber: selectedInvoice.invoiceNumber,
+                  client: selectedInvoice.client || { companyName: 'Unknown Client', contactPerson: { firstName: '', lastName: '', email: '' }, address: { street: '', city: '', state: '', zipCode: '', country: '' } },
+                  project: selectedInvoice.project || undefined,
+                  items: selectedInvoice.items || [{ description: 'Professional Services', quantity: 1, rate: selectedInvoice.totalAmount, amount: selectedInvoice.totalAmount, taxRate: 0 }],
+                  subtotal: selectedInvoice.totalAmount || 0,
+                  taxAmount: 0,
+                  totalAmount: selectedInvoice.totalAmount || 0,
+                  dueDate: selectedInvoice.dueDate,
+                  status: selectedInvoice.status || 'draft',
+                  notes: selectedInvoice.notes || '',
+                  terms: selectedInvoice.terms || '',
+                  createdAt: selectedInvoice.createdAt || new Date().toISOString(),
+                }}
+                customization={{
+                  ...invoiceCustomization,
+                  showPaymentTerms: invoiceCustomization.showPaymentTerms !== undefined ? invoiceCustomization.showPaymentTerms : true,
+                  paymentTermsText: invoiceCustomization.paymentTermsText || 'Payment is due within 30 days of invoice date. Late payments may incur additional charges.',
+                  dateFormat: invoiceCustomization.dateFormat || 'DD/MM/YYYY',
+                  termsAndConditions: invoiceCustomization.termsAndConditions || '',
+                }}
+                template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
+              />
             </div>
           </div>
         </div>

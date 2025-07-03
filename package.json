@@ -33,7 +33,11 @@
   "author": "Afterink Studio",
   "license": "MIT",
   "dependencies": {
+    "@reduxjs/toolkit": "^2.8.2",
     "@types/pdfkit": "^0.14.0",
-    "pdfkit": "^0.17.1"
+    "html2pdf.js": "^0.10.3",
+    "pdfkit": "^0.17.1",
+    "qrcode.react": "^4.2.0",
+    "react-redux": "^9.2.0"
   }
 }

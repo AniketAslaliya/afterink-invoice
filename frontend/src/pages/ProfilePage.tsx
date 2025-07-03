@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { User, Mail, MapPin, Save, Loader } from 'lucide-react';
-import { apiGet, apiPost } from '../api';
+import { apiGet, apiPost, apiPut } from '../api';
 import { useAuthStore } from '../store/authStore';
 
 interface UserProfile {
@@ -18,11 +18,13 @@ interface UserProfile {
   role: string;
   createdAt: string;
   updatedAt: string;
+  avatar?: string;
 }
 
 const ProfilePage: React.FC = () => {
   const { user: authUser } = useAuthStore();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [avatar, setAvatar] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +54,7 @@ const ProfilePage: React.FC = () => {
       }
       
       setProfile(profileData);
+      setAvatar(profileData.avatar || null);
     } catch (err: any) {
       console.error('Profile fetch error:', err);
       if (err.message.includes('Access token') || err.message.includes('Failed to fetch') || err.message.includes('401')) {
@@ -71,14 +74,23 @@ const ProfilePage: React.FC = () => {
     if (success) setSuccess(null);
   };
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setAvatar(ev.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile) return;
-    
     setSaving(true);
     setError(null);
     setSuccess(null);
-    
     try {
       const updateData = {
         firstName: profile.firstName,
@@ -90,21 +102,17 @@ const ProfilePage: React.FC = () => {
         city: profile.city || '',
         state: profile.state || '',
         zipCode: profile.zipCode || '',
-        country: profile.country || ''
+        country: profile.country || '',
+        avatar: avatar || '',
       };
-      
-      await apiPost('/users/profile', updateData);
+      await apiPut('/users/profile', updateData);
       setSuccess('✅ Profile updated successfully!');
-      
-      // Update auth store if needed
       if (authUser) {
         authUser.firstName = profile.firstName;
         authUser.lastName = profile.lastName;
         authUser.email = profile.email;
       }
-      
     } catch (err: any) {
-      console.error('Profile update error:', err);
       setError(err.message || 'Failed to update profile');
     } finally {
       setSaving(false);
@@ -172,254 +180,158 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-gray-800 rounded-xl shadow-xl border border-gray-700">
-        <div className="p-8">
-          {/* Header */}
-          <div className="flex items-center space-x-4 mb-8">
-            <div className="bg-blue-600 rounded-full p-4">
-              <User className="h-8 w-8 text-white" />
+      <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700">
+        <div className="p-10 flex flex-col md:flex-row gap-10 items-center md:items-start">
+          {/* Avatar Section */}
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative">
+              <img
+                src={avatar || '/default-avatar.png'}
+                alt="Avatar"
+                className="w-32 h-32 rounded-full border-4 border-blue-500 object-cover shadow-lg"
+              />
+              <label className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-2 cursor-pointer shadow-lg hover:bg-blue-700 transition-colors">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+                <span className="text-xs font-bold">Edit</span>
+              </label>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-100">My Profile</h1>
-              <p className="text-gray-400">Manage your account information</p>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-white">{profile.firstName} {profile.lastName}</h2>
+              <p className="text-gray-400">{profile.email}</p>
+              <p className="text-gray-400 text-sm">{profile.role}</p>
             </div>
           </div>
-
-          {/* Success/Error Messages */}
-          {success && (
-            <div className="mb-6 p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
-              <p className="text-green-400">{success}</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="mb-6 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
-              <p className="text-red-400">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Personal Information */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-100 mb-4 flex items-center">
-                <User className="h-5 w-5 mr-2" />
-                Personal Information
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    First Name
-                  </label>
-          <input
-                    type="text"
-            name="firstName"
-            value={profile.firstName || ''}
-            onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter first name"
-                    required
-          />
-        </div>
-        <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Last Name
-                  </label>
-          <input
-                    type="text"
-            name="lastName"
-            value={profile.lastName || ''}
-            onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter last name"
-                    required
-          />
-        </div>
+          {/* Profile Form */}
+          <form className="flex-1 space-y-6" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-gray-300 mb-1">First Name</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  value={profile.firstName}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-gray-300 mb-1">Last Name</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={profile.lastName}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                  required
+                />
               </div>
             </div>
-
-            {/* Contact Information */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-100 mb-4 flex items-center">
-                <Mail className="h-5 w-5 mr-2" />
-                Contact Information
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Email Address
-                  </label>
-          <input
-                    type="email"
-            name="email"
-            value={profile.email || ''}
-            onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter email address"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Phone Number
-                  </label>
-                  <div className="flex space-x-2">
-                    <select
-                      name="countryCode"
-                      value={profile.countryCode || '+91'}
-                      onChange={handleChange}
-                      className="w-28 px-3 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    >
-                      <option value="+91">🇮🇳 +91</option>
-                      <option value="+1">🇺🇸 +1</option>
-                      <option value="+44">🇬🇧 +44</option>
-                      <option value="+61">🇦🇺 +61</option>
-                      <option value="+33">🇫🇷 +33</option>
-                      <option value="+49">🇩🇪 +49</option>
-                      <option value="+81">🇯🇵 +81</option>
-                      <option value="+86">🇨🇳 +86</option>
-                      <option value="+971">🇦🇪 +971</option>
-                      <option value="+65">🇸🇬 +65</option>
-                    </select>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={profile.phone || ''}
-                      onChange={handleChange}
-                      className="flex-1 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter phone number (without country code)"
-                    />
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-gray-300 mb-1">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={profile.email}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-gray-300 mb-1">Phone</label>
+                <input
+                  type="text"
+                  name="phone"
+                  value={profile.phone || ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                />
               </div>
             </div>
-
-            {/* Address Information */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-100 mb-4 flex items-center">
-                <MapPin className="h-5 w-5 mr-2" />
-                Address Information
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Street Address
-                  </label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={profile.address || ''}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter street address"
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      City
-                    </label>
-                    <input
-                      type="text"
-                      name="city"
-                      value={profile.city || ''}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter city"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      State
-                    </label>
-                    <input
-                      type="text"
-                      name="state"
-                      value={profile.state || ''}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter state"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      ZIP Code
-                    </label>
-                    <input
-                      type="text"
-                      name="zipCode"
-                      value={profile.zipCode || ''}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter ZIP"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Country
-                  </label>
-                  <input
-                    type="text"
-                    name="country"
-                    value={profile.country || ''}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter country"
-                  />
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-gray-300 mb-1">Address</label>
+                <input
+                  type="text"
+                  name="address"
+                  value={profile.address || ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-300 mb-1">City</label>
+                <input
+                  type="text"
+                  name="city"
+                  value={profile.city || ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                />
               </div>
             </div>
-
-            {/* Account Info (Read-only) */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-100 mb-4">Account Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Role
-                  </label>
-                  <input
-                    type="text"
-                    value={profile.role}
-                    className="w-full px-4 py-3 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 cursor-not-allowed"
-                    disabled
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Member Since
-                  </label>
-                  <input
-                    type="text"
-                    value={new Date(profile.createdAt).toLocaleDateString()}
-                    className="w-full px-4 py-3 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 cursor-not-allowed"
-                    disabled
-          />
-        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-gray-300 mb-1">State</label>
+                <input
+                  type="text"
+                  name="state"
+                  value={profile.state || ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-300 mb-1">Zip Code</label>
+                <input
+                  type="text"
+                  name="zipCode"
+                  value={profile.zipCode || ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                />
               </div>
             </div>
-
-            {/* Submit Button */}
-            <div className="flex justify-end pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-gray-300 mb-1">Country</label>
+                <input
+                  type="text"
+                  name="country"
+                  value={profile.country || ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                />
+              </div>
+              <div></div>
+            </div>
+            <div className="flex justify-end">
               <button
                 type="submit"
+                className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
                 disabled={saving}
-                className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {saving ? (
-                  <>
-                    <Loader className="h-4 w-4 animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4" />
-                    <span>Save Changes</span>
-                  </>
-                )}
-        </button>
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
             </div>
-      </form>
+            {success && (
+              <div className="mt-4 p-3 bg-green-900/20 border border-green-500/30 rounded-lg text-green-400">
+                {success}
+              </div>
+            )}
+            {error && (
+              <div className="mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded-lg text-red-400">
+                {error}
+              </div>
+            )}
+          </form>
         </div>
       </div>
     </div>

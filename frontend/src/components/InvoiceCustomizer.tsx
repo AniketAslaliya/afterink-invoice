@@ -45,6 +45,7 @@ export interface InvoiceCustomization {
   footerText: string;
   currency: string;
   dateFormat: string;
+  termsAndConditions?: string;
 }
 
 const defaultTemplates: InvoiceTemplate[] = [
@@ -137,8 +138,24 @@ const InvoiceCustomizer: React.FC<InvoiceCustomizerProps> = ({
   onSave, 
   initialCustomization 
 }) => {
+  // Fetch global terms from localStorage (set by settings page)
+  let globalTerms = '';
+  try {
+    const settings = JSON.parse(localStorage.getItem('settings') || '{}');
+    globalTerms = settings.termsAndConditions || '';
+  } catch {}
+
   const [customization, setCustomization] = useState<InvoiceCustomization>(
-    initialCustomization || defaultCustomization
+    initialCustomization
+      ? {
+          ...defaultCustomization,
+          ...initialCustomization,
+          paymentTermsText: initialCustomization.paymentTermsText || globalTerms || defaultCustomization.paymentTermsText,
+        }
+      : {
+          ...defaultCustomization,
+          paymentTermsText: globalTerms || defaultCustomization.paymentTermsText,
+        }
   );
   const [activeTab, setActiveTab] = useState('template');
   const [showPreview, setShowPreview] = useState(false);
@@ -472,6 +489,21 @@ const InvoiceCustomizer: React.FC<InvoiceCustomizerProps> = ({
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-gray-100"
                     rows={3}
                   />
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 mb-2">Terms & Conditions (editable for this invoice):</label>
+                  <textarea
+                    value={customization.termsAndConditions || globalTerms}
+                    onChange={(e) => setCustomization(prev => ({
+                      ...prev,
+                      termsAndConditions: e.target.value
+                    }))}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-gray-100"
+                    rows={4}
+                    placeholder="Enter terms & conditions for this invoice or leave blank to use global default."
+                  />
+                  <p className="text-xs text-gray-400 mt-1">If left blank, the global default from settings will be used.</p>
                 </div>
 
                 <div>

@@ -41,6 +41,7 @@ export interface IClient {
   notes?: string;
   tags: string[];
   status: 'active' | 'inactive';
+  customClientId: string;
   createdBy: Types.ObjectId | string;
   createdAt?: Date;
   updatedAt?: Date;

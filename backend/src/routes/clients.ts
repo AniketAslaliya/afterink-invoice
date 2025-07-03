@@ -121,6 +121,18 @@ router.post('/',
         status: req.body.status || 'active'
       };
       
+      // Generate customClientId
+      const firstLetter = (req.body.companyName?.[0] || 'x').toLowerCase();
+      const prefix = `a${firstLetter}`;
+      // Find latest client with this prefix
+      const latestClient = await Client.findOne({ customClientId: { $regex: `^${prefix}` } }).sort({ customClientId: -1 });
+      let nextNumber = 1;
+      if (latestClient && latestClient.customClientId) {
+        const currentNumber = parseInt(latestClient.customClientId.replace(prefix, ''), 10);
+        if (!isNaN(currentNumber)) nextNumber = currentNumber + 1;
+      }
+      clientData.customClientId = `${prefix}${nextNumber.toString().padStart(5, '0')}`;
+
       console.log('Creating client with data:', clientData);
       
       const client = new Client(clientData);

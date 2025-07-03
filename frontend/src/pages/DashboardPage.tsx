@@ -72,10 +72,11 @@ const DashboardPage: React.FC = () => {
   const [recentInvoices, setRecentInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [refreshKey]);
 
   const fetchDashboardData = async () => {
     try {

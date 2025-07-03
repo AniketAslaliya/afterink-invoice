@@ -30,6 +30,7 @@ import userRoutes from './routes/users';
 import clientRoutes from './routes/clients';
 import invoiceRoutes from './routes/invoices';
 import projectRoutes from './routes/projects';
+import settingsRoutes from './routes/settings';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -78,7 +79,12 @@ app.use(limiter);
  * Supports multiple origins and includes credentials for authentication.
  */
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173',
+    'http://frontend:5173',
+  ],
   credentials: true, // Allow cookies and authentication headers
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
@@ -127,6 +133,7 @@ app.use('/api/users', userRoutes);         // User management
 app.use('/api/clients', clientRoutes);     // Client management
 app.use('/api/invoices', invoiceRoutes);   // Invoice management
 app.use('/api/projects', projectRoutes);   // Project management
+app.use('/api/settings', settingsRoutes);   // Settings management
 
 /**
  * API Documentation Endpoint

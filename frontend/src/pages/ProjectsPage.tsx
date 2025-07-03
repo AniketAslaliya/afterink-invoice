@@ -147,6 +147,10 @@ const ProjectsPage: React.FC = () => {
   }
 
   const handleEditProject = (project: Project) => {
+    if (!project || !project.client || !project.client._id) {
+      alert('Project or client information is missing.');
+      return;
+    }
     setSelectedProject(project)
     setNewProject({
       name: project.name,
@@ -186,14 +190,15 @@ const ProjectsPage: React.FC = () => {
   }
 
   const handleCreateInvoice = (project: Project) => {
-    // Store project data in sessionStorage for the invoices page
+    if (!project || !project._id || !project.client || !project.client._id) {
+      alert('Project or client information is missing.');
+      return;
+    }
     sessionStorage.setItem('preselectedProject', JSON.stringify({
       id: project._id,
       name: project.name,
       clientId: project.client._id
     }))
-    
-    // Navigate to invoices page
     window.location.href = '/invoices'
   }
 
@@ -426,10 +431,22 @@ const ProjectsPage: React.FC = () => {
                   'planning': 'bg-yellow-900 text-yellow-400 border-yellow-700'
                 };
                 
-                // Calculate progress (dummy calculation for demo)
-                const progress = project.status === 'completed' ? 100 : 
-                                project.status === 'active' ? 65 : 
-                                project.status === 'planning' ? 25 : 15;
+                // Calculate progress (date-based if possible)
+                let progress = 0;
+                if (project.startDate && project.endDate) {
+                  const start = new Date(project.startDate).getTime();
+                  const end = new Date(project.endDate).getTime();
+                  const now = Date.now();
+                  if (end > start) {
+                    progress = Math.round(((now - start) / (end - start)) * 100);
+                    progress = Math.max(0, Math.min(progress, 100));
+                  }
+                } else {
+                  // Fallback: status-based
+                  progress = project.status === 'completed' ? 100 : 
+                             project.status === 'active' ? 65 : 
+                             project.status === 'planning' ? 25 : 15;
+                }
                 
                 return (
                   <div key={project._id} className="border border-gray-600 rounded-xl p-6 hover:shadow-lg hover:bg-gray-700 transition-all duration-200">
@@ -500,19 +517,19 @@ const ProjectsPage: React.FC = () => {
                     <div className="flex items-center gap-2 pt-4 border-t border-gray-600">
                       <button
                         className="flex-1 bg-blue-900 hover:bg-blue-800 text-blue-400 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
-                        onClick={() => handleViewProject(project)}
+                        onClick={() => project && project.client && project.client._id ? handleViewProject(project) : alert('Project or client information is missing.')}
                       >
                         View Details
                       </button>
                       <button
                         className="bg-gray-700 hover:bg-gray-600 text-gray-300 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
-                        onClick={() => handleEditProject(project)}
+                        onClick={() => project && project.client && project.client._id ? handleEditProject(project) : alert('Project or client information is missing.')}
                       >
                         Edit
                         </button>
                       <button
                         className="bg-green-900 hover:bg-green-800 text-green-400 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
-                        onClick={() => handleCreateInvoice(project)}
+                        onClick={() => project && project.client && project.client._id ? handleCreateInvoice(project) : alert('Project or client information is missing.')}
                       >
                         Invoice
                         </button>
@@ -856,7 +873,7 @@ const ProjectsPage: React.FC = () => {
               <button
                 onClick={() => {
                   setShowViewModal(false)
-                  handleEditProject(selectedProject)
+                  selectedProject && selectedProject.client && selectedProject.client._id ? handleEditProject(selectedProject) : alert('Project or client information is missing.')
                 }}
                 className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
               >
@@ -864,7 +881,7 @@ const ProjectsPage: React.FC = () => {
                 Edit Project
               </button>
               <button
-                onClick={() => handleCreateInvoice(selectedProject)}
+                onClick={() => selectedProject && selectedProject.client && selectedProject.client._id ? handleCreateInvoice(selectedProject) : alert('Project or client information is missing.')}
                 className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
               >
                 <FileText className="h-4 w-4 inline mr-2" />

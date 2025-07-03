@@ -1,5 +1,9 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Check, Crown, Zap } from 'lucide-react';
+import './invoice-a4.css';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
+import { QRCodeSVG } from 'qrcode.react';
 
 export interface InvoiceTemplate {
   id: string;
@@ -53,6 +57,7 @@ export interface InvoiceCustomization {
   footerText: string;
   currency: string;
   dateFormat: string;
+  termsAndConditions?: string;
 }
 
 export interface Invoice {
@@ -222,10 +227,30 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   template,
   isPreview = false 
 }) => {
+  console.log('Invoice data:', invoice);
+  const invoiceRef = useRef<HTMLDivElement>(null);
+
+  // Replace dynamic bankDetails and upiString with hardcoded values
+  const bankDetails = {
+    accountName: 'ASLALIYA ANIKET PARESHBHAI',
+    accountNumber: '41497670019',
+    ifsc: 'SBIN0018700',
+    accountType: 'Savings',
+    bankName: 'The State Bank Of India',
+    upiId: 'aniketaslaliya@oksbi'
+  };
+  const upiAmount = invoice.totalAmount || 0;
+  const upiString = `upi://pay?pa=aniketaslaliya@oksbi&pn=ASLALIYA%20ANIKET%20PARESHBHAI&am=${upiAmount}&cu=INR`;
+
+  // Determine if client is Indian
+  const isIndianClient = customization.currency === 'INR' || (invoice.client.address && invoice.client.address.country?.toLowerCase() === 'india');
+
+  // Format currency: always use INR for Indian clients
   const formatCurrency = (amount: number) => {
+    const currency = isIndianClient ? 'INR' : (customization.currency || 'USD');
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: customization.currency || 'USD'
+      currency,
     }).format(amount);
   };
 
@@ -255,224 +280,288 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     ? 'rounded-lg overflow-hidden shadow-sm'
     : '';
 
+  // A4 size: 210mm x 297mm (convert to px for web: 794px x 1123px at 96dpi)
+  const A4_STYLE = {
+    width: '794px',
+    minHeight: '1123px',
+    maxWidth: '794px',
+    background: customization.colors.background,
+    margin: '0 auto',
+    boxShadow: isPreview ? '0 0 0 1px #e5e7eb' : 'none',
+    padding: '48px',
+    position: 'relative' as 'relative',
+    fontFamily: template.fonts.body,
+    color: customization.colors.text,
+  };
+
+  // Download PDF handler (sticky button)
+  const handleDownloadPDF = () => {
+    if (!invoiceRef.current) return;
+    html2pdf()
+      .set({
+        margin: 0,
+        filename: `${invoice.invoiceNumber || 'invoice'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      })
+      .from(invoiceRef.current)
+      .save();
+  };
+
   return (
-    <div 
-      className={`max-w-4xl mx-auto p-8 ${isPreview ? 'scale-75 transform-gpu' : ''}`}
-      style={{ 
-        fontFamily: template.fonts.body,
-        color: customization.colors.text,
-        backgroundColor: customization.colors.background 
-      }}
-    >
-      {/* Header */}
+    <>
+      <div style={{ position: 'sticky', top: 0, zIndex: 50, background: '#fff', padding: '12px 0' }} className="no-print w-full flex justify-end">
+        <button onClick={handleDownloadPDF} className="btn btn-primary mb-4">Download PDF</button>
+      </div>
       <div 
-        className={headerClass}
-        style={{ borderColor: customization.colors.primary }}
+        ref={invoiceRef}
+        className={`invoice-a4 max-w-none mx-auto p-0 ${isPreview ? 'scale-75 transform-gpu' : ''}`}
+        style={A4_STYLE}
       >
-        {template.layout?.headerStyle === 'creative' && (
-          <div 
-            className="absolute top-0 right-0 w-32 h-32 opacity-10"
-            style={{ backgroundColor: customization.colors.accent }}
-          />
-        )}
-        
-        <div className="flex justify-between items-start relative z-10">
+        {/* Header */}
+        <div 
+          className={headerClass}
+          style={{ borderColor: customization.colors.primary }}
+        >
+          {template.layout?.headerStyle === 'creative' && (
+            <div 
+              className="absolute top-0 right-0 w-32 h-32 opacity-10"
+              style={{ backgroundColor: customization.colors.accent }}
+            />
+          )}
+          <div className="flex justify-between items-start relative z-10">
+            <div>
+              {customization.showLogo && customization.companyLogo && (
+                <img 
+                  src={customization.companyLogo} 
+                  alt="Company Logo"
+                  className="h-16 w-auto mb-4"
+                />
+              )}
+              <h1 
+                className="text-3xl font-bold mb-2"
+                style={{ 
+                  fontFamily: template.fonts.heading,
+                  color: customization.colors.primary 
+                }}
+              >
+                {customization.companyName || 'Your Company Name'}
+              </h1>
+              {customization.showCompanyDetails && (
+                <div className="text-sm space-y-1" style={{ color: customization.colors.secondary }}>
+                  <p>{customization.companyAddress || 'Company Address'}</p>
+                  <p>{customization.companyPhone || ''} • {customization.companyEmail || ''}</p>
+                  {customization.companyWebsite && <p>{customization.companyWebsite}</p>}
+                </div>
+              )}
+            </div>
+            <div className="text-right">
+              <h2 
+                className="text-2xl font-bold mb-2"
+                style={{ 
+                  fontFamily: template.fonts.heading,
+                  color: customization.colors.primary 
+                }}
+              >
+                INVOICE
+              </h2>
+              <div className="text-sm space-y-1">
+                <p><span className="font-medium">Invoice #:</span> {invoice.invoiceNumber || '-'}</p>
+                <p><span className="font-medium">Date:</span> {formatDate(invoice.createdAt)}</p>
+                <p><span className="font-medium">Due Date:</span> {formatDate(invoice.dueDate)}</p>
+                <p>
+                  <span 
+                    className="inline-block px-2 py-1 rounded text-xs font-medium"
+                    style={{ 
+                      backgroundColor: invoice.status === 'paid' ? '#10b981' : invoice.status === 'pending' ? '#f59e0b' : '#ef4444',
+                      color: 'white'
+                    }}
+                  >
+                    {(invoice.status || 'draft').toUpperCase()}
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Client Information */}
+        <div className="mb-8">
+          <h3 
+            className="text-lg font-semibold mb-3"
+            style={{ color: customization.colors.primary }}
+          >
+            Bill To:
+          </h3>
           <div>
-            {customization.showLogo && customization.companyLogo && (
-              <img 
-                src={customization.companyLogo} 
-                alt="Company Logo"
-                className="h-16 w-auto mb-4"
-              />
-            )}
-            <h1 
-              className="text-3xl font-bold mb-2"
-              style={{ 
-                fontFamily: template.fonts.heading,
-                color: customization.colors.primary 
-              }}
-            >
-              {customization.companyName}
-            </h1>
-            {customization.showCompanyDetails && (
-              <div className="text-sm space-y-1" style={{ color: customization.colors.secondary }}>
-                <p>{customization.companyAddress}</p>
-                <p>{customization.companyPhone} • {customization.companyEmail}</p>
-                {customization.companyWebsite && <p>{customization.companyWebsite}</p>}
+            <p className="font-medium text-lg">{invoice.client?.companyName || 'Unknown Client'}</p>
+            <p>{invoice.client?.contactPerson?.firstName || ''} {invoice.client?.contactPerson?.lastName || ''}</p>
+            <p className="text-sm" style={{ color: customization.colors.secondary }}>
+              {invoice.client?.contactPerson?.email || ''}
+            </p>
+            {invoice.client?.address && (
+              <div className="mt-2 text-sm" style={{ color: customization.colors.secondary }}>
+                <p>{invoice.client.address.street || ''}</p>
+                <p>
+                  {invoice.client.address.city || ''}, {invoice.client.address.state || ''} {invoice.client.address.zipCode || ''}
+                </p>
+                <p>{invoice.client.address.country || ''}</p>
               </div>
             )}
           </div>
-          
-          <div className="text-right">
-            <h2 
-              className="text-2xl font-bold mb-2"
+          {invoice.project && (
+            <div className="mt-4">
+              <span className="font-medium">Project: </span>
+              <span style={{ color: customization.colors.secondary }}>{invoice.project.name}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Items Table */}
+        <div className={`mb-8 ${tableClass}`}>
+          <table className="w-full">
+            <thead>
+              <tr 
+                className="text-left"
+                style={{ backgroundColor: customization.colors.accent }}
+              >
+                <th className="p-3 font-medium">Description</th>
+                <th className="p-3 font-medium text-center">Qty</th>
+                <th className="p-3 font-medium text-right">Rate</th>
+                <th className="p-3 font-medium text-right">Tax</th>
+                <th className="p-3 font-medium text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoice.items.map((item, index) => (
+                <tr 
+                  key={index} 
+                  className={`border-b ${template.layout?.tableStyle === 'bordered' ? 'border-gray-300' : 'border-gray-100'}`}
+                >
+                  <td className="p-3">{item.description}</td>
+                  <td className="p-3 text-center">{item.quantity}</td>
+                  <td className="p-3 text-right">{formatCurrency(item.rate)}</td>
+                  <td className="p-3 text-right">{item.taxRate || 0}%</td>
+                  <td className="p-3 text-right font-medium">{formatCurrency(item.amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Totals */}
+        <div className="flex justify-end mb-8">
+          <div className="w-64">
+            {invoice.subtotal && (
+              <div className="flex justify-between py-2 border-b border-gray-200">
+                <span>Subtotal:</span>
+                <span>{formatCurrency(invoice.subtotal)}</span>
+              </div>
+            )}
+            {invoice.taxAmount && invoice.taxAmount > 0 && (
+              <div className="flex justify-between py-2 border-b border-gray-200">
+                <span>Tax:</span>
+                <span>{formatCurrency(invoice.taxAmount)}</span>
+              </div>
+            )}
+            <div 
+              className="flex justify-between py-3 font-bold text-lg border-t-2"
               style={{ 
-                fontFamily: template.fonts.heading,
+                borderColor: customization.colors.primary,
                 color: customization.colors.primary 
               }}
             >
-              INVOICE
-            </h2>
-            <div className="text-sm space-y-1">
-              <p><span className="font-medium">Invoice #:</span> {invoice.invoiceNumber}</p>
-              <p><span className="font-medium">Date:</span> {formatDate(invoice.createdAt)}</p>
-              <p><span className="font-medium">Due Date:</span> {formatDate(invoice.dueDate)}</p>
-              <p>
-                <span 
-                  className="inline-block px-2 py-1 rounded text-xs font-medium"
-                  style={{ 
-                    backgroundColor: invoice.status === 'paid' ? '#10b981' : invoice.status === 'pending' ? '#f59e0b' : '#ef4444',
-                    color: 'white'
-                  }}
-                >
-                  {invoice.status.toUpperCase()}
-                </span>
-              </p>
+              <span>Total:</span>
+              <span>{formatCurrency(invoice.totalAmount)}</span>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Client Information */}
-      <div className="mb-8">
-        <h3 
-          className="text-lg font-semibold mb-3"
-          style={{ color: customization.colors.primary }}
-        >
-          Bill To:
-        </h3>
-        <div>
-          <p className="font-medium text-lg">{invoice.client.companyName}</p>
-          <p>{invoice.client.contactPerson.firstName} {invoice.client.contactPerson.lastName}</p>
-          <p className="text-sm" style={{ color: customization.colors.secondary }}>
-            {invoice.client.contactPerson.email}
-          </p>
-          {invoice.client.address && (
-            <div className="mt-2 text-sm" style={{ color: customization.colors.secondary }}>
-              <p>{invoice.client.address.street}</p>
-              <p>
-                {invoice.client.address.city}, {invoice.client.address.state} {invoice.client.address.zipCode}
-              </p>
-              <p>{invoice.client.address.country}</p>
+        {/* Payment Methods Section - always visible */}
+        <div className="mt-10 border-t pt-6">
+          <h3 className="text-lg font-semibold mb-3" style={{ color: customization.colors.primary }}>Payment Methods</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Bank Details */}
+            <div>
+              <h4 className="font-bold mb-2">Bank Transfer</h4>
+              <div className="text-sm space-y-1">
+                <div><span className="font-medium">Account Name:</span> {bankDetails.accountName}</div>
+                <div><span className="font-medium">Account Number:</span> {bankDetails.accountNumber}</div>
+                <div><span className="font-medium">IFSC:</span> {bankDetails.ifsc}</div>
+                <div><span className="font-medium">Account Type:</span> {bankDetails.accountType}</div>
+                <div><span className="font-medium">Bank:</span> {bankDetails.bankName}</div>
+              </div>
             </div>
-          )}
+            {/* UPI QR Code */}
+            <div>
+              <h4 className="font-bold mb-2">UPI (Scan & Pay)</h4>
+              <QRCodeSVG value={upiString} size={120} includeMargin={true} />
+              <div className="text-xs mt-2">Pay to: <span className="font-medium">{bankDetails.upiId}</span></div>
+              <div className="text-xs">Amount: <span className="font-medium">₹{upiAmount}</span></div>
+            </div>
+          </div>
+          <div className="mt-6 text-sm text-gray-600">PayPal and Credit/Debit Cards accepted (if enabled).</div>
         </div>
-        {invoice.project && (
-          <div className="mt-4">
-            <span className="font-medium">Project: </span>
-            <span style={{ color: customization.colors.secondary }}>{invoice.project.name}</span>
-          </div>
-        )}
-      </div>
 
-      {/* Items Table */}
-      <div className={`mb-8 ${tableClass}`}>
-        <table className="w-full">
-          <thead>
-            <tr 
-              className="text-left"
-              style={{ backgroundColor: customization.colors.accent }}
-            >
-              <th className="p-3 font-medium">Description</th>
-              <th className="p-3 font-medium text-center">Qty</th>
-              <th className="p-3 font-medium text-right">Rate</th>
-              <th className="p-3 font-medium text-right">Tax</th>
-              <th className="p-3 font-medium text-right">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoice.items.map((item, index) => (
-              <tr 
-                key={index} 
-                className={`border-b ${template.layout?.tableStyle === 'bordered' ? 'border-gray-300' : 'border-gray-100'}`}
-              >
-                <td className="p-3">{item.description}</td>
-                <td className="p-3 text-center">{item.quantity}</td>
-                <td className="p-3 text-right">{formatCurrency(item.rate)}</td>
-                <td className="p-3 text-right">{item.taxRate || 0}%</td>
-                <td className="p-3 text-right font-medium">{formatCurrency(item.amount)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Totals */}
-      <div className="flex justify-end mb-8">
-        <div className="w-64">
-          {invoice.subtotal && (
-            <div className="flex justify-between py-2 border-b border-gray-200">
-              <span>Subtotal:</span>
-              <span>{formatCurrency(invoice.subtotal)}</span>
-            </div>
-          )}
-          {invoice.taxAmount && invoice.taxAmount > 0 && (
-            <div className="flex justify-between py-2 border-b border-gray-200">
-              <span>Tax:</span>
-              <span>{formatCurrency(invoice.taxAmount)}</span>
-            </div>
-          )}
-          <div 
-            className="flex justify-between py-3 font-bold text-lg border-t-2"
-            style={{ 
-              borderColor: customization.colors.primary,
-              color: customization.colors.primary 
-            }}
-          >
-            <span>Total:</span>
-            <span>{formatCurrency(invoice.totalAmount)}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Notes and Terms */}
-      <div className="space-y-6">
-        {invoice.notes && (
-          <div>
-            <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>
-              Notes:
-            </h4>
-            <p className="text-sm" style={{ color: customization.colors.secondary }}>
-              {invoice.notes}
-            </p>
-          </div>
-        )}
-        
-        {customization.showPaymentTerms && (
-          <div>
-            <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>
-              Payment Terms:
-            </h4>
-            <p className="text-sm" style={{ color: customization.colors.secondary }}>
-              {customization.paymentTermsText || invoice.terms || 'Payment is due within 30 days of invoice date.'}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      {template.layout?.footerStyle !== 'simple' && (
-        <div 
-          className="mt-12 pt-6 border-t text-center"
-          style={{ borderColor: customization.colors.accent }}
-        >
-          {template.layout?.footerStyle === 'branded' && (
-            <div className="mb-4">
-              <p 
-                className="font-medium"
-                style={{ color: customization.colors.primary }}
-              >
-                Thank you for your business!
+        {/* Notes and Terms */}
+        <div className="space-y-6">
+          {invoice.notes && (
+            <div>
+              <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>
+                Notes:
+              </h4>
+              <p className="text-sm" style={{ color: customization.colors.secondary }}>
+                {invoice.notes}
               </p>
             </div>
           )}
           
-          <p className="text-sm" style={{ color: customization.colors.secondary }}>
-            {customization.footerText || 'Powered by Afterink Invoice'}
-          </p>
+          {customization.showPaymentTerms && (
+            <div>
+              <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>
+                Payment Terms:
+              </h4>
+              <p className="text-sm" style={{ color: customization.colors.secondary }}>
+                {customization.paymentTermsText || invoice.terms || 'Payment is due within 30 days of invoice date.'}
+              </p>
+            </div>
+          )}
+          {/* Terms & Conditions Section */}
+          <div>
+            <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>
+              Terms & Conditions:
+            </h4>
+            <p className="text-sm" style={{ color: customization.colors.secondary }}>
+              {customization.termsAndConditions || 'All services are subject to our standard terms and conditions.'}
+            </p>
+          </div>
         </div>
-      )}
-    </div>
+
+        {/* Footer */}
+        {template.layout?.footerStyle !== 'simple' && (
+          <div 
+            className="mt-12 pt-6 border-t text-center"
+            style={{ borderColor: customization.colors.accent }}
+          >
+            {template.layout?.footerStyle === 'branded' && (
+              <div className="mb-4">
+                <p 
+                  className="font-medium"
+                  style={{ color: customization.colors.primary }}
+                >
+                  Thank you for your business!
+                </p>
+              </div>
+            )}
+            
+            <p className="text-sm" style={{ color: customization.colors.secondary }}>
+              {customization.footerText || 'Powered by Afterink Invoice'}
+            </p>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

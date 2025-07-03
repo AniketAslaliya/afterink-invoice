@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { DollarSign, FileText, Users, TrendingUp, BarChart3, Loader, RefreshCw, Calendar, Target, PieChart, Activity, Award, Clock, AlertTriangle } from 'lucide-react'
+import { DollarSign, FileText, Users, TrendingUp, BarChart3, Loader, RefreshCw, Calendar, Target, PieChart as PieChartIcon, Activity, Award, Clock, AlertTriangle } from 'lucide-react'
 import { apiGet } from '../api'
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend
+} from 'recharts';
 
 interface ReportData {
   totalRevenue: number
@@ -54,6 +57,7 @@ interface Invoice {
     _id: string;
     name: string;
   };
+  currency?: string;
 }
 
 interface Client {
@@ -73,16 +77,32 @@ interface Project {
   clientId: string;
 }
 
+// Currency conversion utility (mock rates)
+const currencyToINR = (amount: number, currency: string) => {
+  if (currency === 'INR') return amount;
+  const rates: Record<string, number> = {
+    USD: 83,
+    EUR: 90,
+    GBP: 105,
+    CAD: 61,
+    AUD: 55,
+    INR: 1,
+  };
+  return amount * (rates[currency] || 1);
+};
+
 const ReportsPage: React.FC = () => {
   const [reportData, setReportData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedPeriod, setSelectedPeriod] = useState('6months')
   const [activeTab, setActiveTab] = useState('overview')
+  const [weeklyRevenue, setWeeklyRevenue] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     fetchReportData()
-  }, [selectedPeriod])
+  }, [selectedPeriod, refreshKey])
 
   const fetchReportData = async () => {
     try {
@@ -128,7 +148,7 @@ const ReportsPage: React.FC = () => {
 
       // Calculate comprehensive report data
       const totalRevenue = invoices.reduce((sum: number, inv: Invoice) => 
-        inv.status === 'paid' ? sum + (inv.totalAmount || 0) : sum, 0)
+        inv.status === 'paid' ? sum + currencyToINR(inv.totalAmount || 0, inv.currency || 'INR') : sum, 0)
       
       const currentMonth = new Date().getMonth()
       const currentYear = new Date().getFullYear()
@@ -139,7 +159,18 @@ const ReportsPage: React.FC = () => {
                  invDate.getFullYear() === currentYear && 
                  inv.status === 'paid'
         })
-        .reduce((sum: number, inv: Invoice) => sum + (inv.totalAmount || 0), 0)
+        .reduce((sum: number, inv: Invoice) => sum + currencyToINR(inv.totalAmount || 0, inv.currency || 'INR'), 0)
+
+      // Weekly revenue (last 7 days)
+      const now = new Date();
+      const weekAgo = new Date(now);
+      weekAgo.setDate(now.getDate() - 7);
+      const weeklyRevenue = invoices
+        .filter((inv: Invoice) => {
+          const invDate = new Date(inv.dueDate)
+          return invDate >= weekAgo && invDate <= now && inv.status === 'paid';
+        })
+        .reduce((sum: number, inv: Invoice) => sum + currencyToINR(inv.totalAmount || 0, inv.currency || 'INR'), 0);
 
       const paidInvoices = invoices.filter((inv: Invoice) => inv.status === 'paid').length
       const pendingInvoices = invoices.filter((inv: Invoice) => inv.status === 'pending').length
@@ -274,6 +305,8 @@ const ReportsPage: React.FC = () => {
         clientStats,
         statusBreakdown
       })
+
+      setWeeklyRevenue(weeklyRevenue);
 
     } catch (err: any) {
       console.error('Error fetching report data:', err)
@@ -464,7 +497,7 @@ const ReportsPage: React.FC = () => {
             {/* Status Distribution */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
               <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-                <PieChart className="h-5 w-5 mr-2" />
+                <PieChartIcon className="h-5 w-5 mr-2" />
                 Invoice Status Distribution
               </h3>
               <div className="space-y-4">
@@ -523,37 +556,73 @@ const ReportsPage: React.FC = () => {
       {/* Revenue Analytics Tab */}
       {activeTab === 'revenue' && (
         <div className="space-y-8">
-          {/* Monthly Revenue Chart */}
-          <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-            <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-              <TrendingUp className="h-5 w-5 mr-2" />
-              Revenue Trend - {selectedPeriod.replace('months', ' Months')}
-            </h3>
-            <div className="space-y-4">
-              {reportData.monthlyStats.map((month, index) => {
-                const maxRevenue = Math.max(...reportData.monthlyStats.map(m => m.revenue))
-                const widthPercentage = maxRevenue > 0 ? (month.revenue / maxRevenue) * 100 : 0
-                
-                return (
-                  <div key={index} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-300 font-medium">{month.month}</span>
-                      <span className="text-white font-bold">{formatCurrency(month.revenue)}</span>
-                    </div>
-                    <div className="w-full bg-gray-700 rounded-full h-3">
-                      <div 
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: `${widthPercentage}%` }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between text-sm text-gray-400">
-                      <span>{month.invoices} invoices</span>
-                      <span>{month.paid} paid, {month.pending} pending</span>
-                    </div>
-                  </div>
-                )
-              })}
+          {/* Revenue Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-gradient-to-br from-green-900 to-green-700 rounded-2xl p-6 border border-green-600">
+              <p className="text-green-300 text-sm font-medium">Total Revenue (INR)</p>
+              <p className="text-2xl font-bold text-white">₹{reportData.totalRevenue.toLocaleString('en-IN')}</p>
             </div>
+            <div className="bg-gradient-to-br from-blue-900 to-blue-700 rounded-2xl p-6 border border-blue-600">
+              <p className="text-blue-300 text-sm font-medium">Monthly Revenue (INR)</p>
+              <p className="text-2xl font-bold text-white">₹{reportData.monthlyRevenue.toLocaleString('en-IN')}</p>
+            </div>
+            <div className="bg-gradient-to-br from-purple-900 to-purple-700 rounded-2xl p-6 border border-purple-600">
+              <p className="text-purple-300 text-sm font-medium">Weekly Revenue (INR)</p>
+              <p className="text-2xl font-bold text-white">₹{weeklyRevenue.toLocaleString('en-IN')}</p>
+            </div>
+          </div>
+
+          {/* Monthly Revenue Trend */}
+          <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 mb-8">
+            <h2 className="text-lg font-semibold text-white mb-4">Monthly Revenue Trend</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={reportData.monthlyStats} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" stroke="#cbd5e1" />
+                <YAxis stroke="#cbd5e1" tickFormatter={v => `₹${v/1000}k`} />
+                <Tooltip formatter={v => `₹${v.toLocaleString('en-IN')}`} />
+                <Line type="monotone" dataKey="revenue" stroke="#38bdf8" strokeWidth={3} dot={{ r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Top Clients by Revenue */}
+          <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 mb-8">
+            <h2 className="text-lg font-semibold text-white mb-4">Top Clients by Revenue</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={reportData.clientStats} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="client" stroke="#cbd5e1" />
+                <YAxis stroke="#cbd5e1" tickFormatter={v => `₹${v/1000}k`} />
+                <Tooltip formatter={v => `₹${v.toLocaleString('en-IN')}`} />
+                <Bar dataKey="revenue" fill="#a78bfa" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Invoice Status Breakdown */}
+          <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 mb-8">
+            <h2 className="text-lg font-semibold text-white mb-4">Invoice Status Breakdown</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChartIcon>
+                <Pie
+                  data={reportData.statusBreakdown}
+                  dataKey="count"
+                  nameKey="status"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  fill="#38bdf8"
+                  label={({ status, percentage }) => `${status}: ${percentage.toFixed(1)}%`}
+                >
+                  {reportData.statusBreakdown.map((entry, idx) => (
+                    <Cell key={`cell-${idx}`} fill={["#38bdf8", "#fbbf24", "#f87171", "#a3e635"][idx % 4]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={v => `${v} invoices`} />
+                <Legend />
+              </PieChartIcon>
+            </ResponsiveContainer>
           </div>
         </div>
       )}
