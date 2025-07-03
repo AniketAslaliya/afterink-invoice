@@ -302,7 +302,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
         margin: 0,
         filename: `${invoice.invoiceNumber || 'invoice'}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
+        html2canvas: { 
+          scale: 2,
+          ignoreElements: (element: Element) => {
+            return element.classList.contains('no-print');
+          }
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       })
       .from(invoiceRef.current)
@@ -370,17 +375,19 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
                 <p><span className="font-medium">Invoice #:</span> {invoice.invoiceNumber || '-'}</p>
                 <p><span className="font-medium">Date:</span> {formatDate(invoice.createdAt)}</p>
                 <p><span className="font-medium">Due Date:</span> {formatDate(invoice.dueDate)}</p>
-                <p>
-                  <span 
-                    className="inline-block px-2 py-1 rounded text-xs font-medium"
-                    style={{ 
-                      backgroundColor: invoice.status === 'paid' ? '#10b981' : invoice.status === 'pending' ? '#f59e0b' : '#ef4444',
-                      color: 'white'
-                    }}
-                  >
-                    {(invoice.status || 'draft').toUpperCase()}
-                  </span>
-                </p>
+                {isPreview && (
+                  <p>
+                    <span 
+                      className="inline-block px-2 py-1 rounded text-xs font-medium no-print"
+                      style={{ 
+                        backgroundColor: invoice.status === 'paid' ? '#10b981' : invoice.status === 'pending' ? '#f59e0b' : '#ef4444',
+                        color: 'white'
+                      }}
+                    >
+                      {(invoice.status || 'draft').toUpperCase()}
+                    </span>
+                  </p>
+                )}
               </div>
             </div>
           </div>

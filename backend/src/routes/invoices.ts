@@ -25,10 +25,23 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
     const invoices = await Invoice.find(query)
       .skip((page - 1) * limit)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .populate('clientId')
+      .populate('projectId');
+    
+    // Remap clientId to client and projectId to project for each invoice
+    const invoicesWithClient = invoices.map(invoice => {
+      const obj = invoice.toObject() as Record<string, any>;
+      obj.client = obj.clientId;
+      obj.project = obj.projectId;
+      delete obj.clientId;
+      delete obj.projectId;
+      return obj;
+    });
+    
     res.json({
       success: true,
-      data: { invoices, pagination: { page, limit, total, pages: Math.ceil(total / limit) } },
+      data: { invoices: invoicesWithClient, pagination: { page, limit, total, pages: Math.ceil(total / limit) } },
       timestamp: new Date().toISOString(),
     } as IApiResponse);
   } catch (error) {
@@ -43,7 +56,9 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
 // Get specific invoice
 router.get('/:id', authenticate, authorizeOwnerOrAdmin(), async (req: Request, res: Response) => {
   try {
-    const invoice = await Invoice.findById(req.params.id);
+    const invoice = await Invoice.findById(req.params.id)
+      .populate('clientId')
+      .populate('projectId');
     if (!invoice) {
       return res.status(404).json({
         success: false,
@@ -51,9 +66,17 @@ router.get('/:id', authenticate, authorizeOwnerOrAdmin(), async (req: Request, r
         timestamp: new Date().toISOString(),
       } as IApiResponse);
     }
+    
+    // Remap clientId to client and projectId to project
+    const invoiceObj = invoice.toObject() as Record<string, any>;
+    invoiceObj.client = invoiceObj.clientId;
+    invoiceObj.project = invoiceObj.projectId;
+    delete invoiceObj.clientId;
+    delete invoiceObj.projectId;
+    
     res.json({
       success: true,
-      data: { invoice },
+      data: { invoice: invoiceObj },
       timestamp: new Date().toISOString(),
     } as IApiResponse);
   } catch (error) {

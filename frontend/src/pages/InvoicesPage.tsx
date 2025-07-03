@@ -568,16 +568,15 @@ const InvoicesPage: React.FC = () => {
                 <p><strong>Invoice #:</strong> ${invoice.invoiceNumber}</p>
                 <p><strong>Issue Date:</strong> ${new Date().toLocaleDateString()}</p>
                 <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
-                <div class="status-badge status-${invoice.status}">${invoice.status.toUpperCase()}</div>
               </div>
             </div>
           </div>
           
           <div class="bill-to">
             <h3>Bill To</h3>
-            <div class="client-name">${invoice.client?.companyName || 'N/A'}</div>
-            <div>${invoice.client?.contactPerson?.firstName || ''} ${invoice.client?.contactPerson?.lastName || ''}</div>
-            <div style="color: ${invoiceCustomization.colors.secondary};">${invoice.client?.contactPerson?.email || 'N/A'}</div>
+            <div class="client-name">${invoice.client?.companyName || invoice.clientId || 'Client Name Not Available'}</div>
+            <div>${(invoice.client?.contactPerson?.firstName || '') + ' ' + (invoice.client?.contactPerson?.lastName || '')}</div>
+            <div style="color: ${invoiceCustomization.colors.secondary};">${invoice.client?.contactPerson?.email || ''}</div>
             ${invoice.project ? `<div style="margin-top: 10px;"><strong>Project:</strong> ${invoice.project.name}</div>` : ''}
           </div>
           
