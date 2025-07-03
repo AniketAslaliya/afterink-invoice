@@ -843,8 +843,13 @@ const InvoicesPage: React.FC = () => {
           <div className="bg-gray-900 rounded-xl p-8 w-full max-w-4xl shadow-lg relative mx-4 my-8 border border-gray-700 modal-content max-h-[90vh] overflow-y-auto"
                onClick={(e) => e.stopPropagation()}>
             <button 
-              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none" 
-              onClick={() => setShowAddModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none cursor-pointer" 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowAddModal(false);
+              }}
+              type="button"
             >
               &times;
             </button>
@@ -1096,8 +1101,13 @@ const InvoicesPage: React.FC = () => {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-gray-900 rounded-xl p-8 w-full max-w-6xl shadow-lg relative mx-4 my-8 border border-gray-700 max-h-[90vh] overflow-y-auto">
             <button 
-              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none z-10" 
-              onClick={() => setShowCustomizer(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none z-10 cursor-pointer" 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowCustomizer(false);
+              }}
+              type="button"
             >
               &times;
             </button>
@@ -1351,14 +1361,24 @@ const InvoicesPage: React.FC = () => {
 
             <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-700">
               <button
-                onClick={() => setShowCustomizer(false)}
-                className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-gray-800"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowCustomizer(false);
+                }}
+                className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-gray-800 cursor-pointer"
+                type="button"
               >
                 Cancel
               </button>
               <button
-                onClick={() => handleSaveCustomization(invoiceCustomization)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center space-x-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSaveCustomization(invoiceCustomization);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center space-x-2 cursor-pointer"
+                type="button"
               >
                 <Save className="h-4 w-4" />
                 <span>Save Customization</span>
@@ -1671,8 +1691,13 @@ const InvoicesPage: React.FC = () => {
           <div className="bg-gray-900 rounded-xl p-8 w-full max-w-2xl shadow-lg relative mx-4 my-8 border border-gray-700 max-h-[90vh] overflow-y-auto"
                onClick={(e) => e.stopPropagation()}>
             <button 
-              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none" 
-              onClick={() => setShowPaymentModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none cursor-pointer" 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowPaymentModal(false);
+              }}
+              type="button"
             >
               &times;
             </button>
@@ -1835,8 +1860,13 @@ const InvoicesPage: React.FC = () => {
                   <span>Download PDF</span>
                 </button>
                 <button 
-                  className="text-gray-400 hover:text-gray-600 text-2xl leading-none w-8 h-8 flex items-center justify-center" 
-                  onClick={() => setShowViewModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl leading-none w-8 h-8 flex items-center justify-center cursor-pointer" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowViewModal(false);
+                  }}
+                  type="button"
                 >
                   &times;
                 </button>
@@ -1886,8 +1916,13 @@ const InvoicesPage: React.FC = () => {
           <div className="bg-gray-900 rounded-xl p-8 w-full max-w-4xl shadow-lg relative mx-4 my-8 border border-gray-700 modal-content max-h-[90vh] overflow-y-auto"
                onClick={(e) => e.stopPropagation()}>
             <button 
-              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none" 
-              onClick={() => setShowEditModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none cursor-pointer" 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowEditModal(false);
+              }}
+              type="button"
             >
               &times;
             </button>
