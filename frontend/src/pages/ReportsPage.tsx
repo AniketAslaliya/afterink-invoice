@@ -501,7 +501,7 @@ const ReportsPage: React.FC = () => {
                 Invoice Status Distribution
               </h3>
               <div className="space-y-4">
-                {reportData.statusBreakdown.map((item, _) => (
+                {reportData.statusBreakdown.map((item, _: number) => (
                   <div key={item.status} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <div className={`w-3 h-3 rounded-full ${
@@ -579,8 +579,8 @@ const ReportsPage: React.FC = () => {
               <LineChart data={reportData.monthlyStats} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" stroke="#cbd5e1" />
-                <YAxis stroke="#cbd5e1" tickFormatter={v => `₹${v/1000}k`} />
-                <Tooltip formatter={v => `₹${v.toLocaleString('en-IN')}`} />
+                <YAxis stroke="#cbd5e1" tickFormatter={(v: number) => `₹${v/1000}k`} />
+                <Tooltip formatter={(v: number) => `₹${v.toLocaleString('en-IN')}`} />
                 <Line type="monotone" dataKey="revenue" stroke="#38bdf8" strokeWidth={3} dot={{ r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
@@ -593,8 +593,8 @@ const ReportsPage: React.FC = () => {
               <BarChart data={reportData.clientStats} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="client" stroke="#cbd5e1" />
-                <YAxis stroke="#cbd5e1" tickFormatter={v => `₹${v/1000}k`} />
-                <Tooltip formatter={v => `₹${v.toLocaleString('en-IN')}`} />
+                <YAxis stroke="#cbd5e1" tickFormatter={(v: number) => `₹${v/1000}k`} />
+                <Tooltip formatter={(v: number) => `₹${v.toLocaleString('en-IN')}`} />
                 <Bar dataKey="revenue" fill="#a78bfa" />
               </BarChart>
             </ResponsiveContainer>
@@ -613,13 +613,13 @@ const ReportsPage: React.FC = () => {
                   cy="50%"
                   outerRadius={100}
                   fill="#38bdf8"
-                  label={({ status, percentage }) => `${status}: ${percentage.toFixed(1)}%`}
+                  label={({ status, percentage }: {status: string, percentage: number}) => `${status}: ${percentage.toFixed(1)}%`}
                 >
                   {reportData.statusBreakdown.map((entry, idx) => (
                     <Cell key={`cell-${idx}`} fill={["#38bdf8", "#fbbf24", "#f87171", "#a3e635"][idx % 4]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={v => `${v} invoices`} />
+                <Tooltip formatter={(v: number) => `${v} invoices`} />
                 <Legend />
               </PieChartIcon>
             </ResponsiveContainer>
