@@ -742,7 +742,7 @@ const InvoicesPage: React.FC = () => {
       clientId: invoice.clientId,
       projectId: invoice.project?._id || '',
       dueDate: invoice.dueDate.split('T')[0],
-      items: [{
+      items: invoice.items && invoice.items.length > 0 ? invoice.items : [{
         description: 'Service/Product',
         quantity: 1,
         rate: invoice.totalAmount,
@@ -750,8 +750,8 @@ const InvoicesPage: React.FC = () => {
         taxRate: 0
       }],
       currency: 'INR',
-      notes: '',
-      terms: 'Payment is due within 30 days of invoice date.'
+      notes: invoice.notes || '',
+      terms: invoice.terms || 'Payment is due within 30 days of invoice date.'
     });
     setShowEditModal(true);
   };
@@ -767,7 +767,7 @@ const InvoicesPage: React.FC = () => {
         totalAmount: calculateTotal()
       };
       
-      await apiPut(`/api/invoices/${selectedInvoice._id}`, invoiceData);
+      await apiPut(`/invoices/${selectedInvoice._id}`, invoiceData);
       
       // Refresh invoices from server to get updated data
       dispatch(fetchInvoices());
@@ -1843,26 +1843,41 @@ const InvoicesPage: React.FC = () => {
 
       {/* Invoice Edit Modal */}
       {showEditModal && selectedInvoice && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto">
-          <div className="bg-gray-900 rounded-xl p-8 w-full max-w-4xl shadow-lg relative mx-4 my-8 border border-gray-700 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto modal-backdrop">
+          <div className="bg-gray-900 rounded-xl p-8 w-full max-w-4xl shadow-lg relative mx-4 my-8 border border-gray-700 modal-content">
             <button 
               className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none" 
               onClick={() => setShowEditModal(false)}
             >
               &times;
             </button>
-            <h2 className="text-2xl font-bold mb-6 text-white">Edit Invoice</h2>
+            <h2 className="text-2xl font-bold mb-6 text-white">Edit Invoice #{selectedInvoice.invoiceNumber}</h2>
             
-            {/* Same form as Add Invoice but with update functionality */}
+            {/* Show warning about paid/sent invoices */}
+            {selectedInvoice.status === 'paid' && (
+              <div className="mb-4 p-3 bg-yellow-900/50 border border-yellow-700 rounded-md">
+                <p className="text-yellow-200 text-sm">⚠️ This invoice is marked as paid. Only due date and notes can be modified.</p>
+              </div>
+            )}
+            {selectedInvoice.status === 'sent' && (
+              <div className="mb-4 p-3 bg-blue-900/50 border border-blue-700 rounded-md">
+                <p className="text-blue-200 text-sm">ℹ️ This invoice has been sent. Major changes are limited to prevent confusion.</p>
+              </div>
+            )}
+            
             <div className="space-y-6 max-h-96 overflow-y-auto">
+              {/* Basic Information */}
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Client *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Client *
+                  </label>
                   <select
                     value={newInvoice.clientId}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, clientId: e.target.value })}
+                    onChange={(e) => setNewInvoice({ ...newInvoice, clientId: e.target.value, projectId: '' })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                     required
+                    disabled={selectedInvoice.status === 'paid' || selectedInvoice.status === 'sent'}
                   >
                     <option value="">Select a client</option>
                     {clients.map((client) => (
@@ -1871,9 +1886,48 @@ const InvoicesPage: React.FC = () => {
                       </option>
                     ))}
                   </select>
-        </div>
+                  {(selectedInvoice.status === 'paid' || selectedInvoice.status === 'sent') && (
+                    <p className="text-xs text-gray-400 mt-1">Client cannot be changed for {selectedInvoice.status} invoices</p>
+                  )}
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Due Date *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Project (Optional)
+                  </label>
+                  <select
+                    value={newInvoice.projectId}
+                    onChange={(e) => setNewInvoice({ ...newInvoice, projectId: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    disabled={!newInvoice.clientId || selectedInvoice.status === 'paid' || selectedInvoice.status === 'sent'}
+                  >
+                    <option value="">Select a project (optional)</option>
+                    {getFilteredProjects().map((project) => (
+                      <option key={project._id} value={project._id}>
+                        {project.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Invoice Number
+                  </label>
+                  <input
+                    type="text"
+                    value={newInvoice.invoiceNumber}
+                    onChange={(e) => setNewInvoice({ ...newInvoice, invoiceNumber: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                    disabled
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Invoice number cannot be changed</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Due Date *
+                  </label>
                   <input
                     type="date"
                     value={newInvoice.dueDate}
@@ -1881,7 +1935,155 @@ const InvoicesPage: React.FC = () => {
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                     required
                   />
-      </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Currency
+                  </label>
+                  <select
+                    value={newInvoice.currency}
+                    onChange={(e) => setNewInvoice({ ...newInvoice, currency: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    disabled={selectedInvoice.status === 'paid' || selectedInvoice.status === 'sent'}
+                  >
+                    <option value="INR">INR</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="CAD">CAD</option>
+                    <option value="AUD">AUD</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Items - only editable for draft invoices */}
+              {selectedInvoice.status === 'draft' && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-gray-200">Invoice Items</h3>
+                    <button
+                      type="button"
+                      onClick={addItem}
+                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 flex items-center"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Item
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {newInvoice.items.map((item, index) => (
+                      <div key={index} className="border border-gray-600 rounded-md p-4 bg-gray-800">
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="font-medium text-gray-200">Item {index + 1}</h4>
+                          {newInvoice.items.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeItem(index)}
+                              className="text-red-400 hover:text-red-300"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                        
+                        <div className="grid grid-cols-12 gap-3">
+                          <div className="col-span-5">
+                            <label className="block text-xs font-medium text-gray-400 mb-1">
+                              Description *
+                            </label>
+                            <input
+                              type="text"
+                              value={item.description}
+                              onChange={(e) => updateItem(index, 'description', e.target.value)}
+                              className="w-full px-3 py-2 bg-gray-700 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-sm"
+                              required
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <label className="block text-xs font-medium text-gray-400 mb-1">
+                              Quantity *
+                            </label>
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                              className="w-full px-3 py-2 bg-gray-700 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-sm"
+                              min="0"
+                              step="0.01"
+                              required
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <label className="block text-xs font-medium text-gray-400 mb-1">
+                              Rate *
+                            </label>
+                            <input
+                              type="number"
+                              value={item.rate}
+                              onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                              className="w-full px-3 py-2 bg-gray-700 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-sm"
+                              min="0"
+                              step="0.01"
+                              required
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <label className="block text-xs font-medium text-gray-400 mb-1">
+                              Tax %
+                            </label>
+                            <input
+                              type="number"
+                              value={item.taxRate || 0}
+                              onChange={(e) => updateItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
+                              className="w-full px-3 py-2 bg-gray-700 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-sm"
+                              min="0"
+                              max="100"
+                              step="0.01"
+                            />
+                          </div>
+                          <div className="col-span-1">
+                            <label className="block text-xs font-medium text-gray-400 mb-1">
+                              Amount
+                            </label>
+                            <div className="px-3 py-2 bg-gray-700 border border-gray-500 rounded-md text-white text-sm text-center">
+                              {formatCurrency(item.quantity * item.rate * (1 + (item.taxRate || 0) / 100))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes and Terms */}
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Notes
+                  </label>
+                  <textarea
+                    value={newInvoice.notes}
+                    onChange={(e) => setNewInvoice({ ...newInvoice, notes: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    rows={3}
+                    placeholder="Additional notes..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Terms & Conditions
+                  </label>
+                  <textarea
+                    value={newInvoice.terms}
+                    onChange={(e) => setNewInvoice({ ...newInvoice, terms: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    rows={3}
+                    placeholder="Payment terms and conditions..."
+                    disabled={selectedInvoice.status === 'paid'}
+                  />
+                </div>
               </div>
 
               <div className="text-right">

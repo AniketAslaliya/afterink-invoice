@@ -104,7 +104,7 @@ const ProjectsPage: React.FC = () => {
   const handleUpdateProjectStatus = async (projectId: string, newStatus: 'planning' | 'active' | 'on-hold' | 'completed') => {
     try {
       setSubmitting(true)
-      await apiPut(`/api/projects/${projectId}`, { status: newStatus })
+      await apiPut(`/projects/${projectId}`, { status: newStatus })
       
       // Refresh projects from server
       dispatch(fetchProjects())
@@ -142,7 +142,7 @@ const ProjectsPage: React.FC = () => {
     
     try {
       setSubmitting(true)
-      await apiPut(`/api/projects/${selectedProject._id}`, newProject)
+      await apiPut(`/projects/${selectedProject._id}`, newProject)
       
       // Refresh projects from server
       dispatch(fetchProjects())
