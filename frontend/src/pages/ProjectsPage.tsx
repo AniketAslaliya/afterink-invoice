@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Search, Filter, Edit, Eye, FileText, Clock, CheckCircle, Pause, PlayCircle } from 'lucide-react'
 import { apiGet, apiPost, apiPut } from '../api'
+import { useAppSelector, useAppDispatch } from '../store';
+import { fetchProjects } from '../store/projectsSlice';
 
 interface Project {
   _id: string
@@ -18,9 +20,10 @@ interface Project {
 }
 
 const ProjectsPage: React.FC = () => {
-  const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const projects = useAppSelector((state: any) => state.projects.projects);
+  const loading = useAppSelector((state: any) => state.projects.loading);
+  const error = useAppSelector((state: any) => state.projects.error);
+  const dispatch = useAppDispatch();
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [clients, setClients] = useState<any[]>([])
   const [newProject, setNewProject] = useState({
@@ -38,43 +41,9 @@ const ProjectsPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    fetchProjects()
-    fetchClients()
-  }, [])
-
-  const fetchProjects = async () => {
-    try {
-      console.log('Fetching projects from API...')
-      const res = await apiGet('/projects')
-      console.log('Projects API Response:', res)
-      
-      // Handle different response structures
-      let projectsArray = [];
-      if (res && res.data && res.data.projects) {
-        projectsArray = res.data.projects;
-      } else if (res && Array.isArray(res.projects)) {
-        projectsArray = res.projects;
-      } else if (res && Array.isArray(res)) {
-        projectsArray = res;
-      } else {
-        console.warn('Unexpected projects response structure:', res);
-        projectsArray = []; // Default to empty array
-      }
-      
-      setProjects(projectsArray)
-      setError(null)
-    } catch (error: any) {
-      console.error('Fetch projects error:', error)
-      if (error.message === 'Authentication failed') {
-        setError('authentication')
-      } else {
-        setError(error.message || 'Failed to load projects')
-      }
-      setProjects([])
-    } finally {
-      setLoading(false)
-    }
-  }
+    dispatch(fetchProjects());
+    fetchClients();
+  }, []);
 
   const fetchClients = async () => {
     try {
@@ -109,7 +78,7 @@ const ProjectsPage: React.FC = () => {
       
       // Add to local state
       const projectData = res.data?.project || res.project || res
-      setProjects([projectData, ...projects])
+      dispatch(fetchProjects())
       
       setShowCreateModal(false)
       setNewProject({
@@ -135,7 +104,7 @@ const ProjectsPage: React.FC = () => {
       await apiPut(`/api/projects/${projectId}`, { status: newStatus })
       
       // Refresh projects from server
-      await fetchProjects()
+      dispatch(fetchProjects())
       
       console.log(`Project status updated to ${newStatus}`)
     } catch (error: any) {
@@ -172,7 +141,7 @@ const ProjectsPage: React.FC = () => {
       await apiPut(`/api/projects/${selectedProject._id}`, newProject)
       
       // Refresh projects from server
-      await fetchProjects()
+      dispatch(fetchProjects())
       
       setShowEditModal(false)
       setSelectedProject(null)

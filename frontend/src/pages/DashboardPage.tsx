@@ -36,6 +36,8 @@ import {
 import { useAuthStore } from '../store/authStore';
 import { apiGet } from '../api';
 import { useNavigate } from 'react-router-dom';
+import { useAppSelector, useAppDispatch } from '../store';
+import { fetchDashboardStats } from '../store/dashboardSlice';
 // Dashboard layout is handled by App.tsx routing
 
 interface DashboardStats {
@@ -55,101 +57,14 @@ interface DashboardStats {
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   
-  const [stats, setStats] = useState<DashboardStats>({
-    totalClients: 0,
-    totalProjects: 0,
-    totalInvoices: 0,
-    totalRevenue: 0,
-    pendingInvoices: 0,
-    overdueInvoices: 0,
-    paidInvoices: 0,
-    monthlyRevenue: 0,
-    monthlyGrowth: 0,
-    averageInvoiceValue: 0,
-    paymentRate: 0
-  });
-
-  const [recentInvoices, setRecentInvoices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const stats = useAppSelector((state: any) => state.dashboard.stats);
+  const loading = useAppSelector((state: any) => state.dashboard.loading);
+  const error = useAppSelector((state: any) => state.dashboard.error);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [refreshKey]);
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const [clientsRes, projectsRes, invoicesRes] = await Promise.all([
-      apiGet('/clients'),
-        apiGet('/projects'),
-        apiGet('/invoices')
-      ]);
-
-      const clients = clientsRes.data;
-      const projects = projectsRes.data;
-      const invoices = invoicesRes.data;
-
-      // Calculate stats
-      const totalRevenue = invoices.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
-      const paidInvoices = invoices.filter((inv: any) => inv.status === 'paid');
-      const pendingInvoices = invoices.filter((inv: any) => inv.status === 'pending');
-      const overdueInvoices = invoices.filter((inv: any) => {
-        const dueDate = new Date(inv.dueDate);
-        return inv.status === 'pending' && dueDate < new Date();
-      });
-
-      // Monthly calculations
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-      const monthlyInvoices = invoices.filter((inv: any) => {
-        const invDate = new Date(inv.createdAt);
-        return invDate.getMonth() === currentMonth && invDate.getFullYear() === currentYear;
-      });
-      const monthlyRevenue = monthlyInvoices.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
-
-      // Previous month for growth calculation
-      const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-      const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-      const prevMonthInvoices = invoices.filter((inv: any) => {
-        const invDate = new Date(inv.createdAt);
-        return invDate.getMonth() === prevMonth && invDate.getFullYear() === prevYear;
-      });
-      const prevMonthRevenue = prevMonthInvoices.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
-      const monthlyGrowth = prevMonthRevenue > 0 ? ((monthlyRevenue - prevMonthRevenue) / prevMonthRevenue) * 100 : 0;
-
-        setStats({
-        totalClients: clients.length,
-        totalProjects: projects.length,
-        totalInvoices: invoices.length,
-        totalRevenue,
-        pendingInvoices: pendingInvoices.length,
-        overdueInvoices: overdueInvoices.length,
-        paidInvoices: paidInvoices.length,
-        monthlyRevenue,
-        monthlyGrowth,
-        averageInvoiceValue: invoices.length > 0 ? totalRevenue / invoices.length : 0,
-        paymentRate: invoices.length > 0 ? (paidInvoices.length / invoices.length) * 100 : 0
-      });
-
-      // Get recent invoices
-      const recent = invoices
-        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 5);
-      setRecentInvoices(recent);
-
-    } catch (error: any) {
-      console.error('Error fetching dashboard data:', error);
-      if (error.message?.includes('Access token') || error.message?.includes('Failed to fetch') || error.message?.includes('401')) {
-        setError('🔒 Please log in to view dashboard');
-      } else {
-        setError(error.message || 'An error occurred');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+    dispatch(fetchDashboardStats());
+  }, []);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -344,25 +259,23 @@ const DashboardPage: React.FC = () => {
             <div>
               <h4 className="text-lg font-semibold text-white mb-4">Recent Invoices</h4>
               <div className="space-y-3">
-                {recentInvoices.length > 0 ? (
-                  recentInvoices.map((invoice) => (
-                    <div key={invoice._id} className="flex items-center justify-between p-4 bg-gray-700 rounded-xl hover:bg-gray-600 transition-colors border border-gray-600">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-3 h-3 rounded-full ${
-                          invoice.status === 'paid' ? 'bg-green-400' :
-                          invoice.status === 'pending' ? 'bg-yellow-400' : 'bg-red-400'
-                        }`}></div>
-                        <div>
-                          <p className="font-medium text-white">#{invoice.invoiceNumber}</p>
-                          <p className="text-sm text-gray-400">{invoice.client?.companyName}</p>
-                      </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-white">{formatCurrency(invoice.totalAmount)}</p>
-                        <p className="text-sm text-gray-400 capitalize">{invoice.status}</p>
+                {stats.totalInvoices > 0 ? (
+                  <div className="flex items-center justify-between p-4 bg-gray-700 rounded-xl hover:bg-gray-600 transition-colors border border-gray-600">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-3 h-3 rounded-full ${
+                        stats.paidInvoices > 0 ? 'bg-green-400' :
+                        stats.pendingInvoices > 0 ? 'bg-yellow-400' : 'bg-red-400'
+                      }`}></div>
+                      <div>
+                        <p className="font-medium text-white">#{stats.totalInvoices - stats.overdueInvoices - stats.pendingInvoices - stats.paidInvoices + 1}</p>
+                        <p className="text-sm text-gray-400">{stats.totalClients} clients</p>
                       </div>
                     </div>
-                  ))
+                    <div className="text-right">
+                      <p className="font-semibold text-white">{formatCurrency(stats.totalRevenue)}</p>
+                      <p className="text-sm text-gray-400 capitalize">{stats.paidInvoices > 0 ? 'paid' : stats.pendingInvoices > 0 ? 'pending' : 'overdue'}</p>
+                    </div>
+                  </div>
                 ) : (
                   <div className="text-center py-8">
                     <FileText className="mx-auto h-12 w-12 text-gray-500 mb-4" />

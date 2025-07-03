@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Plus, Search, Filter } from 'lucide-react'
 import { apiGet, apiPost } from '../api'
+import { useAppSelector, useAppDispatch } from '../store'
+import { fetchClients } from '../store/clientsSlice'
 
 interface Client {
   _id: string;
@@ -28,9 +30,10 @@ interface Client {
 }
 
 const ClientsPage: React.FC = () => {
-  const [clients, setClients] = useState<Client[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const clients = useAppSelector((state: any) => state.clients.clients)
+  const loading = useAppSelector((state: any) => state.clients.loading)
+  const error = useAppSelector((state: any) => state.clients.error)
+  const dispatch = useAppDispatch()
   const [showAddModal, setShowAddModal] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -62,28 +65,8 @@ const ClientsPage: React.FC = () => {
   })
 
   useEffect(() => {
-    fetchClients()
-  }, [])
-
-  const fetchClients = async () => {
-    try {
-      setLoading(true)
-      const _res = await apiGet('/clients')
-      setClients(_res.data.clients || [])
-      setError(null)
-    } catch (err: any) {
-      console.error('Fetch clients error:', err)
-      // Check if it's an authentication error
-      if (err.message.includes('Access token') || err.message.includes('Failed to fetch') || err.message.includes('401')) {
-        setError('authentication')
-      } else {
-        setError(err.message)
-      }
-      setClients([]) // Set empty array so we can show "no clients" message
-    } finally {
-      setLoading(false)
-    }
-  }
+    dispatch(fetchClients())
+  }, [dispatch])
 
   // Filter and sort clients based on search criteria
   const filteredClients = clients
@@ -151,7 +134,6 @@ const ClientsPage: React.FC = () => {
 
   const handleAddClient = async () => {
     try {
-      setLoading(true)
       const clientData = {
         companyName: newClient.companyName,
         contactPerson: {
@@ -179,7 +161,7 @@ const ClientsPage: React.FC = () => {
         throw new Error('Unexpected API response structure')
       }
       
-      setClients([clientObject, ...clients])
+      dispatch(fetchClients())
       setShowAddModal(false)
       setNewClient({
         companyName: '',
@@ -205,9 +187,7 @@ const ClientsPage: React.FC = () => {
       })
     } catch (error: any) {
       console.error('Error creating client:', error)
-      setError(error.message || 'Failed to create client')
-    } finally {
-      setLoading(false)
+      dispatch(fetchClients())
     }
   }
 
@@ -215,7 +195,6 @@ const ClientsPage: React.FC = () => {
     if (!selectedClient) return
     
     try {
-      setLoading(true)
       const clientData = {
         companyName: newClient.companyName,
         contactPerson: newClient.contactPerson,
@@ -226,19 +205,13 @@ const ClientsPage: React.FC = () => {
       const res = await apiPost(`/clients/${selectedClient._id}`, clientData)
       
       // Update the client in the list
-      setClients(clients.map(client => 
-        client._id === selectedClient._id 
-          ? { ...client, ...clientData }
-          : client
-      ))
+      dispatch(fetchClients())
       
       setShowEditModal(false)
       setSelectedClient(null)
     } catch (error: any) {
       console.error('Error updating client:', error)
-      setError(error.message || 'Failed to update client')
-    } finally {
-      setLoading(false)
+      dispatch(fetchClients())
     }
   }
 
@@ -549,7 +522,6 @@ const ClientsPage: React.FC = () => {
               <button
                 onClick={() => setShowAddModal(false)}
                 className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-gray-800"
-                disabled={loading}
               >
                 Cancel
               </button>
