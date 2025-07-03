@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { Eye, EyeOff, LogIn } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../../store/authStore'
+import { apiPost } from '../../api'
 
 
 const loginSchema = z.object({
@@ -35,33 +36,17 @@ const LoginPage: React.FC = () => {
     try {
       console.log('Login attempt:', data)
       
-      // Make real API call to MongoDB backend
-      const res = await fetch(`http://localhost:5000/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-        }),
-        credentials: 'include',
+      // Use the API utility function which has the correct production URL
+      const response = await apiPost('/auth/login', {
+        email: data.email,
+        password: data.password,
       })
       
-      console.log('Response status:', res.status)
-      
-      if (!res.ok) {
-        const errorText = await res.text()
-        console.error('Login error response:', errorText)
-        throw new Error(`HTTP ${res.status}: ${errorText}`)
-      }
-      
-      const response = await res.json()
       console.log('Login response:', response)
       
       // Check if login was successful
-      if (response.success && response.data && response.data.user && response.data.tokens) {
-        const { user, tokens } = response.data
+      if (response && response.user && response.tokens) {
+        const { user, tokens } = response
         
         // Store user and tokens in auth store
         login(user, tokens)
@@ -76,9 +61,9 @@ const LoginPage: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Login error:', error)
-      if (error.message.includes('Invalid email or password')) {
+      if (error.message.includes('Invalid email or password') || error.message.includes('401')) {
         toast.error('Invalid email or password. Please check your credentials.')
-      } else if (error.message.includes('Failed to fetch')) {
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
         toast.error('Unable to connect to server. Please try again later.')
       } else {
         toast.error('Login failed. Please try again.')
