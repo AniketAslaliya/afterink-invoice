@@ -1,7 +1,6 @@
 {
-  "buildCommand": "cd frontend && rm -rf node_modules package-lock.json && npm install && npm run build",
-  "outputDirectory": "frontend/dist",
-  "installCommand": "echo 'Installation handled in build command'",
+  "buildCommand": "rm -rf node_modules package-lock.json && npm install && npm run build",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/(.*)",
