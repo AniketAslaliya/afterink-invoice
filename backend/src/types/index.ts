@@ -70,6 +70,7 @@ export interface IInvoice {
   status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
   paymentStatus: 'unpaid' | 'partial' | 'paid';
   paidAmount: number;
+  paymentAmount?: number;
   paymentDate?: Date;
   notes?: string;
   terms?: string;

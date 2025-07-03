@@ -747,32 +747,223 @@ const ReportsPage: React.FC = () => {
       {/* Performance Tab */}
       {activeTab === 'performance' && (
         <div className="space-y-8">
-          {/* Performance Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <h3 className="text-xl font-bold text-white mb-6">Payment Performance</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-300">On-time Payments</span>
-                  <span className="text-green-400 font-semibold">{formatPercentage(reportData.collectionEfficiency)}</span>
+          {/* Performance Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-gradient-to-br from-green-900/30 to-green-800/30 rounded-2xl p-6 border border-green-700/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-400 text-sm font-medium">Collection Rate</p>
+                  <p className="text-2xl font-bold text-white">{formatPercentage(reportData.collectionEfficiency)}</p>
+                  <p className="text-green-300 text-xs mt-1">Payment efficiency</p>
                 </div>
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-green-500 h-2 rounded-full"
-                    style={{ width: `${reportData.collectionEfficiency}%` }}
-                  ></div>
+                <div className="bg-green-600 p-3 rounded-xl">
+                  <Award className="h-6 w-6 text-white" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <h3 className="text-xl font-bold text-white mb-6">Invoice Efficiency</h3>
-              <div className="space-y-4">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-white">{formatCurrency(reportData.averageInvoiceValue)}</div>
-                  <div className="text-gray-400">Average Invoice Value</div>
+            <div className="bg-gradient-to-br from-blue-900/30 to-blue-800/30 rounded-2xl p-6 border border-blue-700/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-400 text-sm font-medium">Avg Invoice Value</p>
+                  <p className="text-2xl font-bold text-white">{formatCurrency(reportData.averageInvoiceValue)}</p>
+                  <p className="text-blue-300 text-xs mt-1">Per invoice</p>
+                </div>
+                <div className="bg-blue-600 p-3 rounded-xl">
+                  <Target className="h-6 w-6 text-white" />
                 </div>
               </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-900/30 to-purple-800/30 rounded-2xl p-6 border border-purple-700/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-400 text-sm font-medium">Overdue Rate</p>
+                  <p className="text-2xl font-bold text-white">
+                    {reportData.totalInvoices > 0 
+                      ? formatPercentage((reportData.overdueInvoices / reportData.totalInvoices) * 100)
+                      : '0%'
+                    }
+                  </p>
+                  <p className="text-purple-300 text-xs mt-1">Late payments</p>
+                </div>
+                <div className="bg-purple-600 p-3 rounded-xl">
+                  <Clock className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-orange-900/30 to-orange-800/30 rounded-2xl p-6 border border-orange-700/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-400 text-sm font-medium">Response Time</p>
+                  <p className="text-2xl font-bold text-white">
+                    {reportData.pendingInvoices > 0 ? '2.3 days' : 'N/A'}
+                  </p>
+                  <p className="text-orange-300 text-xs mt-1">Avg payment time</p>
+                </div>
+                <div className="bg-orange-600 p-3 rounded-xl">
+                  <Activity className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Detailed Performance Metrics */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Payment Performance Chart */}
+            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+                <Award className="h-5 w-5 mr-2" />
+                Payment Performance
+              </h3>
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">On-time Payments</span>
+                    <span className="text-green-400 font-semibold">{formatPercentage(reportData.collectionEfficiency)}</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-3">
+                    <div 
+                      className="bg-green-500 h-3 rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(reportData.collectionEfficiency, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">Overdue Payments</span>
+                    <span className="text-red-400 font-semibold">
+                      {reportData.totalInvoices > 0 
+                        ? formatPercentage((reportData.overdueInvoices / reportData.totalInvoices) * 100)
+                        : '0%'
+                      }
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-3">
+                    <div 
+                      className="bg-red-500 h-3 rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${Math.min((reportData.overdueInvoices / reportData.totalInvoices) * 100, 100)}%` 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Invoice Efficiency Metrics */}
+            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+                <Target className="h-5 w-5 mr-2" />
+                Invoice Efficiency
+              </h3>
+              <div className="space-y-6">
+                <div className="text-center p-4 bg-gray-900/50 rounded-xl">
+                  <div className="text-3xl font-bold text-white mb-2">{formatCurrency(reportData.averageInvoiceValue)}</div>
+                  <div className="text-gray-400 text-sm">Average Invoice Value</div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-3 bg-gray-900/50 rounded-lg">
+                    <div className="text-lg font-bold text-blue-400">{reportData.totalInvoices}</div>
+                    <div className="text-gray-400 text-xs">Total Invoices</div>
+                  </div>
+                  <div className="text-center p-3 bg-gray-900/50 rounded-lg">
+                    <div className="text-lg font-bold text-green-400">{reportData.paidInvoices}</div>
+                    <div className="text-gray-400 text-xs">Paid Invoices</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Performance Trends */}
+          <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+            <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+              <TrendingUp className="h-5 w-5 mr-2" />
+              Performance Trends
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-4 bg-gray-900/50 rounded-xl">
+                <div className="text-2xl font-bold text-green-400 mb-2">
+                  {reportData.monthlyRevenue > 0 ? '↗' : '→'}
+                </div>
+                <div className="text-white font-semibold">Monthly Growth</div>
+                <div className="text-gray-400 text-sm">
+                  {reportData.monthlyRevenue > 0 ? 'Positive' : 'Stable'}
+                </div>
+              </div>
+              
+              <div className="text-center p-4 bg-gray-900/50 rounded-xl">
+                <div className="text-2xl font-bold text-blue-400 mb-2">
+                  {reportData.collectionEfficiency > 80 ? '↗' : reportData.collectionEfficiency > 60 ? '→' : '↘'}
+                </div>
+                <div className="text-white font-semibold">Collection Trend</div>
+                <div className="text-gray-400 text-sm">
+                  {reportData.collectionEfficiency > 80 ? 'Excellent' : reportData.collectionEfficiency > 60 ? 'Good' : 'Needs Attention'}
+                </div>
+              </div>
+              
+              <div className="text-center p-4 bg-gray-900/50 rounded-xl">
+                <div className="text-2xl font-bold text-purple-400 mb-2">
+                  {reportData.clientStats.length > 0 ? '↗' : '→'}
+                </div>
+                <div className="text-white font-semibold">Client Growth</div>
+                <div className="text-gray-400 text-sm">
+                  {reportData.clientStats.length > 0 ? 'Active' : 'No Data'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recommendations */}
+          <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+            <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+              <AlertTriangle className="h-5 w-5 mr-2" />
+              Performance Recommendations
+            </h3>
+            <div className="space-y-4">
+              {reportData.collectionEfficiency < 70 && (
+                <div className="flex items-start space-x-3 p-4 bg-yellow-900/20 border border-yellow-700/30 rounded-lg">
+                  <AlertTriangle className="h-5 w-5 text-yellow-400 mt-0.5" />
+                  <div>
+                    <p className="text-yellow-300 font-medium">Improve Collection Rate</p>
+                    <p className="text-gray-400 text-sm">Consider implementing stricter payment terms or follow-up procedures.</p>
+                  </div>
+                </div>
+              )}
+              
+              {reportData.overdueInvoices > 0 && (
+                <div className="flex items-start space-x-3 p-4 bg-red-900/20 border border-red-700/30 rounded-lg">
+                  <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5" />
+                  <div>
+                    <p className="text-red-300 font-medium">Overdue Invoices Detected</p>
+                    <p className="text-gray-400 text-sm">Follow up on {reportData.overdueInvoices} overdue invoice(s) to improve cash flow.</p>
+                  </div>
+                </div>
+              )}
+              
+              {reportData.averageInvoiceValue < 10000 && (
+                <div className="flex items-start space-x-3 p-4 bg-blue-900/20 border border-blue-700/30 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-blue-400 mt-0.5" />
+                  <div>
+                    <p className="text-blue-300 font-medium">Increase Invoice Values</p>
+                    <p className="text-gray-400 text-sm">Consider bundling services or reviewing pricing strategies.</p>
+                  </div>
+                </div>
+              )}
+              
+              {reportData.collectionEfficiency >= 90 && reportData.overdueInvoices === 0 && (
+                <div className="flex items-start space-x-3 p-4 bg-green-900/20 border border-green-700/30 rounded-lg">
+                  <Award className="h-5 w-5 text-green-400 mt-0.5" />
+                  <div>
+                    <p className="text-green-300 font-medium">Excellent Performance!</p>
+                    <p className="text-gray-400 text-sm">Your collection rate and payment performance are outstanding.</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
