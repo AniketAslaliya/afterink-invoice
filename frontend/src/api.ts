@@ -1,7 +1,7 @@
 // Simple API utility for frontend
 // Updated for Vercel deployment - Force new commit
 
-const API_BASE_URL = 'https://api.render.com/deploy/srv-d1j65q95pdvs73csdh90?key=KKaNmB-ix7U'; // Production API URL
+const API_BASE_URL = 'https://afterink-invoice.onrender.com/api'; // Production API URL
 
 function getAuthToken() {
   return localStorage.getItem('token');
