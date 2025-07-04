@@ -835,6 +835,21 @@ const InvoicesPage: React.FC = () => {
     }
   };
 
+  // Add useEffect for keyboard escape handler
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showViewModal) setShowViewModal(false);
+        if (showEditModal) setShowEditModal(false);
+        if (showAddModal) setShowAddModal(false);
+        if (showPaymentModal) setShowPaymentModal(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showViewModal, showEditModal, showAddModal, showPaymentModal]);
+
   return (
     <div className="space-y-8">
       {/* Header Section */}
@@ -1893,20 +1908,25 @@ const InvoicesPage: React.FC = () => {
       {/* Invoice View Modal */}
       {showViewModal && selectedInvoice && (
         <div 
-          className="fixed inset-0 bg-black/60 flex items-start justify-center z-50 overflow-y-auto modal-backdrop p-4"
+          className="fixed inset-0 bg-black/60 flex items-start justify-center z-50 overflow-y-auto modal-backdrop p-4 cursor-pointer"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowViewModal(false);
             }
           }}
+          style={{ cursor: 'pointer' }}
         >
-          <div className="bg-white rounded-2xl w-full max-w-6xl shadow-2xl relative my-4 modal-content invoice-view-modal"
-               onClick={(e) => e.stopPropagation()}>
+          <div 
+            className="bg-white rounded-2xl w-full max-w-6xl shadow-2xl relative my-4 modal-content invoice-view-modal cursor-default"
+            onClick={(e) => e.stopPropagation()}
+            style={{ cursor: 'default' }}
+          >
             {/* Header - Sticky */}
             <div className="modal-header rounded-t-2xl flex justify-between items-center shadow-sm">
               <div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Invoice Preview</h2>
                 <p className="text-gray-600 text-sm md:text-base">#{selectedInvoice.invoiceNumber}</p>
+                <p className="text-xs text-gray-400 mt-1">Click outside to close • Press ESC to close</p>
               </div>
               <div className="flex items-center space-x-2 md:space-x-3">
                 <button
@@ -1918,13 +1938,14 @@ const InvoicesPage: React.FC = () => {
                   <span className="sm:hidden">PDF</span>
                 </button>
                 <button 
-                  className="text-gray-400 hover:text-gray-600 text-2xl leading-none w-8 h-8 flex items-center justify-center cursor-pointer" 
+                  className="text-gray-400 hover:text-gray-600 text-2xl leading-none w-8 h-8 flex items-center justify-center cursor-pointer transition-colors" 
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     setShowViewModal(false);
                   }}
                   type="button"
+                  title="Close (ESC)"
                 >
                   &times;
                 </button>

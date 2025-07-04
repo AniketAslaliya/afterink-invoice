@@ -336,130 +336,105 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
       <div 
         ref={invoiceRef}
         className={`invoice-a4 max-w-none mx-auto p-0 ${isPreview ? 'scale-75 transform-gpu' : ''}`}
-        style={A4_STYLE}
+        style={{
+          ...A4_STYLE,
+          fontFamily: 'Inter, Poppins, Merriweather, Roboto, sans-serif',
+          borderRadius: '16px',
+          boxShadow: '0 4px 32px rgba(0,0,0,0.08)',
+          border: '1px solid #e5e7eb',
+          padding: '40px',
+          background: customization.colors.background,
+        }}
       >
         {/* Header */}
-        <div 
-          className={headerClass}
-          style={{ borderColor: customization.colors.primary }}
-        >
-          {template.layout?.headerStyle === 'creative' && (
-            <div 
-              className="absolute top-0 right-0 w-32 h-32 opacity-10"
-              style={{ backgroundColor: customization.colors.accent }}
-            />
-          )}
-          <div className="flex justify-between items-start relative z-10">
-            <div>
-              {customization.showLogo && customization.companyLogo && (
-                <img 
-                  src={customization.companyLogo} 
-                  alt="Company Logo"
-                  className="h-16 w-auto mb-4"
-                />
-              )}
-              <h1 
-                className="text-3xl font-bold mb-2"
-                style={{ 
-                  fontFamily: template.fonts.heading,
-                  color: customization.colors.primary 
-                }}
-              >
-                {customization.companyName || 'Your Company Name'}
-              </h1>
-              {customization.showCompanyDetails && (
-                <div className="text-sm space-y-1" style={{ color: customization.colors.secondary }}>
-                  <p>{customization.companyAddress || 'Company Address'}</p>
-                  <p>{customization.companyPhone || ''} • {customization.companyEmail || ''}</p>
-                  {customization.companyWebsite && <p>{customization.companyWebsite}</p>}
-                </div>
-              )}
-            </div>
-            <div className="text-right">
-              <h2 
-                className="text-2xl font-bold mb-2"
-                style={{ 
-                  fontFamily: template.fonts.heading,
-                  color: customization.colors.primary 
-                }}
-              >
-                INVOICE
-              </h2>
-              <div className="text-sm space-y-1">
-                <p><span className="font-medium">Invoice #:</span> {invoice.invoiceNumber || '-'}</p>
-                <p><span className="font-medium">Date:</span> {formatDate(invoice.createdAt)}</p>
-                <p><span className="font-medium">Due Date:</span> {formatDate(invoice.dueDate)}</p>
-                {isPreview && (
-                  <p>
-                    <span 
-                      className="inline-block px-2 py-1 rounded text-xs font-medium no-print"
-                      style={{ 
-                        backgroundColor: invoice.status === 'paid' ? '#10b981' : invoice.status === 'pending' ? '#f59e0b' : '#ef4444',
-                        color: 'white'
-                      }}
-                    >
-                      {(invoice.status || 'draft').toUpperCase()}
-                    </span>
-                  </p>
-                )}
+        <div className="flex justify-between items-start mb-8 pb-6 border-b-2" style={{ borderColor: customization.colors.primary }}>
+          <div className="flex flex-col gap-2">
+            {customization.showLogo && customization.companyLogo && (
+              <img 
+                src={customization.companyLogo} 
+                alt="Company Logo"
+                className="h-16 w-auto mb-2 rounded-lg shadow"
+              />
+            )}
+            <h1 
+              className="text-3xl font-bold mb-1"
+              style={{ fontFamily: template.fonts.heading, color: customization.colors.primary }}
+            >
+              {customization.companyName || 'Your Company Name'}
+            </h1>
+            {customization.showCompanyDetails && (
+              <div className="text-sm space-y-1" style={{ color: customization.colors.secondary }}>
+                <p>{customization.companyAddress || 'Company Address'}</p>
+                <p>{customization.companyPhone || ''} • {customization.companyEmail || ''}</p>
+                {customization.companyWebsite && <p>{customization.companyWebsite}</p>}
               </div>
+            )}
+          </div>
+          <div className="text-right flex flex-col gap-2">
+            <h2 
+              className="text-2xl font-bold mb-2 tracking-wide"
+              style={{ fontFamily: template.fonts.heading, color: customization.colors.primary }}
+            >
+              INVOICE
+            </h2>
+            <div className="text-sm space-y-1">
+              <p><span className="font-medium">Invoice #:</span> {invoice.invoiceNumber || '-'}</p>
+              <p><span className="font-medium">Date:</span> {formatDate(invoice.createdAt)}</p>
+              <p><span className="font-medium">Due Date:</span> {formatDate(invoice.dueDate)}</p>
+              {isPreview && (
+                <p>
+                  <span 
+                    className="inline-block px-2 py-1 rounded text-xs font-medium no-print"
+                    style={{ backgroundColor: invoice.status === 'paid' ? '#10b981' : invoice.status === 'pending' ? '#f59e0b' : '#ef4444', color: 'white' }}
+                  >
+                    {(invoice.status || 'draft').toUpperCase()}
+                  </span>
+                </p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Client Information */}
-        <div className="mb-8">
-          <h3 
-            className="text-lg font-semibold mb-3"
-            style={{ color: customization.colors.primary }}
-          >
-            Bill To:
-          </h3>
-          <div>
-            <p className="font-medium text-lg">{invoice.client?.companyName || 'Unknown Client'}</p>
-            <p>{invoice.client?.contactPerson?.firstName || ''} {invoice.client?.contactPerson?.lastName || ''}</p>
-            <p className="text-sm" style={{ color: customization.colors.secondary }}>
-              {invoice.client?.contactPerson?.email || ''}
-            </p>
-            {invoice.client?.address && showClientAddress && (
-              <div className="mt-2 text-sm" style={{ color: customization.colors.secondary }}>
-                <p>{invoice.client.address.street || ''}</p>
-                <p>
-                  {invoice.client.address.city || ''}, {invoice.client.address.state || ''} {invoice.client.address.zipCode || ''}
-                </p>
-                <p>{invoice.client.address.country || ''}</p>
-              </div>
-            )}
+        {/* Bill To & Project */}
+        <div className="flex flex-col md:flex-row md:justify-between gap-8 mb-8">
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold mb-2" style={{ color: customization.colors.primary }}>Bill To:</h3>
+            <div>
+              <p className="font-medium text-lg">{invoice.client?.companyName || 'Unknown Client'}</p>
+              <p>{invoice.client?.contactPerson?.firstName || ''} {invoice.client?.contactPerson?.lastName || ''}</p>
+              <p className="text-sm" style={{ color: customization.colors.secondary }}>{invoice.client?.contactPerson?.email || ''}</p>
+              {invoice.client?.address && showClientAddress && (
+                <div className="mt-2 text-sm" style={{ color: customization.colors.secondary }}>
+                  <p>{invoice.client.address.street || ''}</p>
+                  <p>{invoice.client.address.city || ''}, {invoice.client.address.state || ''} {invoice.client.address.zipCode || ''}</p>
+                  <p>{invoice.client.address.country || ''}</p>
+                </div>
+              )}
+            </div>
           </div>
           {invoice.project && (
-            <div className="mt-4">
-              <span className="font-medium">Project: </span>
-              <span style={{ color: customization.colors.secondary }}>{invoice.project.name}</span>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold mb-2" style={{ color: customization.colors.primary }}>Project:</h3>
+              <span className="text-base" style={{ color: customization.colors.secondary }}>{invoice.project.name}</span>
             </div>
           )}
         </div>
 
         {/* Items Table */}
-        <div className={`mb-8 ${tableClass}`}>
-          <table className="w-full">
+        <div className="overflow-x-auto rounded-lg border border-gray-200 mb-8">
+          <table className="w-full text-sm">
             <thead>
-              <tr 
-                className="text-left"
-                style={{ backgroundColor: customization.colors.accent }}
-              >
-                <th className="p-3 font-medium">Description</th>
-                <th className="p-3 font-medium text-center">Qty</th>
-                <th className="p-3 font-medium text-right">Rate</th>
-                <th className="p-3 font-medium text-right">Tax</th>
-                <th className="p-3 font-medium text-right">Amount</th>
+              <tr className="bg-gray-50" style={{ backgroundColor: customization.colors.accent }}>
+                <th className="p-3 font-semibold text-left">Description</th>
+                <th className="p-3 font-semibold text-center">Qty</th>
+                <th className="p-3 font-semibold text-right">Rate</th>
+                <th className="p-3 font-semibold text-right">Tax</th>
+                <th className="p-3 font-semibold text-right">Amount</th>
               </tr>
             </thead>
             <tbody>
               {invoice.items.map((item, index) => (
-                <tr 
-                  key={index} 
-                  className={`border-b ${template.layout?.tableStyle === 'bordered' ? 'border-gray-300' : 'border-gray-100'}`}
-                >
+                <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                   <td className="p-3">{item.description}</td>
                   <td className="p-3 text-center">{item.quantity}</td>
                   <td className="p-3 text-right">{formatCurrency(item.rate)}</td>
@@ -472,8 +447,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
         </div>
 
         {/* Totals */}
-        <div className="flex justify-end mb-8">
-          <div className="w-64">
+        <div className="flex flex-col items-end mb-8">
+          <div className="w-full md:w-1/2 lg:w-1/3">
             {invoice.subtotal && (
               <div className="flex justify-between py-2 border-b border-gray-200">
                 <span>Subtotal:</span>
@@ -488,10 +463,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
             )}
             <div 
               className="flex justify-between py-3 font-bold text-lg border-t-2"
-              style={{ 
-                borderColor: customization.colors.primary,
-                color: customization.colors.primary 
-              }}
+              style={{ borderColor: customization.colors.primary, color: customization.colors.primary }}
             >
               <span>Total:</span>
               <span>{formatCurrency(invoice.totalAmount)}</span>
@@ -499,33 +471,19 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
           </div>
         </div>
 
-        {/* Payment Methods Section - always visible */}
-        <div className="mt-10 border-t pt-6">
-          <h3 className="text-lg font-semibold mb-3" style={{ color: customization.colors.primary }}>Payment Methods</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Bank Details */}
-            <div>
-              <h4 className="font-bold mb-2">Bank Transfer</h4>
-              <div className="text-sm space-y-1">
-                <div><span className="font-medium">Account Name:</span> {bankDetails.accountName}</div>
-                <div><span className="font-medium">Account Number:</span> {bankDetails.accountNumber}</div>
-                <div><span className="font-medium">IFSC:</span> {bankDetails.ifsc}</div>
-                <div><span className="font-medium">Account Type:</span> {bankDetails.accountType}</div>
-                <div><span className="font-medium">Bank:</span> {bankDetails.bankName}</div>
-              </div>
-            </div>
-            {/* UPI QR Code */}
-            <div>
-              <h4 className="font-bold mb-2">UPI (Scan & Pay)</h4>
-              <QRCodeSVG value={upiString} size={120} includeMargin={true} />
-              <div className="text-xs mt-2">Pay to: <span className="font-medium">{bankDetails.upiId}</span></div>
-              <div className="text-xs">Amount: <span className="font-medium">₹{upiAmount}</span></div>
-            </div>
+        {/* Payment Methods Section */}
+        <div className="mb-8">
+          <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>Payment Details</h4>
+          <div className="text-sm space-y-1">
+            <p><span className="font-medium">Bank Name:</span> {bankDetails.bankName}</p>
+            <p><span className="font-medium">Account Name:</span> {bankDetails.accountName}</p>
+            <p><span className="font-medium">Account Number:</span> {bankDetails.accountNumber}</p>
+            <p><span className="font-medium">IFSC:</span> {bankDetails.ifsc}</p>
+            <p><span className="font-medium">UPI ID:</span> {bankDetails.upiId}</p>
           </div>
-          <div className="mt-6 text-sm text-gray-600">PayPal and Credit/Debit Cards accepted (if enabled).</div>
         </div>
 
-        {/* Notes and Terms */}
+        {/* Notes, Terms, and Footer */}
         <div className="space-y-6">
           {invoice.notes && (
             <div>
@@ -537,7 +495,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
               </p>
             </div>
           )}
-          
           {customization.showPaymentTerms && (
             <div>
               <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>
@@ -548,41 +505,18 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
               </p>
             </div>
           )}
-          {/* Terms & Conditions Section */}
-          {invoice.terms && (
-            <div>
-              <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>
-                Terms & Conditions:
-              </h4>
-              <p className="text-sm" style={{ color: customization.colors.secondary }}>
-                {customization.termsAndConditions || invoice.terms || 'All services are subject to our standard terms and conditions.'}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        {template.layout?.footerStyle !== 'simple' && (
-          <div 
-            className="mt-12 pt-6 border-t text-center"
-            style={{ borderColor: customization.colors.accent }}
-          >
-            {template.layout?.footerStyle === 'branded' && (
-              <div className="mb-4">
-                <p 
-                  className="font-medium"
-                  style={{ color: customization.colors.primary }}
-                >
-                  Thank you for your business!
-                </p>
-              </div>
-            )}
-            
+          <div>
+            <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>
+              Terms & Conditions:
+            </h4>
             <p className="text-sm" style={{ color: customization.colors.secondary }}>
-              {customization.footerText || 'Powered by Afterink Invoice'}
+              {customization.termsAndConditions || invoice.terms || 'All services are subject to our standard terms and conditions.'}
             </p>
           </div>
-        )}
+        </div>
+        <div className="mt-10 pt-6 border-t border-gray-200 text-center text-xs text-gray-400">
+          {customization.footerText || 'Thank you for your business!'}
+        </div>
       </div>
     </>
   );
