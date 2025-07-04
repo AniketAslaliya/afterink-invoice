@@ -72,6 +72,9 @@ export interface IInvoice {
   paidAmount: number;
   paymentAmount?: number;
   paymentDate?: Date;
+  paymentMethod?: 'bank_transfer' | 'upi' | 'paypal' | 'card' | 'cheque' | 'cash';
+  transactionId?: string;
+  paymentNotes?: string;
   notes?: string;
   terms?: string;
   createdBy: Types.ObjectId | string;
