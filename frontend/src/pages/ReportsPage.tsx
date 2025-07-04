@@ -52,6 +52,7 @@ interface Invoice {
       lastName: string;
       email: string;
     };
+    name?: string;
   };
   project?: {
     _id: string;

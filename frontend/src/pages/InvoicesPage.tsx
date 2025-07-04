@@ -1002,7 +1002,7 @@ const InvoicesPage: React.FC = () => {
                     value={newInvoice.currency}
                     onChange={(e) => setNewInvoice({ ...newInvoice, currency: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    disabled={selectedInvoice.status === 'paid' || selectedInvoice.status === 'sent'}
+                    disabled={selectedInvoice?.status === 'paid' || selectedInvoice?.status === 'sent'}
                   >
                     <option value="INR">INR</option>
                     <option value="USD">USD</option>
@@ -2052,7 +2052,7 @@ const InvoicesPage: React.FC = () => {
                     onChange={(e) => setNewInvoice({ ...newInvoice, clientId: e.target.value, projectId: '' })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                     required
-                    disabled={selectedInvoice.status === 'paid' || selectedInvoice.status === 'sent'}
+                    disabled={selectedInvoice?.status === 'paid' || selectedInvoice?.status === 'sent'}
                   >
                     <option value="">Select a client</option>
                     {clients.map((client) => (
@@ -2061,8 +2061,8 @@ const InvoicesPage: React.FC = () => {
                       </option>
                     ))}
                   </select>
-                  {(selectedInvoice.status === 'paid' || selectedInvoice.status === 'sent') && (
-                    <p className="text-xs text-gray-400 mt-1">Client cannot be changed for {selectedInvoice.status} invoices</p>
+                  {(selectedInvoice?.status === 'paid' || selectedInvoice?.status === 'sent') && (
+                    <p className="text-xs text-gray-400 mt-1">Client cannot be changed for {selectedInvoice?.status} invoices</p>
                   )}
                 </div>
                 <div>
@@ -2073,7 +2073,7 @@ const InvoicesPage: React.FC = () => {
                     value={newInvoice.projectId}
                     onChange={(e) => setNewInvoice({ ...newInvoice, projectId: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    disabled={!newInvoice.clientId || selectedInvoice.status === 'paid' || selectedInvoice.status === 'sent'}
+                    disabled={!newInvoice.clientId || selectedInvoice?.status === 'paid' || selectedInvoice?.status === 'sent'}
                   >
                     <option value="">Select a project (optional)</option>
                     {getFilteredProjects().map((project) => (
@@ -2129,7 +2129,7 @@ const InvoicesPage: React.FC = () => {
                     value={newInvoice.currency}
                     onChange={(e) => setNewInvoice({ ...newInvoice, currency: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    disabled={selectedInvoice.status === 'paid' || selectedInvoice.status === 'sent'}
+                    disabled={selectedInvoice?.status === 'paid' || selectedInvoice?.status === 'sent'}
                   >
                     <option value="INR">INR</option>
                     <option value="USD">USD</option>
@@ -2156,7 +2156,7 @@ const InvoicesPage: React.FC = () => {
               </div>
 
               {/* Items - only editable for draft invoices */}
-              {selectedInvoice.status === 'draft' && (
+              {selectedInvoice?.status === 'draft' && (
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-semibold text-gray-200">Invoice Items</h3>
@@ -2280,7 +2280,7 @@ const InvoicesPage: React.FC = () => {
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                     rows={3}
                     placeholder="Payment terms and conditions..."
-                    disabled={selectedInvoice.status === 'paid'}
+                    disabled={selectedInvoice?.status === 'paid'}
                   />
                 </div>
               </div>
