@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Plus, Search, Filter } from 'lucide-react'
-import { apiGet, apiPost } from '../api'
+import { apiGet, apiPost, apiPut } from '../api'
 import { useAppSelector, useAppDispatch } from '../store'
 import { fetchClients } from '../store/clientsSlice'
 
@@ -207,7 +207,7 @@ const ClientsPage: React.FC = () => {
         status: newClient.status
       }
       
-      const res = await apiPost(`/clients/${selectedClient._id}`, clientData)
+      const res = await apiPut(`/clients/${selectedClient._id}`, clientData)
       
       // Update the client in the list
       dispatch(fetchClients())
