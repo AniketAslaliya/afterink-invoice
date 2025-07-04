@@ -543,8 +543,8 @@ const InvoicesPage: React.FC = () => {
   const handleEditInvoice = (invoice: Invoice) => {
     setEditInvoice({
       ...invoice,
-      clientId: '',
-      projectId: '',
+      clientId: invoice.client && (invoice.client as any)._id ? (invoice.client as any)._id : '',
+      projectId: invoice.project && (invoice.project as any)._id ? (invoice.project as any)._id : '',
       items: invoice.items ? invoice.items.map(item => ({ ...item })) : [],
       notes: invoice.notes || '',
       terms: invoice.terms || getDefaultTerms(),
