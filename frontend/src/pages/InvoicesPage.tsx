@@ -312,6 +312,11 @@ const InvoicesPage: React.FC = () => {
         currency: newInvoice.currency
       };
       
+      // Remove projectId if empty string
+      if (typeof invoiceData.projectId !== 'undefined' && !invoiceData.projectId) {
+        delete invoiceData.projectId;
+      }
+      
       console.log('Sending invoice data:', invoiceData)
       const res = await apiPost('/invoices', invoiceData)
       console.log('Invoice API Response:', res)
