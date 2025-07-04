@@ -5,7 +5,7 @@ export const fetchDashboardStats = createAsyncThunk('dashboard/fetchDashboardSta
   const [clientsRes, projectsRes, invoicesRes] = await Promise.all([
     apiGet('/clients'),
     apiGet('/projects'),
-    apiGet('/invoices'),
+    apiGet('/invoices?limit=1000'),
   ]);
   return {
     clients: clientsRes.data?.clients || clientsRes.clients || [],
