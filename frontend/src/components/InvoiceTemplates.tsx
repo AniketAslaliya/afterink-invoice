@@ -233,13 +233,13 @@ interface InvoicePreviewProps {
   showClientAddress?: boolean;
 }
 
-export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ 
-  invoice, 
-  customization, 
+export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewProps>(({
+  invoice,
+  customization,
   template,
   isPreview = false,
   showClientAddress = true
-}) => {
+}, ref) => {
   console.log('Invoice data:', invoice);
   const invoiceRef = useRef<HTMLDivElement>(null);
 
@@ -334,7 +334,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
         <button onClick={handleDownloadPDF} className="btn btn-primary mb-4">Download PDF</button>
       </div>
       <div 
-        ref={invoiceRef}
+        ref={ref}
         className={`invoice-a4 max-w-none mx-auto p-0 ${isPreview ? 'scale-75 transform-gpu' : ''}`}
         style={{
           ...A4_STYLE,
@@ -483,9 +483,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
               <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>
                 Notes:
               </h4>
-              <p className="text-sm" style={{ color: customization.colors.secondary }}>
-                {invoice.notes}
-              </p>
+              <div className="text-sm" style={{ color: customization.colors.secondary }}
+                dangerouslySetInnerHTML={{ __html: (invoice.notes || '').replace(/\n/g, '<br/>') }}
+              />
             </div>
           )}
           {customization.showPaymentTerms && (
@@ -513,7 +513,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
       </div>
     </>
   );
-};
+});
 
 interface InvoiceTemplatesProps {
   selectedTemplate: string;

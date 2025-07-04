@@ -1,9 +1,14 @@
-import React, { useEffect, useState } from 'react';
+// @ts-ignore
+// eslint-disable-next-line
+// declare module 'html2pdf.js';
+
+import React, { useEffect, useState, useRef } from 'react';
 import { Plus, Search, Filter, Trash2, Download, Palette, Save, FileText, CheckCircle, Clock, AlertCircle, Eye, Edit, DollarSign } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../api';
 import { InvoicePreview, defaultTemplates } from '../components/InvoiceTemplates';
 import { useAppSelector, useAppDispatch } from '../store';
 import { fetchInvoices } from '../store/invoicesSlice';
+import html2pdf from 'html2pdf.js';
 
 // Type for Invoice
 interface Invoice {
@@ -20,6 +25,8 @@ interface Invoice {
   terms?: string;
   createdAt?: string;
   currency?: string;
+  taxAmount?: number;
+  termsAndConditions?: string;
 }
 
 interface InvoiceItem {
@@ -147,29 +154,16 @@ const InvoicesPage: React.FC = () => {
     notes: '',
     date: new Date().toISOString().split('T')[0]
   });
-  const [newInvoice, setNewInvoice] = useState<{
-    invoiceNumber: string;
-    clientId: string;
-    projectId?: string;
-    dueDate: string;
-    items: InvoiceItem[];
-    currency: string;
-    notes: string;
-    terms: string;
-  }>({
+  const [newInvoice, setNewInvoice] = useState<any>({
     invoiceNumber: '',
     clientId: '',
+    projectId: '',
     dueDate: '',
-    items: [{
-      description: '',
-      quantity: 1,
-      rate: 0,
-      amount: 0,
-      taxRate: 0
-    }],
+    items: [{ description: '', quantity: 1, rate: 0, amount: 0, taxRate: 0 }],
     currency: 'INR',
     notes: '',
-    terms: 'Payment is due within 30 days of invoice date.'
+    terms: '',
+    termsAndConditions: '',
   });
   
   // Template customization states
@@ -205,6 +199,10 @@ const InvoicesPage: React.FC = () => {
   const loading = useAppSelector((state: any) => state.invoices.loading);
   const [error, setError] = useState<string | null>(null);
   const dispatch = useAppDispatch();
+
+  // Add a ref to the invoice preview node
+  const invoicePreviewRef = useRef<HTMLDivElement>(null);
+  const [pdfInvoice, setPdfInvoice] = useState<Invoice | null>(null);
 
   // Fetch invoices from backend on mount
   useEffect(() => {
@@ -407,7 +405,8 @@ const InvoicesPage: React.FC = () => {
         }],
         currency: 'INR',
         notes: '',
-        terms: getDefaultTerms()
+        terms: getDefaultTerms(),
+        termsAndConditions: getDefaultTerms(),
       });
       // Fetch next invoice number for the next use
       generateNextInvoiceNumber();
@@ -477,271 +476,21 @@ const InvoicesPage: React.FC = () => {
     }).format(amount);
   };
 
-  const handleDownloadInvoice = (invoice: Invoice) => {
-    
-    // Create a printable invoice view with custom styling
-    const invoiceHTML = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Invoice ${invoice.invoiceNumber}</title>
-          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Georgia:wght@400;700&family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-              font-family: ${invoiceCustomization.fonts.body}; 
-              margin: 40px; 
-              color: ${invoiceCustomization.colors.text}; 
-              background-color: ${invoiceCustomization.colors.background};
-              line-height: 1.6;
-            }
-            .header { 
-              border-bottom: 3px solid ${invoiceCustomization.colors.primary};
-              padding-bottom: 30px;
-              margin-bottom: 40px;
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-            }
-            .company-info {
-              flex: 1;
-            }
-            .company-logo {
-              height: 80px;
-              width: auto;
-              margin-bottom: 20px;
-            }
-            .company-name { 
-              font-family: ${invoiceCustomization.fonts.heading};
-              font-size: 32px; 
-              font-weight: bold;
-              color: ${invoiceCustomization.colors.primary}; 
-              margin-bottom: 10px;
-            }
-            .company-details {
-              color: ${invoiceCustomization.colors.secondary};
-              font-size: 14px;
-              line-height: 1.5;
-            }
-            .invoice-title-section {
-              text-align: right;
-              flex: 1;
-            }
-            .invoice-title { 
-              font-family: ${invoiceCustomization.fonts.heading};
-              font-size: 36px; 
-              font-weight: bold; 
-              color: ${invoiceCustomization.colors.primary}; 
-              margin-bottom: 20px;
-            }
-            .invoice-meta {
-              background-color: ${invoiceCustomization.colors.accent};
-              padding: 20px;
-              border-radius: 8px;
-              font-size: 14px;
-            }
-            .invoice-meta p {
-              margin-bottom: 8px;
-            }
-            .status-badge {
-              display: inline-block;
-              padding: 6px 12px;
-              border-radius: 20px;
-              font-size: 12px;
-              font-weight: bold;
-              text-transform: uppercase;
-              margin-top: 8px;
-            }
-            .status-paid { background-color: #10b981; color: white; }
-            .status-pending { background-color: #f59e0b; color: white; }
-            .status-overdue { background-color: #ef4444; color: white; }
-            .bill-to {
-              margin-bottom: 40px;
-              background-color: ${invoiceCustomization.colors.accent};
-              padding: 25px;
-              border-radius: 8px;
-              border-left: 4px solid ${invoiceCustomization.colors.primary};
-            }
-            .bill-to h3 {
-              font-family: ${invoiceCustomization.fonts.heading};
-              color: ${invoiceCustomization.colors.primary};
-              font-size: 18px;
-              margin-bottom: 15px;
-              font-weight: 600;
-            }
-            .bill-to .client-name {
-              font-size: 18px;
-              font-weight: 600;
-              color: ${invoiceCustomization.colors.text};
-              margin-bottom: 5px;
-            }
-            .invoice-table { 
-              width: 100%; 
-              border-collapse: collapse; 
-              margin-bottom: 30px;
-              border-radius: 8px;
-              overflow: hidden;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            }
-            .invoice-table th { 
-              background-color: ${invoiceCustomization.colors.primary}; 
-              color: white;
-              padding: 15px; 
-              text-align: left; 
-              font-weight: 600;
-              font-size: 14px;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-            }
-            .invoice-table td { 
-              padding: 15px; 
-              border-bottom: 1px solid #e5e7eb;
-              background-color: white;
-            }
-            .invoice-table tbody tr:hover {
-              background-color: ${invoiceCustomization.colors.accent};
-            }
-            .total-section { 
-              margin-top: 40px;
-              display: flex;
-              justify-content: flex-end;
-            }
-            .total-box {
-              background-color: ${invoiceCustomization.colors.accent};
-              padding: 25px;
-              border-radius: 8px;
-              min-width: 300px;
-              border: 2px solid ${invoiceCustomization.colors.primary};
-            }
-            .total-row { 
-              display: flex; 
-              justify-content: space-between; 
-              margin-bottom: 12px;
-              padding: 8px 0;
-            }
-            .total-row.subtotal {
-              border-bottom: 1px solid #e5e7eb;
-              padding-bottom: 12px;
-            }
-            .total-row.final { 
-              font-size: 20px; 
-              font-weight: bold; 
-              color: ${invoiceCustomization.colors.primary};
-              border-top: 2px solid ${invoiceCustomization.colors.primary};
-              padding-top: 15px;
-              margin-top: 15px;
-            }
-            .footer {
-              margin-top: 50px; 
-              padding-top: 30px; 
-              border-top: 2px solid ${invoiceCustomization.colors.accent};
-              text-align: center;
-            }
-            .footer-text {
-              color: ${invoiceCustomization.colors.secondary};
-              font-size: 14px;
-              margin-bottom: 15px;
-            }
-            .footer-company {
-              color: ${invoiceCustomization.colors.primary};
-              font-weight: 600;
-              font-size: 16px;
-            }
-            @media print { 
-              body { margin: 20px; } 
-              .invoice-table { box-shadow: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="company-info">
-              ${invoiceCustomization.companyLogo && invoiceCustomization.showLogo ? 
-                `<img src="${invoiceCustomization.companyLogo}" alt="Company Logo" class="company-logo" />` : ''}
-              <div class="company-name">${invoiceCustomization.companyName}</div>
-              ${invoiceCustomization.showCompanyDetails ? `
-                <div class="company-details">
-                  <div>${invoiceCustomization.companyAddress}</div>
-                  <div>${invoiceCustomization.companyPhone} • ${invoiceCustomization.companyEmail}</div>
-                  ${invoiceCustomization.companyWebsite ? `<div>${invoiceCustomization.companyWebsite}</div>` : ''}
-                </div>` : ''}
-            </div>
-            
-            <div class="invoice-title-section">
-              <div class="invoice-title">INVOICE</div>
-              <div class="invoice-meta">
-                <p><strong>Invoice #:</strong> ${invoice.invoiceNumber}</p>
-                <p><strong>Issue Date:</strong> ${new Date().toLocaleDateString()}</p>
-                <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div class="bill-to">
-            <h3>Bill To</h3>
-            <div class="client-name">${invoice.client?.companyName || invoice.clientId || 'Client Name Not Available'}</div>
-            <div>${(invoice.client?.contactPerson?.firstName || '') + ' ' + (invoice.client?.contactPerson?.lastName || '')}</div>
-            <div style="color: ${invoiceCustomization.colors.secondary};">${invoice.client?.contactPerson?.email || ''}</div>
-            ${invoice.project ? `<div style="margin-top: 10px;"><strong>Project:</strong> ${invoice.project.name}</div>` : ''}
-          </div>
-          
-          <table class="invoice-table">
-            <thead>
-              <tr>
-                <th style="width: 50%;">Description</th>
-                <th style="width: 15%; text-align: center;">Qty</th>
-                <th style="width: 20%; text-align: right;">Rate</th>
-                <th style="width: 15%; text-align: right;">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Professional Services</td>
-                <td style="text-align: center;">1</td>
-                                        <td style="text-align: right;">{formatCurrency(invoice.totalAmount || 0, invoice.currency)}</td>
-                        <td style="text-align: right; font-weight: 600;">{formatCurrency(invoice.totalAmount || 0, invoice.currency)}</td>
-              </tr>
-            </tbody>
-          </table>
-          
-          <div class="total-section">
-            <div class="total-box">
-              <div class="total-row subtotal">
-                <span>Subtotal:</span>
-                <span>${formatCurrency(invoice.totalAmount || 0, invoice.currency)}</span>
-              </div>
-              <div class="total-row">
-                <span>Tax:</span>
-                <span>${formatCurrency(0, invoice.currency)}</span>
-              </div>
-              <div class="total-row final">
-                <span>Total:</span>
-                <span>${formatCurrency(invoice.totalAmount || 0, invoice.currency)}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="footer">
-            <div class="footer-text">${invoiceCustomization.footerText}</div>
-            <div class="footer-company">${invoiceCustomization.companyName}</div>
-          </div>
-        </body>
-      </html>
-    `;
-    
-    // Open in new window for printing/saving
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(invoiceHTML);
-      printWindow.document.close();
-      printWindow.focus();
-      
-      // Auto-trigger print dialog after a short delay
-      setTimeout(() => {
-        printWindow.print();
-      }, 100);
-    }
-  }
+  // PDF download handler
+  const handleDownloadPDF = (invoice: Invoice) => {
+    setPdfInvoice(invoice);
+    setTimeout(() => {
+      if (invoicePreviewRef.current) {
+        html2pdf(invoicePreviewRef.current, {
+          margin: 0,
+          filename: `${invoice.invoiceNumber || 'invoice'}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        });
+      }
+    }, 200); // Wait for preview to render
+  };
 
   const handleSaveCustomization = (customization: InvoiceCustomization) => {
     setInvoiceCustomization(customization);
@@ -846,6 +595,7 @@ const InvoicesPage: React.FC = () => {
       items: invoice.items ? invoice.items.map(item => ({ ...item })) : [],
       notes: invoice.notes || '',
       terms: invoice.terms || getDefaultTerms(),
+      termsAndConditions: (invoice as any).termsAndConditions || '',
       currency: invoice.currency || 'INR',
     });
     setSelectedInvoice(invoice);
@@ -1885,7 +1635,7 @@ const InvoicesPage: React.FC = () => {
                         
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleDownloadInvoice(inv)}
+                            onClick={() => handleDownloadPDF(inv)}
                             className="p-2 text-gray-400 hover:text-blue-400 hover:bg-gray-600 rounded-lg transition-all"
                             title="Download Invoice"
                           >
@@ -2130,7 +1880,7 @@ const InvoicesPage: React.FC = () => {
               </div>
               <div className="flex items-center space-x-2 md:space-x-3">
                 <button
-                  onClick={() => handleDownloadInvoice(selectedInvoice)}
+                  onClick={() => handleDownloadPDF(selectedInvoice)}
                   className="px-3 py-2 md:px-4 md:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1 md:space-x-2 text-sm md:text-base"
                 >
                   <Download size={16} />
@@ -2193,6 +1943,7 @@ const InvoicesPage: React.FC = () => {
                   }}
                   template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
                   showClientAddress={showClientAddress}
+                  ref={invoicePreviewRef}
                 />
                 </div>
               </div>
@@ -2391,23 +2142,53 @@ const InvoicesPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
                   <textarea
-                    value={editInvoice.notes}
-                    onChange={(e) => setEditInvoice({ ...editInvoice, notes: e.target.value })}
+                    value={editInvoice ? editInvoice.notes : newInvoice.notes}
+                    onChange={e => editInvoice ? setEditInvoice({ ...editInvoice, notes: e.target.value }) : setNewInvoice({ ...newInvoice, notes: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    rows={3}
-                    placeholder="Additional notes..."
+                    rows={4}
+                    placeholder="Add notes for this invoice..."
                   />
+                  {/* Live preview for notes with line breaks */}
+                  <div className="mt-2 p-2 bg-gray-900 border border-gray-700 rounded text-gray-200 text-sm">
+                    <div dangerouslySetInnerHTML={{ __html: (editInvoice ? editInvoice.notes : newInvoice.notes || '').replace(/\n/g, '<br/>') }} />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Terms & Conditions</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Payment Terms</label>
                   <textarea
-                    value={editInvoice.terms}
-                    onChange={(e) => setEditInvoice({ ...editInvoice, terms: e.target.value })}
+                    value={editInvoice ? editInvoice.terms : newInvoice.terms}
+                    onChange={e => editInvoice ? setEditInvoice({ ...editInvoice, terms: e.target.value }) : setNewInvoice({ ...newInvoice, terms: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    rows={3}
-                    placeholder="Payment terms and conditions..."
+                    rows={2}
+                    placeholder="Enter payment terms..."
                   />
+                  <button
+                    className="mt-2 px-3 py-1 bg-blue-700 text-white rounded text-xs"
+                    onClick={() => {
+                      localStorage.setItem('defaultPaymentTerms', editInvoice ? editInvoice.terms : newInvoice.terms);
+                      alert('Default payment terms saved!');
+                    }}
+                    type="button"
+                  >Save as Default</button>
                 </div>
+              </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-300 mb-1">Terms & Conditions</label>
+                <textarea
+                  value={editInvoice ? editInvoice.termsAndConditions : newInvoice.termsAndConditions}
+                  onChange={e => editInvoice ? setEditInvoice({ ...editInvoice, termsAndConditions: e.target.value }) : setNewInvoice({ ...newInvoice, termsAndConditions: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                  rows={2}
+                  placeholder="Enter terms & conditions..."
+                />
+                <button
+                  className="mt-2 px-3 py-1 bg-blue-700 text-white rounded text-xs"
+                  onClick={() => {
+                    localStorage.setItem('defaultTermsAndConditions', editInvoice ? editInvoice.termsAndConditions : newInvoice.termsAndConditions);
+                    alert('Default terms & conditions saved!');
+                  }}
+                  type="button"
+                >Save as Default</button>
               </div>
               <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-700">
                 <button
@@ -2427,6 +2208,20 @@ const InvoicesPage: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Hidden PDF preview for download */}
+      {pdfInvoice && (
+        <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+          <InvoicePreview
+            ref={invoicePreviewRef}
+            invoice={pdfInvoice}
+            customization={invoiceCustomization}
+            template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
+            isPreview={false}
+            showClientAddress={false}
+          />
         </div>
       )}
     </div>
