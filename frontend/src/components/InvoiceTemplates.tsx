@@ -96,6 +96,7 @@ export interface Invoice {
   notes?: string;
   terms?: string;
   createdAt: string;
+  currency?: string;
 }
 
 export const defaultTemplates: InvoiceTemplate[] = [
@@ -105,6 +106,11 @@ export const defaultTemplates: InvoiceTemplate[] = [
     description: 'Perfect for Indian businesses with INR focus',
     preview: '/templates/indian-professional.png',
     isNew: false,
+    layout: {
+      headerStyle: 'bold',
+      tableStyle: 'bordered',
+      footerStyle: 'simple'
+    },
     colors: {
       primary: '#FF6B35',
       secondary: '#1A365D',
@@ -123,6 +129,11 @@ export const defaultTemplates: InvoiceTemplate[] = [
     name: 'Elegant Blue',
     description: 'Sophisticated design with blue theme',
     preview: '/templates/elegant-blue.png',
+    layout: {
+      headerStyle: 'simple',
+      tableStyle: 'modern',
+      footerStyle: 'simple'
+    },
     colors: {
       primary: '#2563EB',
       secondary: '#1E40AF',

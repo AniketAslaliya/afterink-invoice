@@ -107,8 +107,12 @@ const defaultCustomization: InvoiceCustomization = {
   },
   showLogo: false,
   showCompanyDetails: true,
+  showPaymentTerms: true,
+  paymentTermsText: 'Payment is due within 30 days of invoice date.',
   footerText: 'Thank you for choosing our services!',
-  currency: 'INR'
+  currency: 'INR',
+  dateFormat: 'DD/MM/YYYY',
+  termsAndConditions: 'All services are subject to our standard terms and conditions.'
 };
 
 /**
@@ -1890,9 +1894,19 @@ const InvoicesPage: React.FC = () => {
                   invoice={{
                     _id: selectedInvoice._id,
                     invoiceNumber: selectedInvoice.invoiceNumber,
-                    client: selectedInvoice.client || { companyName: 'Unknown Client', contactPerson: { firstName: '', lastName: '', email: '' }, address: { street: '', city: '', state: '', zipCode: '', country: '' } },
+                    client: selectedInvoice.client || { 
+                      companyName: 'Unknown Client', 
+                      contactPerson: { firstName: '', lastName: '', email: '' }, 
+                      address: { street: '', city: '', state: '', zipCode: '', country: '' } 
+                    },
                     project: selectedInvoice.project || undefined,
-                    items: selectedInvoice.items || [{ description: 'Professional Services', quantity: 1, rate: selectedInvoice.totalAmount, amount: selectedInvoice.totalAmount, taxRate: 0 }],
+                    items: selectedInvoice.items || [{ 
+                      description: 'Professional Services', 
+                      quantity: 1, 
+                      rate: selectedInvoice.totalAmount, 
+                      amount: selectedInvoice.totalAmount, 
+                      taxRate: 0 
+                    }],
                     subtotal: selectedInvoice.totalAmount || 0,
                     taxAmount: 0,
                     totalAmount: selectedInvoice.totalAmount || 0,
@@ -1901,6 +1915,7 @@ const InvoicesPage: React.FC = () => {
                     notes: selectedInvoice.notes || '',
                     terms: selectedInvoice.terms || '',
                     createdAt: selectedInvoice.createdAt || new Date().toISOString(),
+                    currency: selectedInvoice.currency || 'INR',
                   }}
                   customization={{
                     ...invoiceCustomization,
@@ -1908,6 +1923,7 @@ const InvoicesPage: React.FC = () => {
                     paymentTermsText: invoiceCustomization.paymentTermsText || 'Payment is due within 30 days of invoice date. Late payments may incur additional charges.',
                     dateFormat: invoiceCustomization.dateFormat || 'DD/MM/YYYY',
                     termsAndConditions: invoiceCustomization.termsAndConditions || '',
+                    currency: selectedInvoice.currency || invoiceCustomization.currency || 'INR',
                   }}
                   template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
                 />
