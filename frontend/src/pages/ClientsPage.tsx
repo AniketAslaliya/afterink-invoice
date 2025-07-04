@@ -63,6 +63,7 @@ const ClientsPage: React.FC = () => {
     taxNumber: '',
     notes: ''
   })
+  const [addClientError, setAddClientError] = useState<string | null>(null)
 
   useEffect(() => {
     dispatch(fetchClients())
@@ -133,6 +134,13 @@ const ClientsPage: React.FC = () => {
   }
 
   const handleAddClient = async () => {
+    // Frontend validation for required fields
+    if (!newClient.contactPerson.firstName.trim() || !newClient.contactPerson.lastName.trim()) {
+      setAddClientError('First Name and Last Name are required for the contact person.');
+      return;
+    } else {
+      setAddClientError(null);
+    }
     try {
       const clientData = {
         companyName: newClient.companyName,
@@ -147,9 +155,7 @@ const ClientsPage: React.FC = () => {
         address: newClient.address,
         status: newClient.status
       }
-      
       const res = await apiPost('/clients', clientData)
-      
       let clientObject
       if (res && res.data && res.data.client) {
         clientObject = res.data.client
@@ -160,7 +166,6 @@ const ClientsPage: React.FC = () => {
       } else {
         throw new Error('Unexpected API response structure')
       }
-      
       dispatch(fetchClients())
       setShowAddModal(false)
       setNewClient({
@@ -294,8 +299,9 @@ const ClientsPage: React.FC = () => {
                         ...newClient, 
                         contactPerson: { ...newClient.contactPerson, firstName: e.target.value }
                       })}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      className={`w-full px-3 py-2 bg-gray-800 border ${!newClient.contactPerson.firstName.trim() && addClientError ? 'border-red-500' : 'border-gray-600'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}
                       placeholder="First name"
+                      required
                     />
                   </div>
                   <div>
@@ -309,8 +315,9 @@ const ClientsPage: React.FC = () => {
                         ...newClient, 
                         contactPerson: { ...newClient.contactPerson, lastName: e.target.value }
                       })}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      className={`w-full px-3 py-2 bg-gray-800 border ${!newClient.contactPerson.lastName.trim() && addClientError ? 'border-red-500' : 'border-gray-600'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}
                       placeholder="Last name"
+                      required
                     />
                   </div>
                 </div>
@@ -384,6 +391,9 @@ const ClientsPage: React.FC = () => {
                     />
                   </div>
                 </div>
+                {addClientError && (
+                  <div className="text-red-500 text-sm mt-2">{addClientError}</div>
+                )}
               </div>
 
               {/* Address - Optional */}
@@ -933,7 +943,9 @@ const ClientsPage: React.FC = () => {
                       ...newClient, 
                       contactPerson: { ...newClient.contactPerson, firstName: e.target.value }
                     })}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    className={`w-full px-3 py-2 bg-gray-800 border ${!newClient.contactPerson.firstName.trim() && addClientError ? 'border-red-500' : 'border-gray-600'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}
+                    placeholder="First name"
+                    required
                   />
                 </div>
                 <div>
@@ -945,7 +957,9 @@ const ClientsPage: React.FC = () => {
                       ...newClient, 
                       contactPerson: { ...newClient.contactPerson, lastName: e.target.value }
                     })}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    className={`w-full px-3 py-2 bg-gray-800 border ${!newClient.contactPerson.lastName.trim() && addClientError ? 'border-red-500' : 'border-gray-600'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}
+                    placeholder="Last name"
+                    required
                   />
                 </div>
               </div>
