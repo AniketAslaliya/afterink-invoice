@@ -117,7 +117,7 @@ const defaultCustomization: InvoiceCustomization = {
   showLogo: false,
   showCompanyDetails: true,
   showPaymentTerms: true,
-  paymentTermsText: 'Payment is due within 30 days of invoice date.',
+  paymentTermsText: 'Payment is due within 7 days of invoice date.',
   footerText: 'Thank you for choosing our services!',
   currency: 'INR',
   dateFormat: 'DD/MM/YYYY',
@@ -203,6 +203,33 @@ const InvoicesPage: React.FC = () => {
   // Add a ref to the invoice preview node
   const invoicePreviewRef = useRef<HTMLDivElement>(null);
   const [pdfInvoice, setPdfInvoice] = useState<Invoice | null>(null);
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [allInvoices, setAllInvoices] = useState<Invoice[]>([]); // for total revenue
+
+  useEffect(() => {
+    dispatch(fetchInvoices({ page, limit }));
+  }, [dispatch, page, limit]);
+
+  // Fetch all invoices for total revenue (background)
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiGet('/invoices?limit=10000');
+        setAllInvoices(res.data?.invoices || res.invoices || res || []);
+      } catch (e) {
+        setAllInvoices([]);
+      }
+    })();
+  }, []);
+
+  // Calculate total revenue for all invoices
+  const totalRevenue = allInvoices.reduce((sum: number, inv: Invoice) => sum + (inv.totalAmount || 0), 0);
+
+  // Pagination controls
+  const handleNextPage = () => setPage((p) => p + 1);
+  const handlePrevPage = () => setPage((p) => Math.max(1, p - 1));
 
   // Fetch invoices from backend on mount
   useEffect(() => {
@@ -316,7 +343,7 @@ const InvoicesPage: React.FC = () => {
   }, [showAddModal]);
 
   // Helper to get default terms
-  const getDefaultTerms = () => invoiceCustomization.termsAndConditions || 'Payment is due within 30 days of invoice date.';
+  const getDefaultTerms = () => invoiceCustomization.termsAndConditions || 'Payment is due within 7 days of invoice date.';
 
   const handleAddInvoice = async () => {
     let clientId = newInvoice.clientId;

@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiGet, apiPost, apiPut } from '../api';
 
-export const fetchInvoices = createAsyncThunk('invoices/fetchInvoices', async () => {
-  const res = await apiGet('/invoices');
+export const fetchInvoices = createAsyncThunk('invoices/fetchInvoices', async ({ page = 1, limit = 20 }: { page?: number, limit?: number } = {}) => {
+  const res = await apiGet(`/invoices?page=${page}&limit=${limit}`);
   return res.data?.invoices || res.invoices || res || [];
 });
 
