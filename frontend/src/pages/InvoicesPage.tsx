@@ -5,67 +5,50 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Plus, Search, Filter, Trash2, Download, Palette, Save, FileText, CheckCircle, Clock, AlertCircle, Eye, Edit, DollarSign } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../api';
-import { InvoicePreview, defaultTemplates, Invoice, InvoiceCustomization } from '../components/InvoiceTemplates';
-import { useAppSelector, useAppDispatch } from '../store';
-import { fetchInvoices } from '../store/invoicesSlice';
-import html2pdf from 'html2pdf.js';
+import { InvoicePreview, defaultTemplates, InvoiceCustomization } from '../components/InvoiceTemplates';
+import type { Invoice } from '../components/InvoiceTemplates';
 
-// Type for Invoice
-interface Invoice {
-  _id: string;
-  invoiceNumber: string;
-  clientId: string;
-  status: string;
-  totalAmount: number; // Fixed to match backend field name
-  dueDate: string;
-  client?: Client;
-  project?: Project;
-  items?: InvoiceItem[];
-  notes?: string;
-  terms?: string;
-  createdAt?: string;
-  currency?: string;
-  taxAmount?: number;
-  termsAndConditions?: string;
-}
-
-interface InvoiceItem {
+// Define types that are used in this component
+type InvoiceItem = {
   description: string;
   quantity: number;
   rate: number;
   amount: number;
   taxRate?: number;
-}
+};
 
-interface Client {
+type Client = {
   _id: string;
   companyName: string;
-  contactPerson: { firstName: string; lastName: string; email: string };
-  name?: string;
-}
+  contactPerson: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    position?: string;
+    countryCode?: string;
+  };
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  status: string;
+  paymentTerms?: number;
+  taxNumber?: string;
+  notes?: string;
+};
 
-interface Project {
+type Project = {
   _id: string;
   name: string;
   clientId: string;
-}
-
-interface InvoiceTemplate {
-  id: string;
-  name: string;
-  description: string;
-  colors: {
-    primary: string;
-    secondary: string;
-    text: string;
-    background: string;
-    accent: string;
-  };
-  fonts: {
-    heading: string;
-    body: string;
-  };
-}
+};
+import { useAppSelector, useAppDispatch } from '../store';
+import { fetchInvoices } from '../store/invoicesSlice';
+import html2pdf from 'html2pdf.js';
 
 const defaultCustomization: InvoiceCustomization = {
   template: 'indian-professional',
@@ -102,8 +85,8 @@ const defaultCustomization: InvoiceCustomization = {
 const InvoicesPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -125,7 +108,7 @@ const InvoicesPage: React.FC = () => {
     notes: '',
     date: new Date().toISOString().split('T')[0]
   });
-  const [newInvoice, setNewInvoice] = useState<any>({
+  const [newInvoice, setNewInvoice] = useState({
     invoiceNumber: '',
     clientId: '',
     projectId: '',
@@ -145,7 +128,7 @@ const InvoicesPage: React.FC = () => {
   });
 
   // Add this state for settings
-  const [appSettings, setAppSettings] = useState<any>(null);
+  const [appSettings, setAppSettings] = useState(null);
 
   // Add this state for client address checkbox
   const [showClientAddress, setShowClientAddress] = useState(true);
@@ -169,16 +152,16 @@ const InvoicesPage: React.FC = () => {
   const invoices = useAppSelector((state: any) => state.invoices.invoices);
   const pagination = useAppSelector((state: any) => state.invoices.pagination);
   const loading = useAppSelector((state: any) => state.invoices.loading);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   const dispatch = useAppDispatch();
 
   // Add a ref to the invoice preview node
-  const invoicePreviewRef = useRef<HTMLDivElement>(null);
+  const invoicePreviewRef = useRef(null);
   const [pdfInvoice, setPdfInvoice] = useState<Invoice | null>(null);
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
-  const [allInvoices, setAllInvoices] = useState<Invoice[]>([]); // for total revenue
+  const [allInvoices, setAllInvoices] = useState<any[]>([]); // for total revenue
 
   useEffect(() => {
     dispatch(fetchInvoices({ page, limit }));
@@ -197,7 +180,7 @@ const InvoicesPage: React.FC = () => {
   }, []);
 
   // Calculate total revenue for all invoices
-  const totalRevenue = allInvoices.reduce((sum: number, inv: Invoice) => sum + (inv.totalAmount || 0), 0);
+  const totalRevenue = allInvoices.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
 
   // Pagination controls
   const handleNextPage = () => setPage((p) => Math.min(p + 1, pagination.pages));
@@ -205,7 +188,6 @@ const InvoicesPage: React.FC = () => {
 
   // Fetch invoices from backend on mount
   useEffect(() => {
-    fetchClients();
     fetchProjects();
     
     // Load business settings and apply to invoice customization
@@ -232,7 +214,6 @@ const InvoicesPage: React.FC = () => {
       const projectData = JSON.parse(preselectedProject);
       setNewInvoice(prev => ({
         ...prev,
-        clientId: projectData.clientId,
         projectId: projectData.id
       }));
       setShowAddModal(true);
@@ -255,31 +236,6 @@ const InvoicesPage: React.FC = () => {
       console.error('Error fetching settings:', error);
     }
   };
-
-  const fetchClients = async () => {
-    try {
-      console.log('Fetching clients from API...')
-      const res = await apiGet('/clients')
-      console.log('Clients API Response:', res)
-      
-      // Handle different response structures
-      let clientsArray = [];
-      if (res && res.data && res.data.clients) {
-        clientsArray = res.data.clients;
-      } else if (res && Array.isArray(res.clients)) {
-        clientsArray = res.clients;
-      } else if (res && Array.isArray(res)) {
-        clientsArray = res;
-      } else {
-        console.warn('Unexpected clients response structure:', res);
-        clientsArray = []; // Default to empty array
-      }
-      
-      setClients(clientsArray)
-    } catch (err: any) {
-      console.error('Error fetching clients:', err.message)
-    }
-  }
 
   const fetchProjects = async () => {
     try {
@@ -352,7 +308,7 @@ const InvoicesPage: React.FC = () => {
       }, 0)
       const totalAmount = subtotal + taxAmount
       
-      const invoiceData = {
+      const invoiceData: any = {
         ...newInvoice,
         clientId,
         totalAmount: totalAmount,
@@ -362,7 +318,8 @@ const InvoicesPage: React.FC = () => {
       
       // Remove projectId if empty string
       if (typeof invoiceData.projectId !== 'undefined' && !invoiceData.projectId) {
-        delete invoiceData.projectId;
+        const { projectId, ...dataWithoutProjectId } = invoiceData;
+        Object.assign(invoiceData, dataWithoutProjectId);
       }
       
       console.log('Sending invoice data:', invoiceData)
@@ -383,16 +340,11 @@ const InvoicesPage: React.FC = () => {
         throw new Error('Unexpected API response structure. Check console for details.');
       }
       
-      dispatch(fetchInvoices(invoices.map((inv: Invoice) => 
-        inv._id === invoiceObject._id 
-          ? { ...inv, ...invoiceObject }
-          : inv
-      )));
+      dispatch(fetchInvoices({ page, limit }));
       setShowAddModal(false)
       // Reset form
       setNewInvoice({
         invoiceNumber: '',
-        clientId: '',
         dueDate: '',
         items: [{
           description: '',
@@ -442,9 +394,9 @@ const InvoicesPage: React.FC = () => {
     setNewInvoice((prev: any) => {
       const items = [...prev.items];
       items[index] = { ...items[index], [field]: value };
-      if (field === 'quantity' || field === 'rate') {
+    if (field === 'quantity' || field === 'rate') {
         items[index].amount = items[index].quantity * items[index].rate;
-      }
+    }
       return { ...prev, items };
     });
   }
@@ -478,7 +430,7 @@ const InvoicesPage: React.FC = () => {
   // PDF download handler
   const handleDownloadPDF = (invoice: Invoice) => {
     setPdfInvoice(invoice);
-    setTimeout(() => {
+      setTimeout(() => {
       if (invoicePreviewRef.current) {
         html2pdf(invoicePreviewRef.current, {
           margin: 0,
@@ -781,10 +733,10 @@ const InvoicesPage: React.FC = () => {
                   >
                     Add New Client
                   </button>
-                </div>
+          </div>
                 {showNewClientFields && (
                   <div className="grid grid-cols-2 gap-4 mt-2">
-                    <div>
+                <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1">Company Name *</label>
                       <input
                         type="text"
@@ -797,16 +749,16 @@ const InvoicesPage: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1">Status</label>
-                      <select
+                  <select
                         value={newClient.status}
                         onChange={e => setNewClient({ ...newClient, status: e.target.value as any })}
                         className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                      >
+                  >
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                         <option value="prospect">Prospect</option>
-                      </select>
-                    </div>
+                  </select>
+        </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1">First Name *</label>
                       <input
@@ -1616,12 +1568,12 @@ const InvoicesPage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       {/* Left Section - Invoice Info */}
                       <div className="flex items-center gap-6">
-                        <div className="bg-blue-900 p-3 rounded-xl">
-                          <FileText className="text-blue-400" size={20} />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-white text-lg">#{inv.invoiceNumber}</h3>
-                          <p className="text-gray-400 text-sm">{inv.client?.companyName || 'Unknown Client'}</p>
+                          <div className="bg-blue-900 p-3 rounded-xl">
+                            <FileText className="text-blue-400" size={20} />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-white text-lg">#{inv.invoiceNumber}</h3>
+                            <p className="text-gray-400 text-sm">{inv.client?.companyName || 'Unknown Client'}</p>
                           <p className="text-white text-base font-bold mt-1">{formatCurrency(inv.totalAmount || 0, inv.currency)}</p>
                         </div>
                       </div>
@@ -2011,13 +1963,13 @@ const InvoicesPage: React.FC = () => {
               <div className="grid grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Invoice Number</label>
-                  <input
-                    type="text"
+                    <input
+                      type="text"
                     value={editInvoice.invoiceNumber}
                     onChange={(e) => setEditInvoice({ ...editInvoice, invoiceNumber: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    placeholder="Enter invoice number"
-                  />
+                      placeholder="Enter invoice number"
+                    />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Due Date *</label>
@@ -2046,94 +1998,94 @@ const InvoicesPage: React.FC = () => {
                 </div>
               </div>
               {/* Items */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-200">Invoice Items</h3>
-                  <button
-                    type="button"
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-gray-200">Invoice Items</h3>
+                    <button
+                      type="button"
                     onClick={handleEditAddItem}
-                    className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 flex items-center"
-                  >
+                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 flex items-center"
+                    >
                     <Plus className="h-4 w-4 mr-1" /> Add Item
-                  </button>
-                </div>
-                <div className="space-y-3">
+                    </button>
+                  </div>
+                  <div className="space-y-3">
                   {editInvoice.items.map((item: InvoiceItem, index: number) => (
-                    <div key={index} className="border border-gray-600 rounded-md p-4 bg-gray-800">
-                      <div className="flex justify-between items-start mb-3">
-                        <h4 className="font-medium text-gray-200">Item {index + 1}</h4>
+                      <div key={index} className="border border-gray-600 rounded-md p-4 bg-gray-800">
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="font-medium text-gray-200">Item {index + 1}</h4>
                         {editInvoice.items.length > 1 && (
-                          <button
-                            type="button"
+                            <button
+                              type="button"
                             onClick={() => handleEditRemoveItem(index)}
-                            className="text-red-400 hover:text-red-300"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-12 gap-3">
-                        <div className="col-span-5">
+                              className="text-red-400 hover:text-red-300"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-12 gap-3">
+                          <div className="col-span-5">
                           <label className="block text-xs font-medium text-gray-400 mb-1">Description *</label>
-                          <input
-                            type="text"
-                            value={item.description}
+                            <input
+                              type="text"
+                              value={item.description}
                             onChange={(e) => handleEditItem(index, 'description', e.target.value)}
                             className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
                             placeholder="Item description"
-                            required
-                          />
-                        </div>
-                        <div className="col-span-2">
+                              required
+                            />
+                          </div>
+                          <div className="col-span-2">
                           <label className="block text-xs font-medium text-gray-400 mb-1">Quantity *</label>
-                          <input
-                            type="number"
-                            value={item.quantity}
+                            <input
+                              type="number"
+                              value={item.quantity}
                             onChange={(e) => handleEditItem(index, 'quantity', parseFloat(e.target.value) || 0)}
                             className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
                             min="0.01"
-                            step="0.01"
-                            required
-                          />
-                        </div>
-                        <div className="col-span-2">
+                              step="0.01"
+                              required
+                            />
+                          </div>
+                          <div className="col-span-2">
                           <label className="block text-xs font-medium text-gray-400 mb-1">Rate *</label>
-                          <input
-                            type="number"
-                            value={item.rate}
+                            <input
+                              type="number"
+                              value={item.rate}
                             onChange={(e) => handleEditItem(index, 'rate', parseFloat(e.target.value) || 0)}
                             className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                            min="0"
-                            step="0.01"
-                            required
-                          />
-                        </div>
-                        <div className="col-span-2">
+                              min="0"
+                              step="0.01"
+                              required
+                            />
+                          </div>
+                          <div className="col-span-2">
                           <label className="block text-xs font-medium text-gray-400 mb-1">Tax %</label>
-                          <input
-                            type="number"
-                            value={item.taxRate || 0}
+                            <input
+                              type="number"
+                              value={item.taxRate || 0}
                             onChange={(e) => handleEditItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
                             className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                          />
-                        </div>
-                        <div className="col-span-1">
+                              min="0"
+                              max="100"
+                              step="0.01"
+                            />
+                          </div>
+                          <div className="col-span-1">
                           <label className="block text-xs font-medium text-gray-400 mb-1">Amount</label>
                           <div className="px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded text-gray-300">
                             {formatCurrency(item.amount, editInvoice.currency)}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
                 <div className="text-right">
                   <div className="text-lg font-semibold text-white">
                     Total: {formatCurrency(handleEditCalculateTotal(), editInvoice.currency)}
-                  </div>
+                </div>
                 </div>
               </div>
               {/* Notes and Terms */}
@@ -2188,22 +2140,22 @@ const InvoicesPage: React.FC = () => {
                   }}
                   type="button"
                 >Save as Default</button>
-              </div>
-              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-700">
-                <button
+                </div>
+            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-700">
+              <button
                   onClick={() => { setShowEditModal(false); setEditInvoice(null); }}
-                  className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-gray-800"
-                  disabled={submitting}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleUpdateInvoice}
+                className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-gray-800"
+                disabled={submitting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateInvoice}
                   disabled={submitting || !editInvoice.clientId || !editInvoice.dueDate}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submitting ? 'Updating...' : 'Update Invoice'}
-                </button>
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Updating...' : 'Update Invoice'}
+              </button>
               </div>
             </div>
           </div>
