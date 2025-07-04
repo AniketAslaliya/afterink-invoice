@@ -28,6 +28,20 @@ const initialStats = {
   paymentRate: 0,
 };
 
+// Add currencyToINR utility (mock rates, same as ReportsPage)
+const currencyToINR = (amount: number, currency: string): number => {
+  if (currency === 'INR') return amount;
+  const rates: Record<string, number> = {
+    USD: 83,
+    EUR: 90,
+    GBP: 105,
+    CAD: 61,
+    AUD: 55,
+    INR: 1,
+  };
+  return amount * (rates[currency] || 1);
+};
+
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState: {
@@ -51,7 +65,7 @@ const dashboardSlice = createSlice({
         const safeInvoices = Array.isArray(invoices) ? invoices : [];
 
         // Calculate stats
-        const totalRevenue = safeInvoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
+        const totalRevenue = safeInvoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + currencyToINR(inv.totalAmount || 0, inv.currency || 'INR'), 0);
         const paidInvoices = safeInvoices.filter(inv => inv.status === 'paid');
         const pendingInvoices = safeInvoices.filter(inv => inv.status === 'pending');
         const overdueInvoices = safeInvoices.filter(inv => {
