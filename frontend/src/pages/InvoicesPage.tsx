@@ -172,6 +172,9 @@ const InvoicesPage: React.FC = () => {
   // Add this state for settings
   const [appSettings, setAppSettings] = useState<any>(null);
 
+  // Add this state for client address checkbox
+  const [showClientAddress, setShowClientAddress] = useState(true);
+
   const invoices = useAppSelector((state: any) => state.invoices.invoices);
   const loading = useAppSelector((state: any) => state.invoices.loading);
   const [error, setError] = useState<string | null>(null);
@@ -820,6 +823,18 @@ const InvoicesPage: React.FC = () => {
     }
   };
 
+  // Add this function to generate next invoice number
+  const generateNextInvoiceNumber = async () => {
+    try {
+      const res = await apiGet('/invoices/next-number');
+      if (res && res.data && res.data.invoiceNumber) {
+        setNewInvoice(prev => ({ ...prev, invoiceNumber: res.data.invoiceNumber }));
+      }
+    } catch (error) {
+      console.error('Error generating invoice number:', error);
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Header Section */}
@@ -931,14 +946,24 @@ const InvoicesPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Invoice Number
                   </label>
-                  <input
-                    type="text"
-                    value={newInvoice.invoiceNumber}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, invoiceNumber: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    placeholder="Auto-generated (A0001, A0002...)"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">Leave empty to auto-generate</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newInvoice.invoiceNumber}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, invoiceNumber: e.target.value })}
+                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      placeholder="Enter invoice number"
+                    />
+                    <button
+                      type="button"
+                      onClick={generateNextInvoiceNumber}
+                      className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                      title="Generate next invoice number"
+                    >
+                      Auto
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Make sure the invoice number is unique</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -960,6 +985,7 @@ const InvoicesPage: React.FC = () => {
                     value={newInvoice.currency}
                     onChange={(e) => setNewInvoice({ ...newInvoice, currency: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    disabled={selectedInvoice.status === 'paid' || selectedInvoice.status === 'sent'}
                   >
                     <option value="INR">INR</option>
                     <option value="USD">USD</option>
@@ -1945,6 +1971,7 @@ const InvoicesPage: React.FC = () => {
                     currency: selectedInvoice.currency || invoiceCustomization.currency || 'INR',
                   }}
                   template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
+                  showClientAddress={showClientAddress}
                 />
                 </div>
               </div>
@@ -2040,13 +2067,23 @@ const InvoicesPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Invoice Number
                   </label>
-                  <input
-                    type="text"
-                    value={newInvoice.invoiceNumber}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, invoiceNumber: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    placeholder="Enter invoice number"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newInvoice.invoiceNumber}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, invoiceNumber: e.target.value })}
+                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      placeholder="Enter invoice number"
+                    />
+                    <button
+                      type="button"
+                      onClick={generateNextInvoiceNumber}
+                      className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                      title="Generate next invoice number"
+                    >
+                      Auto
+                    </button>
+                  </div>
                   <p className="text-xs text-gray-400 mt-1">Make sure the invoice number is unique</p>
                 </div>
                 <div>
@@ -2079,6 +2116,20 @@ const InvoicesPage: React.FC = () => {
                     <option value="AUD">AUD</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Client Address Checkbox */}
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="showClientAddress"
+                  checked={showClientAddress}
+                  onChange={(e) => setShowClientAddress(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="showClientAddress" className="text-sm font-medium text-gray-300">
+                  Show client address on invoice
+                </label>
               </div>
 
               {/* Items - only editable for draft invoices */}

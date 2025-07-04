@@ -382,4 +382,22 @@ router.put('/:id/payment',
   }
 );
 
+// Get next invoice number
+router.get('/next-number', authenticate, async (req: Request, res: Response) => {
+  try {
+    const invoiceNumber = await Invoice.generateInvoiceNumber();
+    res.json({
+      success: true,
+      data: { invoiceNumber },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: { message: 'Failed to generate invoice number', details: error },
+      timestamp: new Date().toISOString(),
+    } as IApiResponse);
+  }
+});
+
 export default router; 

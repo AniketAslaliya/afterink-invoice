@@ -230,13 +230,15 @@ interface InvoicePreviewProps {
   customization: InvoiceCustomization;
   template: InvoiceTemplate;
   isPreview?: boolean;
+  showClientAddress?: boolean;
 }
 
 export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ 
   invoice, 
   customization, 
   template,
-  isPreview = false 
+  isPreview = false,
+  showClientAddress = true
 }) => {
   console.log('Invoice data:', invoice);
   const invoiceRef = useRef<HTMLDivElement>(null);
@@ -419,7 +421,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
             <p className="text-sm" style={{ color: customization.colors.secondary }}>
               {invoice.client?.contactPerson?.email || ''}
             </p>
-            {invoice.client?.address && (
+            {invoice.client?.address && showClientAddress && (
               <div className="mt-2 text-sm" style={{ color: customization.colors.secondary }}>
                 <p>{invoice.client.address.street || ''}</p>
                 <p>
