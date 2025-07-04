@@ -318,6 +318,9 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
           scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
           ignoreElements: (element: Element) => {
             return element.classList.contains('no-print');
           }
@@ -465,15 +468,40 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
         </div>
 
         {/* Payment Methods Section */}
-        <div className="mb-8">
-          <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>Payment Details</h4>
-          <div className="text-sm space-y-1">
-            <p><span className="font-medium">Bank Name:</span> {bankDetails.bankName}</p>
-            <p><span className="font-medium">Account Name:</span> {bankDetails.accountName}</p>
-            <p><span className="font-medium">Account Number:</span> {bankDetails.accountNumber}</p>
-            <p><span className="font-medium">IFSC:</span> {bankDetails.ifsc}</p>
-            <p><span className="font-medium">UPI ID:</span> {bankDetails.upiId}</p>
+        <div className="mb-8 flex justify-between items-start gap-8">
+          <div className="flex-1">
+            <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>Payment Details</h4>
+            <div className="text-sm space-y-1">
+              <p><span className="font-medium">Bank Name:</span> {bankDetails.bankName}</p>
+              <p><span className="font-medium">Account Name:</span> {bankDetails.accountName}</p>
+              <p><span className="font-medium">Account Number:</span> {bankDetails.accountNumber}</p>
+              <p><span className="font-medium">IFSC:</span> {bankDetails.ifsc}</p>
+              <p><span className="font-medium">UPI ID:</span> {bankDetails.upiId}</p>
+            </div>
           </div>
+          
+          {/* QR Code Section */}
+          {isIndianClient && (
+            <div className="flex flex-col items-center">
+              <h4 className="font-medium mb-2 text-center" style={{ color: customization.colors.primary }}>
+                Pay via UPI
+              </h4>
+              <div className="p-2 bg-white border-2 border-gray-200 rounded-lg">
+                <QRCodeSVG
+                  value={upiString}
+                  size={120}
+                  level="M"
+                  includeMargin={true}
+                  fgColor={customization.colors.text}
+                  bgColor={customization.colors.background}
+                  className="qr-code-svg"
+                />
+              </div>
+              <p className="text-xs text-center mt-2 max-w-32" style={{ color: customization.colors.secondary }}>
+                Scan to pay {formatCurrency(invoice.totalAmount)}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Notes, Terms, and Footer */}
