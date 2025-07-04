@@ -68,6 +68,7 @@ interface Client {
     lastName: string;
     email: string;
   };
+  name?: string;
 }
 
 interface Project {

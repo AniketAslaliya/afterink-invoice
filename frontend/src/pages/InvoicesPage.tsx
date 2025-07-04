@@ -19,6 +19,7 @@ interface Invoice {
   notes?: string;
   terms?: string;
   createdAt?: string;
+  currency?: string;
 }
 
 interface InvoiceItem {
@@ -33,6 +34,7 @@ interface Client {
   _id: string;
   companyName: string;
   contactPerson: { firstName: string; lastName: string; email: string };
+  name?: string;
 }
 
 interface Project {
