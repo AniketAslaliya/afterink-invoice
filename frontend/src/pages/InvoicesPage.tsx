@@ -198,6 +198,9 @@ const InvoicesPage: React.FC = () => {
   });
   const [addClientError, setAddClientError] = useState<string | null>(null);
 
+  // State for editing an invoice
+  const [editInvoice, setEditInvoice] = useState<any>(null);
+
   const invoices = useAppSelector((state: any) => state.invoices.invoices);
   const loading = useAppSelector((state: any) => state.invoices.loading);
   const [error, setError] = useState<string | null>(null);
@@ -836,53 +839,39 @@ const InvoicesPage: React.FC = () => {
 
   // Handle edit invoice
   const handleEditInvoice = (invoice: Invoice) => {
-    setSelectedInvoice(invoice);
-    setNewInvoice({
-      invoiceNumber: invoice.invoiceNumber,
-      clientId: invoice.clientId,
-      projectId: invoice.project?._id || '',
-      dueDate: invoice.dueDate.split('T')[0],
-      items: invoice.items && invoice.items.length > 0 ? invoice.items : [{
-        description: 'Service/Product',
-        quantity: 1,
-        rate: invoice.totalAmount,
-        amount: invoice.totalAmount,
-        taxRate: 0
-      }],
-      currency: invoice.currency || 'INR',
+    setEditInvoice({
+      ...invoice,
+      clientId: invoice.client?._id || invoice.clientId || '',
+      projectId: (invoice as any).projectId || invoice.project?._id || '',
+      items: invoice.items ? invoice.items.map(item => ({ ...item })) : [],
       notes: invoice.notes || '',
-      terms: invoice.terms || 'Payment is due within 30 days of invoice date.'
+      terms: invoice.terms || getDefaultTerms(),
+      currency: invoice.currency || 'INR',
     });
+    setSelectedInvoice(invoice);
     setShowEditModal(true);
   };
 
   // Handle update invoice
   const handleUpdateInvoice = async () => {
-    if (!selectedInvoice) return;
-    
+    if (!selectedInvoice || !editInvoice) return;
     try {
       setSubmitting(true);
       const invoiceData = {
-        ...newInvoice,
-        totalAmount: calculateTotal(),
-        currency: newInvoice.currency
+        ...editInvoice,
+        totalAmount: handleEditCalculateTotal(),
+        currency: editInvoice.currency,
       };
-      
-      // Remove projectId if empty string
       if (typeof invoiceData.projectId !== 'undefined' && !invoiceData.projectId) {
         delete invoiceData.projectId;
       }
-      
       console.log('Updating invoice with data:', invoiceData);
-      
       const result = await apiPut(`/invoices/${selectedInvoice._id}`, invoiceData);
       console.log('Update result:', result);
-      
-      // Refresh invoices from server to get updated data
       dispatch(fetchInvoices());
-      
       setShowEditModal(false);
       setSelectedInvoice(null);
+      setEditInvoice(null);
     } catch (error: any) {
       console.error('Error updating invoice:', error);
       alert('Error updating invoice: ' + error.message);
@@ -917,6 +906,39 @@ const InvoicesPage: React.FC = () => {
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [showViewModal, showEditModal, showAddModal, showPaymentModal]);
+
+  const handleEditItem = (index: number, field: keyof InvoiceItem, value: string | number) => {
+    setEditInvoice((prev: any) => {
+      const items = [...prev.items];
+      items[index] = { ...items[index], [field]: value };
+      // Recalculate amount if quantity or rate changes
+      if (field === 'quantity' || field === 'rate') {
+        items[index].amount = items[index].quantity * items[index].rate;
+      }
+      return { ...prev, items };
+    });
+  };
+
+  const handleEditAddItem = () => {
+    setEditInvoice((prev: any) => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        { description: '', quantity: 1, rate: 0, amount: 0, taxRate: 0 },
+      ],
+    }));
+  };
+
+  const handleEditRemoveItem = (index: number) => {
+    setEditInvoice((prev: any) => ({
+      ...prev,
+      items: prev.items.filter((_: any, i: number) => i !== index),
+    }));
+  };
+
+  const handleEditCalculateTotal = () => {
+    return editInvoice.items.reduce((total: number, item: InvoiceItem) => total + item.amount, 0);
+  };
 
   return (
     <div className="space-y-8">
@@ -1851,6 +1873,7 @@ const InvoicesPage: React.FC = () => {
                         <div>
                           <h3 className="font-semibold text-white text-lg">#{inv.invoiceNumber}</h3>
                           <p className="text-gray-400 text-sm">{inv.client?.companyName || 'Unknown Client'}</p>
+                          <p className="text-white text-base font-bold mt-1">{formatCurrency(inv.totalAmount || 0, inv.currency)}</p>
                         </div>
                       </div>
 
@@ -2179,12 +2202,12 @@ const InvoicesPage: React.FC = () => {
       )}
 
       {/* Invoice Edit Modal */}
-      {showEditModal && selectedInvoice && (
-        <div 
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto modal-backdrop"
+      {showEditModal && selectedInvoice && editInvoice && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto modal-backdrop"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowEditModal(false);
+              setEditInvoice(null);
             }
           }}
         >
@@ -2196,115 +2219,72 @@ const InvoicesPage: React.FC = () => {
                 e.preventDefault();
                 e.stopPropagation();
                 setShowEditModal(false);
+                setEditInvoice(null);
               }}
               type="button"
             >
               &times;
             </button>
-            <h2 className="text-2xl font-bold mb-6 text-white">Edit Invoice #{selectedInvoice.invoiceNumber}</h2>
-            
-            {/* Show warning about paid/sent invoices */}
-            {selectedInvoice.status === 'paid' && (
-              <div className="mb-4 p-3 bg-yellow-900/50 border border-yellow-700 rounded-md">
-                <p className="text-yellow-200 text-sm">⚠️ This invoice is marked as paid. Only due date and notes can be modified.</p>
-              </div>
-            )}
-            {selectedInvoice.status === 'sent' && (
-              <div className="mb-4 p-3 bg-blue-900/50 border border-blue-700 rounded-md">
-                <p className="text-blue-200 text-sm">ℹ️ This invoice has been sent. Major changes are limited to prevent confusion.</p>
-              </div>
-            )}
-            
+            <h2 className="text-2xl font-bold mb-6 text-white">Edit Invoice</h2>
             <div className="space-y-6 max-h-96 overflow-y-auto">
               {/* Basic Information */}
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Client *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Client *</label>
                   <select
-                    value={newInvoice.clientId}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, clientId: e.target.value, projectId: '' })}
+                    value={editInvoice.clientId}
+                    onChange={(e) => setEditInvoice({ ...editInvoice, clientId: e.target.value, projectId: '' })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                     required
-                    disabled={selectedInvoice?.status === 'paid' || selectedInvoice?.status === 'sent'}
                   >
                     <option value="">Select a client</option>
                     {clients.map((client) => (
-                      <option key={client._id} value={client._id}>
-                        {client.companyName}
-                      </option>
+                      <option key={client._id} value={client._id}>{client.companyName}</option>
                     ))}
                   </select>
-                  {(selectedInvoice?.status === 'paid' || selectedInvoice?.status === 'sent') && (
-                    <p className="text-xs text-gray-400 mt-1">Client cannot be changed for {selectedInvoice?.status} invoices</p>
-                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Project (Optional)
-                  </label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Project (Optional)</label>
                   <select
-                    value={newInvoice.projectId}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, projectId: e.target.value })}
+                    value={editInvoice.projectId}
+                    onChange={(e) => setEditInvoice({ ...editInvoice, projectId: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    disabled={!newInvoice.clientId || selectedInvoice?.status === 'paid' || selectedInvoice?.status === 'sent'}
+                    disabled={!editInvoice.clientId}
                   >
                     <option value="">Select a project (optional)</option>
                     {getFilteredProjects().map((project) => (
-                      <option key={project._id} value={project._id}>
-                        {project.name}
-                      </option>
+                      <option key={project._id} value={project._id}>{project.name}</option>
                     ))}
                   </select>
                 </div>
               </div>
-
               <div className="grid grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Invoice Number
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newInvoice.invoiceNumber}
-                      onChange={(e) => setNewInvoice({ ...newInvoice, invoiceNumber: e.target.value })}
-                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                      placeholder="Enter invoice number"
-                    />
-                    <button
-                      type="button"
-                      onClick={generateNextInvoiceNumber}
-                      className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
-                      title="Generate next invoice number"
-                    >
-                      Auto
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">Make sure the invoice number is unique</p>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Invoice Number</label>
+                  <input
+                    type="text"
+                    value={editInvoice.invoiceNumber}
+                    onChange={(e) => setEditInvoice({ ...editInvoice, invoiceNumber: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    placeholder="Enter invoice number"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Due Date *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Due Date *</label>
                   <input
                     type="date"
-                    value={newInvoice.dueDate}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, dueDate: e.target.value })}
+                    value={editInvoice.dueDate}
+                    onChange={(e) => setEditInvoice({ ...editInvoice, dueDate: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Currency
-                  </label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Currency</label>
                   <select
-                    value={newInvoice.currency}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, currency: e.target.value })}
+                    value={editInvoice.currency}
+                    onChange={(e) => setEditInvoice({ ...editInvoice, currency: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    disabled={selectedInvoice?.status === 'paid' || selectedInvoice?.status === 'sent'}
                   >
                     <option value="INR">INR</option>
                     <option value="USD">USD</option>
@@ -2315,173 +2295,136 @@ const InvoicesPage: React.FC = () => {
                   </select>
                 </div>
               </div>
-
-              {/* Client Address Checkbox */}
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="showClientAddress"
-                  checked={showClientAddress}
-                  onChange={(e) => setShowClientAddress(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
-                />
-                <label htmlFor="showClientAddress" className="text-sm font-medium text-gray-300">
-                  Show client address on invoice
-                </label>
-              </div>
-
-              {/* Items - only editable for draft invoices */}
-              {selectedInvoice?.status === 'draft' && (
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-semibold text-gray-200">Invoice Items</h3>
-                    <button
-                      type="button"
-                      onClick={addItem}
-                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 flex items-center"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Item
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {newInvoice.items.map((item, index) => (
-                      <div key={index} className="border border-gray-600 rounded-md p-4 bg-gray-800">
-                        <div className="flex justify-between items-start mb-3">
-                          <h4 className="font-medium text-gray-200">Item {index + 1}</h4>
-                          {newInvoice.items.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => removeItem(index)}
-                              className="text-red-400 hover:text-red-300"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          )}
+              {/* Items */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-200">Invoice Items</h3>
+                  <button
+                    type="button"
+                    onClick={handleEditAddItem}
+                    className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 flex items-center"
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Add Item
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {editInvoice.items.map((item: InvoiceItem, index: number) => (
+                    <div key={index} className="border border-gray-600 rounded-md p-4 bg-gray-800">
+                      <div className="flex justify-between items-start mb-3">
+                        <h4 className="font-medium text-gray-200">Item {index + 1}</h4>
+                        {editInvoice.items.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleEditRemoveItem(index)}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-12 gap-3">
+                        <div className="col-span-5">
+                          <label className="block text-xs font-medium text-gray-400 mb-1">Description *</label>
+                          <input
+                            type="text"
+                            value={item.description}
+                            onChange={(e) => handleEditItem(index, 'description', e.target.value)}
+                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                            placeholder="Item description"
+                            required
+                          />
                         </div>
-                        
-                        <div className="grid grid-cols-12 gap-3">
-                          <div className="col-span-5">
-                            <label className="block text-xs font-medium text-gray-400 mb-1">
-                              Description *
-                            </label>
-                            <input
-                              type="text"
-                              value={item.description}
-                              onChange={(e) => updateItem(index, 'description', e.target.value)}
-                              className="w-full px-3 py-2 bg-gray-700 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-sm"
-                              required
-                            />
-                          </div>
-                          <div className="col-span-2">
-                            <label className="block text-xs font-medium text-gray-400 mb-1">
-                              Quantity *
-                            </label>
-                            <input
-                              type="number"
-                              value={item.quantity}
-                              onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                              className="w-full px-3 py-2 bg-gray-700 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-sm"
-                              min="0"
-                              step="0.01"
-                              required
-                            />
-                          </div>
-                          <div className="col-span-2">
-                            <label className="block text-xs font-medium text-gray-400 mb-1">
-                              Rate *
-                            </label>
-                            <input
-                              type="number"
-                              value={item.rate}
-                              onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                              className="w-full px-3 py-2 bg-gray-700 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-sm"
-                              min="0"
-                              step="0.01"
-                              required
-                            />
-                          </div>
-                          <div className="col-span-2">
-                            <label className="block text-xs font-medium text-gray-400 mb-1">
-                              Tax %
-                            </label>
-                            <input
-                              type="number"
-                              value={item.taxRate || 0}
-                              onChange={(e) => updateItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
-                              className="w-full px-3 py-2 bg-gray-700 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-sm"
-                              min="0"
-                              max="100"
-                              step="0.01"
-                            />
-                          </div>
-                          <div className="col-span-1">
-                            <label className="block text-xs font-medium text-gray-400 mb-1">
-                              Amount
-                            </label>
-                            <div className="px-3 py-2 bg-gray-700 border border-gray-500 rounded-md text-white text-sm text-center">
-                              {formatCurrency(item.quantity * item.rate * (1 + (item.taxRate || 0) / 100), newInvoice.currency)}
-                            </div>
+                        <div className="col-span-2">
+                          <label className="block text-xs font-medium text-gray-400 mb-1">Quantity *</label>
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => handleEditItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                            min="0.01"
+                            step="0.01"
+                            required
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-xs font-medium text-gray-400 mb-1">Rate *</label>
+                          <input
+                            type="number"
+                            value={item.rate}
+                            onChange={(e) => handleEditItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                            min="0"
+                            step="0.01"
+                            required
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-xs font-medium text-gray-400 mb-1">Tax %</label>
+                          <input
+                            type="number"
+                            value={item.taxRate || 0}
+                            onChange={(e) => handleEditItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
+                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                          />
+                        </div>
+                        <div className="col-span-1">
+                          <label className="block text-xs font-medium text-gray-400 mb-1">Amount</label>
+                          <div className="px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded text-gray-300">
+                            {formatCurrency(item.amount, editInvoice.currency)}
                           </div>
                         </div>
                       </div>
-                    ))}
+                    </div>
+                  ))}
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-semibold text-white">
+                    Total: {formatCurrency(handleEditCalculateTotal(), editInvoice.currency)}
                   </div>
                 </div>
-              )}
-
+              </div>
               {/* Notes and Terms */}
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Notes
-                  </label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
                   <textarea
-                    value={newInvoice.notes}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, notes: e.target.value })}
+                    value={editInvoice.notes}
+                    onChange={(e) => setEditInvoice({ ...editInvoice, notes: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                     rows={3}
                     placeholder="Additional notes..."
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Terms & Conditions
-                  </label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Terms & Conditions</label>
                   <textarea
-                    value={newInvoice.terms}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, terms: e.target.value })}
+                    value={editInvoice.terms}
+                    onChange={(e) => setEditInvoice({ ...editInvoice, terms: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                     rows={3}
                     placeholder="Payment terms and conditions..."
-                    disabled={selectedInvoice?.status === 'paid'}
                   />
                 </div>
               </div>
-
-              <div className="text-right">
-                <div className="text-lg font-semibold text-white">
-                  Total: {formatCurrency(calculateTotal(), newInvoice.currency)}
-                </div>
+              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-700">
+                <button
+                  onClick={() => { setShowEditModal(false); setEditInvoice(null); }}
+                  className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-gray-800"
+                  disabled={submitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateInvoice}
+                  disabled={submitting || !editInvoice.clientId || !editInvoice.dueDate}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? 'Updating...' : 'Update Invoice'}
+                </button>
               </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-700">
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-gray-800"
-                disabled={submitting}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdateInvoice}
-                disabled={submitting || !newInvoice.clientId || !newInvoice.dueDate}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting ? 'Updating...' : 'Update Invoice'}
-              </button>
             </div>
           </div>
         </div>
