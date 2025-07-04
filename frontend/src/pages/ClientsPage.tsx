@@ -197,7 +197,10 @@ const ClientsPage: React.FC = () => {
   }
 
   const handleUpdateClient = async () => {
-    if (!selectedClient) return
+    if (!selectedClient || !selectedClient._id) {
+      alert('No client selected or client ID missing.');
+      return;
+    }
     
     try {
       const clientData = {
@@ -206,15 +209,17 @@ const ClientsPage: React.FC = () => {
         address: newClient.address,
         status: newClient.status
       }
-      
       const res = await apiPut(`/clients/${selectedClient._id}`, clientData)
-      
       // Update the client in the list
       dispatch(fetchClients())
-      
       setShowEditModal(false)
       setSelectedClient(null)
     } catch (error: any) {
+      if (error.response && error.response.status === 404) {
+        alert('Client not found. It may have been deleted.');
+      } else {
+        alert('Error updating client: ' + (error.message || 'Unknown error'));
+      }
       console.error('Error updating client:', error)
       dispatch(fetchClients())
     }
