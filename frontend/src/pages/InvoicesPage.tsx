@@ -314,6 +314,9 @@ const InvoicesPage: React.FC = () => {
     }
   }, [showAddModal]);
 
+  // Helper to get default terms
+  const getDefaultTerms = () => invoiceCustomization.termsAndConditions || 'Payment is due within 30 days of invoice date.';
+
   const handleAddInvoice = async () => {
     let clientId = newInvoice.clientId;
     // If adding a new client, validate and create client first
@@ -354,7 +357,8 @@ const InvoicesPage: React.FC = () => {
         ...newInvoice,
         clientId,
         totalAmount: totalAmount,
-        currency: newInvoice.currency
+        currency: newInvoice.currency,
+        terms: newInvoice.terms || getDefaultTerms(),
       };
       
       // Remove projectId if empty string
@@ -400,8 +404,10 @@ const InvoicesPage: React.FC = () => {
         }],
         currency: 'INR',
         notes: '',
-        terms: 'Payment is due within 30 days of invoice date.'
-      })
+        terms: getDefaultTerms()
+      });
+      // Fetch next invoice number for the next use
+      generateNextInvoiceNumber();
       
       console.log('Invoice created successfully!')
     } catch (err: any) {
