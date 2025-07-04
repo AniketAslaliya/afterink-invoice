@@ -5,7 +5,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Plus, Search, Filter, Trash2, Download, Palette, Save, FileText, CheckCircle, Clock, AlertCircle, Eye, Edit, DollarSign } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../api';
-import { InvoicePreview, defaultTemplates } from '../components/InvoiceTemplates';
+import { InvoicePreview, defaultTemplates, Invoice, InvoiceCustomization } from '../components/InvoiceTemplates';
 import { useAppSelector, useAppDispatch } from '../store';
 import { fetchInvoices } from '../store/invoicesSlice';
 import html2pdf from 'html2pdf.js';
@@ -65,35 +65,6 @@ interface InvoiceTemplate {
     heading: string;
     body: string;
   };
-}
-
-interface InvoiceCustomization {
-  template: string;
-  companyLogo?: string;
-  companyName: string;
-  companyAddress: string;
-  companyPhone: string;
-  companyEmail: string;
-  companyWebsite?: string;
-  colors: {
-    primary: string;
-    secondary: string;
-    text: string;
-    background: string;
-    accent: string;
-  };
-  fonts: {
-    heading: string;
-    body: string;
-  };
-  showLogo: boolean;
-  showCompanyDetails: boolean;
-  footerText: string;
-  currency: string;
-  showPaymentTerms?: boolean;
-  paymentTermsText?: string;
-  dateFormat?: string;
-  termsAndConditions?: string;
 }
 
 const defaultCustomization: InvoiceCustomization = {
@@ -374,8 +345,8 @@ const InvoicesPage: React.FC = () => {
       setSubmitting(true)
       
       // Calculate totals before sending
-      const subtotal = newInvoice.items.reduce((sum, item) => sum + item.amount, 0)
-      const taxAmount = newInvoice.items.reduce((sum, item) => {
+      const subtotal = newInvoice.items.reduce((sum: number, item: InvoiceItem) => sum + item.amount, 0)
+      const taxAmount = newInvoice.items.reduce((sum: number, item: InvoiceItem) => {
         const itemTax = item.amount * (item.taxRate || 0) / 100
         return sum + itemTax
       }, 0)
@@ -461,20 +432,21 @@ const InvoicesPage: React.FC = () => {
   }
 
   const removeItem = (index: number) => {
-    const items = newInvoice.items.filter((_, i) => i !== index)
-    setNewInvoice({ ...newInvoice, items })
+    setNewInvoice((prev: any) => ({
+      ...prev,
+      items: prev.items.filter((_: InvoiceItem, i: number) => i !== index),
+    }));
   }
 
   const updateItem = (index: number, field: keyof InvoiceItem, value: string | number) => {
-    const items = [...newInvoice.items]
-    items[index] = { ...items[index], [field]: value }
-    
-    // Calculate amount when quantity or rate changes
-    if (field === 'quantity' || field === 'rate') {
-      items[index].amount = items[index].quantity * items[index].rate
-    }
-    
-    setNewInvoice({ ...newInvoice, items })
+    setNewInvoice((prev: any) => {
+      const items = [...prev.items];
+      items[index] = { ...items[index], [field]: value };
+      if (field === 'quantity' || field === 'rate') {
+        items[index].amount = items[index].quantity * items[index].rate;
+      }
+      return { ...prev, items };
+    });
   }
 
   const calculateTotal = () => {
@@ -2243,11 +2215,16 @@ const InvoicesPage: React.FC = () => {
         <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
           <InvoicePreview
             ref={invoicePreviewRef}
-            invoice={pdfInvoice}
+            invoice={{
+              ...pdfInvoice,
+              client: pdfInvoice.client || { companyName: '', contactPerson: { firstName: '', lastName: '', email: '' } },
+              items: pdfInvoice.items || [],
+            }}
             customization={invoiceCustomization}
             template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
             isPreview={false}
             showClientAddress={false}
+            showPaymentTerms={invoiceCustomization.showPaymentTerms ?? false}
           />
         </div>
       )}
