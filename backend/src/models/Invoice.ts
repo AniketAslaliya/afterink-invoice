@@ -242,22 +242,21 @@ invoiceSchema.pre('save', function(this: any, next) {
 
 // Static method to generate invoice number
 invoiceSchema.statics.generateInvoiceNumber = async function(): Promise<string> {
-  const year = new Date().getFullYear();
-  const prefix = `INV-${year}-`;
-  // Find the latest invoice number for this year
+  const prefix = 'a';
+  // Find the latest invoice number starting with 'a'
   const latestInvoice = await this.findOne({
-    invoiceNumber: { $regex: `^${prefix}` },
+    invoiceNumber: { $regex: `^${prefix}\d{4}$` },
   }).sort({ invoiceNumber: -1 });
 
   let nextNumber = 1;
   if (latestInvoice) {
-    const match = latestInvoice.invoiceNumber.match(/INV-\d{4}-(\d+)/);
+    const match = latestInvoice.invoiceNumber.match(/^a(\d{4})$/);
     if (match && match[1]) {
       nextNumber = parseInt(match[1], 10) + 1;
     }
   }
 
-  return `${prefix}${nextNumber.toString().padStart(3, '0')}`;
+  return `${prefix}${nextNumber.toString().padStart(4, '0')}`;
 };
 
 export default mongoose.model<IInvoiceDocument, IInvoiceModel>('Invoice', invoiceSchema); 
