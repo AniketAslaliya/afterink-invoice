@@ -1886,15 +1886,12 @@ const InvoicesPage: React.FC = () => {
                     createdAt: selectedInvoice.createdAt || new Date().toISOString(),
                     currency: selectedInvoice.currency || 'INR',
                   }}
-                  customization={
-                    {
-                      ...invoiceCustomization,
-                      paymentTermsText: invoiceCustomization.paymentTermsText || 'Payment is due within 30 days of invoice date. Late payments may incur additional charges.',
-                      dateFormat: invoiceCustomization.dateFormat || 'DD/MM/YYYY',
-                      termsAndConditions: appSettings?.termsAndConditions || invoiceCustomization.termsAndConditions || '',
-                      currency: selectedInvoice.currency || invoiceCustomization.currency || 'INR',
-                    } as InvoiceCustomization
-                  }
+                  customization={Object.assign({}, invoiceCustomization, {
+                    paymentTermsText: invoiceCustomization.paymentTermsText || 'Payment is due within 30 days of invoice date. Late payments may incur additional charges.',
+                    dateFormat: invoiceCustomization.dateFormat || 'DD/MM/YYYY',
+                    termsAndConditions: ((appSettings as any)?.termsAndConditions) || invoiceCustomization.termsAndConditions || '',
+                    currency: selectedInvoice.currency || invoiceCustomization.currency || 'INR',
+                  }) as InvoiceCustomization}
                   template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
                   showClientAddress={showClientAddress}
                   ref={invoicePreviewRef}
