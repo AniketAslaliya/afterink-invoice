@@ -185,6 +185,19 @@ const InvoicesPage: React.FC = () => {
   // Add this state for client address checkbox
   const [showClientAddress, setShowClientAddress] = useState(true);
 
+  // State for new client form in merged modal
+  const [showNewClientFields, setShowNewClientFields] = useState(false);
+  const [newClient, setNewClient] = useState({
+    companyName: '',
+    contactPerson: { firstName: '', lastName: '', email: '', phone: '', position: '', countryCode: '+91' },
+    address: { street: '', city: '', state: '', zipCode: '', country: '' },
+    status: 'active',
+    paymentTerms: 30,
+    taxNumber: '',
+    notes: ''
+  });
+  const [addClientError, setAddClientError] = useState<string | null>(null);
+
   const invoices = useAppSelector((state: any) => state.invoices.invoices);
   const loading = useAppSelector((state: any) => state.invoices.loading);
   const [error, setError] = useState<string | null>(null);
@@ -294,7 +307,38 @@ const InvoicesPage: React.FC = () => {
     }
   }
 
+  // Fetch next invoice number when modal opens
+  useEffect(() => {
+    if (showAddModal) {
+      generateNextInvoiceNumber();
+    }
+  }, [showAddModal]);
+
   const handleAddInvoice = async () => {
+    let clientId = newInvoice.clientId;
+    // If adding a new client, validate and create client first
+    if (showNewClientFields) {
+      if (!newClient.contactPerson.firstName.trim() || !newClient.contactPerson.lastName.trim() || !newClient.companyName.trim()) {
+        setAddClientError('Company Name, First Name, and Last Name are required for the client.');
+        return;
+      } else {
+        setAddClientError(null);
+      }
+      // Create client
+      try {
+        const clientRes = await apiPost('/clients', newClient);
+        if (clientRes && (clientRes.data?.client?._id || clientRes.client?._id || clientRes._id)) {
+          clientId = clientRes.data?.client?._id || clientRes.client?._id || clientRes._id;
+        } else {
+          throw new Error('Failed to create client');
+        }
+      } catch (err) {
+        setAddClientError('Failed to create client.');
+        setSubmitting(false);
+        return;
+      }
+    }
+
     try {
       setSubmitting(true)
       
@@ -308,6 +352,7 @@ const InvoicesPage: React.FC = () => {
       
       const invoiceData = {
         ...newInvoice,
+        clientId,
         totalAmount: totalAmount,
         currency: newInvoice.currency
       };
@@ -931,46 +976,167 @@ const InvoicesPage: React.FC = () => {
               &times;
             </button>
             <h2 className="text-2xl font-bold mb-6 text-white">Create New Invoice</h2>
-            
             <div className="space-y-6 max-h-96 overflow-y-auto">
-              {/* Basic Information */}
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Client *
-                  </label>
+              {/* Client Details Section */}
+              <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                <div className="flex items-center mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mr-2">Client *</label>
                   <select
-                    value={newInvoice.clientId}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, clientId: e.target.value, projectId: '' })}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    required
+                    value={showNewClientFields ? '' : newInvoice.clientId}
+                    onChange={(e) => {
+                      setShowNewClientFields(false);
+                      setNewInvoice({ ...newInvoice, clientId: e.target.value, projectId: '' });
+                    }}
+                    className="px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                   >
                     <option value="">Select a client</option>
                     {clients.map((client) => (
-                      <option key={client._id} value={client._id}>
-                        {client.companyName}
-                      </option>
+                      <option key={client._id} value={client._id}>{client.companyName}</option>
                     ))}
                   </select>
-          </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Project (Optional)
-                  </label>
-                  <select
-                    value={newInvoice.projectId}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, projectId: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    disabled={!newInvoice.clientId}
+                  <button
+                    type="button"
+                    className="ml-4 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                    onClick={() => {
+                      setShowNewClientFields(true);
+                      setNewInvoice({ ...newInvoice, clientId: '' });
+                    }}
                   >
-                    <option value="">Select a project (optional)</option>
-                    {getFilteredProjects().map((project) => (
-                      <option key={project._id} value={project._id}>
-                        {project.name}
-                      </option>
-                    ))}
-                  </select>
-        </div>
+                    Add New Client
+                  </button>
+                </div>
+                {showNewClientFields && (
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Company Name *</label>
+                      <input
+                        type="text"
+                        value={newClient.companyName}
+                        onChange={e => setNewClient({ ...newClient, companyName: e.target.value })}
+                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                        placeholder="Company name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Status</label>
+                      <select
+                        value={newClient.status}
+                        onChange={e => setNewClient({ ...newClient, status: e.target.value as any })}
+                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                      >
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="prospect">Prospect</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">First Name *</label>
+                      <input
+                        type="text"
+                        value={newClient.contactPerson.firstName}
+                        onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, firstName: e.target.value } })}
+                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                        placeholder="First name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Last Name *</label>
+                      <input
+                        type="text"
+                        value={newClient.contactPerson.lastName}
+                        onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, lastName: e.target.value } })}
+                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                        placeholder="Last name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={newClient.contactPerson.email}
+                        onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, email: e.target.value } })}
+                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                        placeholder="Email"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Phone</label>
+                      <input
+                        type="tel"
+                        value={newClient.contactPerson.phone}
+                        onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, phone: e.target.value } })}
+                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                        placeholder="Phone"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Position</label>
+                      <input
+                        type="text"
+                        value={newClient.contactPerson.position}
+                        onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, position: e.target.value } })}
+                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                        placeholder="Position"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Country Code</label>
+                      <input
+                        type="text"
+                        value={newClient.contactPerson.countryCode}
+                        onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, countryCode: e.target.value } })}
+                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                        placeholder="Country code"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Address</label>
+                      <input
+                        type="text"
+                        value={newClient.address.street}
+                        onChange={e => setNewClient({ ...newClient, address: { ...newClient.address, street: e.target.value } })}
+                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white mb-1"
+                        placeholder="Street address"
+                      />
+                      <div className="grid grid-cols-3 gap-2 mt-1">
+                        <input
+                          type="text"
+                          value={newClient.address.city}
+                          onChange={e => setNewClient({ ...newClient, address: { ...newClient.address, city: e.target.value } })}
+                          className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                          placeholder="City"
+                        />
+                        <input
+                          type="text"
+                          value={newClient.address.state}
+                          onChange={e => setNewClient({ ...newClient, address: { ...newClient.address, state: e.target.value } })}
+                          className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                          placeholder="State"
+                        />
+                        <input
+                          type="text"
+                          value={newClient.address.zipCode}
+                          onChange={e => setNewClient({ ...newClient, address: { ...newClient.address, zipCode: e.target.value } })}
+                          className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                          placeholder="Zip code"
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        value={newClient.address.country}
+                        onChange={e => setNewClient({ ...newClient, address: { ...newClient.address, country: e.target.value } })}
+                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white mt-1"
+                        placeholder="Country"
+                      />
+                    </div>
+                  </div>
+                )}
+                {addClientError && (
+                  <div className="text-red-500 text-sm mt-2">{addClientError}</div>
+                )}
               </div>
 
               <div className="grid grid-cols-3 gap-6">
@@ -1673,24 +1839,12 @@ const InvoicesPage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       {/* Left Section - Invoice Info */}
                       <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-blue-900 p-3 rounded-xl">
-                            <FileText className="text-blue-400" size={20} />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-white text-lg">#{inv.invoiceNumber}</h3>
-                            <p className="text-gray-400 text-sm">{inv.client?.companyName || 'Unknown Client'}</p>
-                          </div>
+                        <div className="bg-blue-900 p-3 rounded-xl">
+                          <FileText className="text-blue-400" size={20} />
                         </div>
-                        
-                        <div className="hidden md:block">
-                          <p className="text-gray-400 text-sm">Due Date</p>
-                          <p className="font-medium text-white">{new Date(inv.dueDate).toLocaleDateString()}</p>
-                        </div>
-                        
-                        <div className="hidden lg:block">
-                          <p className="text-gray-400 text-sm">Amount</p>
-                          <p className="font-bold text-white text-lg">{formatCurrency(inv.totalAmount || 0, inv.currency)}</p>
+                        <div>
+                          <h3 className="font-semibold text-white text-lg">#{inv.invoiceNumber}</h3>
+                          <p className="text-gray-400 text-sm">{inv.client?.companyName || 'Unknown Client'}</p>
                         </div>
                       </div>
 
