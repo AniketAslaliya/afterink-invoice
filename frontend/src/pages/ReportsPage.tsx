@@ -35,6 +35,7 @@ interface ReportData {
     percentage: number
     value: number
   }>
+  pendingAmount: number
 }
 
 interface Invoice {
@@ -113,7 +114,7 @@ const ReportsPage: React.FC = () => {
       
       // Fetch data from APIs with proper error handling
       const [invoicesResponse, clientsResponse, projectsResponse] = await Promise.all([
-        apiGet('/invoices').catch(() => ({ data: { invoices: [] } })),
+        apiGet('/invoices?limit=1000').catch(() => ({ data: { invoices: [] } })),
         apiGet('/clients').catch(() => ({ data: { clients: [] } })),
         apiGet('/projects').catch(() => ({ data: { projects: [] } }))
       ])
@@ -157,6 +158,11 @@ const ReportsPage: React.FC = () => {
       const totalRevenue = invoices.reduce((sum: number, inv: Invoice) => 
         inv.status === 'paid' ? sum + currencyToINR(inv.totalAmount || 0, inv.currency || 'INR') : sum, 0)
       
+      // Calculate pending amount
+      const pendingAmount = invoices
+        .filter((inv: Invoice) => inv.status === 'pending')
+        .reduce((sum: number, inv: Invoice) => sum + currencyToINR(inv.totalAmount || 0, inv.currency || 'INR'), 0)
+
       const currentMonth = new Date().getMonth()
       const currentYear = new Date().getFullYear()
       const monthlyRevenue = invoices
@@ -337,7 +343,8 @@ const ReportsPage: React.FC = () => {
         collectionEfficiency,
         monthlyStats,
         clientStats,
-        statusBreakdown
+        statusBreakdown,
+        pendingAmount
       })
 
       setWeeklyRevenue(weeklyRevenue);
@@ -409,6 +416,30 @@ const ReportsPage: React.FC = () => {
       </div>
     )
   }
+
+  // Show summary with total revenue and pending amount
+  const summary = reportData && (
+    <div className="flex flex-col md:flex-row gap-6 mb-8">
+      <div className="bg-gradient-to-br from-green-800 to-green-600 rounded-2xl p-6 border border-green-700 flex-1">
+        <div className="flex items-center gap-3">
+          <DollarSign className="text-white" size={28} />
+          <div>
+            <div className="text-green-300 text-sm font-medium">Total Revenue</div>
+            <div className="text-2xl font-bold text-white">{formatCurrency(reportData.totalRevenue)}</div>
+          </div>
+        </div>
+      </div>
+      <div className="bg-gradient-to-br from-yellow-800 to-yellow-600 rounded-2xl p-6 border border-yellow-700 flex-1">
+        <div className="flex items-center gap-3">
+          <Clock className="text-white" size={28} />
+          <div>
+            <div className="text-yellow-300 text-sm font-medium">Pending Amount</div>
+            <div className="text-2xl font-bold text-white">{formatCurrency(reportData.pendingAmount || 0)}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-8 animate-fadeInUp">

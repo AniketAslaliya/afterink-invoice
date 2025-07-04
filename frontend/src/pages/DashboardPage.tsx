@@ -62,6 +62,11 @@ const DashboardPage: React.FC = () => {
   const error = useAppSelector((state: any) => state.dashboard.error);
   const dispatch = useAppDispatch();
 
+  // Calculate pending amount from stats (if available)
+  const pendingAmount = stats && stats.invoices
+    ? stats.invoices.filter((inv: any) => inv.status === 'pending').reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0)
+    : 0;
+
   useEffect(() => {
     dispatch(fetchDashboardStats());
   }, []);
@@ -138,7 +143,7 @@ const DashboardPage: React.FC = () => {
                 <p className="text-green-400 text-sm font-medium">Total Revenue</p>
                 <p className="text-2xl font-bold text-white">{formatCurrency(stats ? stats.totalRevenue : 0)}</p>
               </div>
-                  </div>
+            </div>
             <div className="flex items-center gap-2">
               {stats ? (stats.monthlyGrowth >= 0 ? (
                 <TrendingUp className="text-green-400" size={16} />
@@ -148,8 +153,21 @@ const DashboardPage: React.FC = () => {
               <span className={`text-sm font-medium ${stats ? (stats.monthlyGrowth >= 0 ? 'text-green-400' : 'text-red-400') : ''}`}>
                 {Math.abs(typeof stats?.monthlyGrowth === 'number' ? stats.monthlyGrowth : 0).toFixed(1)}% from last month
               </span>
-                  </div>
-                </div>
+            </div>
+          </div>
+
+          {/* Pending Amount */}
+          <div className="bg-gradient-to-br from-yellow-800 to-yellow-600 rounded-2xl p-6 border border-yellow-700 card-hover stagger-item">
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-yellow-600 p-3 rounded-xl">
+                <Clock className="text-white" size={24} />
+              </div>
+              <div className="text-right">
+                <p className="text-yellow-300 text-sm font-medium">Pending Amount</p>
+                <p className="text-2xl font-bold text-white">{formatCurrency(pendingAmount)}</p>
+              </div>
+            </div>
+          </div>
 
           {/* Total Invoices */}
           <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 border border-gray-600 card-hover stagger-item">
