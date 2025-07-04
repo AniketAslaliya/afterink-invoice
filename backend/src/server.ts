@@ -181,7 +181,7 @@ const startServer = async () => {
     await connectDatabase();
     
     // Start the HTTP server
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
       console.log(`📚 API Documentation: http://localhost:${PORT}/api`);
       console.log(`❤️  Health Check: http://localhost:${PORT}/health`);
