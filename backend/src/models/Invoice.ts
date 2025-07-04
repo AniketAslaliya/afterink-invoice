@@ -1,10 +1,15 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document, Types, Model } from 'mongoose';
 import { IInvoice, IInvoiceItem } from '../types';
 
 interface IInvoiceDocument extends IInvoice, Document {
   clientId: Types.ObjectId;
   projectId?: Types.ObjectId;
   createdBy: Types.ObjectId;
+}
+
+// Add interface for static methods
+interface IInvoiceModel extends Model<IInvoiceDocument> {
+  generateInvoiceNumber(): Promise<string>;
 }
 
 const invoiceItemSchema = new Schema<IInvoiceItem>({
@@ -255,4 +260,4 @@ invoiceSchema.statics.generateInvoiceNumber = async function(): Promise<string> 
   return `${prefix}${nextNumber.toString().padStart(3, '0')}`;
 };
 
-export default mongoose.model<IInvoiceDocument>('Invoice', invoiceSchema); 
+export default mongoose.model<IInvoiceDocument, IInvoiceModel>('Invoice', invoiceSchema); 
