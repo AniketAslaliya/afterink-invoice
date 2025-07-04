@@ -298,7 +298,7 @@ const InvoicesPage: React.FC = () => {
       setClients(clientsArray)
     } catch (error) {
       console.error('Error fetching clients:', error)
-      console.error('Error details:', error.message)
+      console.error('Error details:', error instanceof Error ? error.message : String(error))
       // Set empty array on error to prevent crashes
       setClients([])
     }
