@@ -196,6 +196,7 @@ const InvoicesPage: React.FC = () => {
   const [editInvoice, setEditInvoice] = useState<any>(null);
 
   const invoices = useAppSelector((state: any) => state.invoices.invoices);
+  const pagination = useAppSelector((state: any) => state.invoices.pagination);
   const loading = useAppSelector((state: any) => state.invoices.loading);
   const [error, setError] = useState<string | null>(null);
   const dispatch = useAppDispatch();
@@ -228,14 +229,13 @@ const InvoicesPage: React.FC = () => {
   const totalRevenue = allInvoices.reduce((sum: number, inv: Invoice) => sum + (inv.totalAmount || 0), 0);
 
   // Pagination controls
-  const handleNextPage = () => setPage((p) => p + 1);
+  const handleNextPage = () => setPage((p) => Math.min(p + 1, pagination.pages));
   const handlePrevPage = () => setPage((p) => Math.max(1, p - 1));
 
   // Fetch invoices from backend on mount
   useEffect(() => {
-    dispatch(fetchInvoices());
-    fetchClients()
-    fetchProjects()
+    fetchClients();
+    fetchProjects();
     
     // Load business settings and apply to invoice customization
     const businessSettings = localStorage.getItem('businessSettings')
@@ -2251,6 +2251,14 @@ const InvoicesPage: React.FC = () => {
           />
         </div>
       )}
+
+      {loading && <div className="flex justify-center items-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>}
+
+      <div className="flex gap-2 justify-center items-center mt-8 mb-8">
+        <button onClick={handlePrevPage} disabled={page === 1 || loading} className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-50 focus:ring-2 focus:ring-blue-500" aria-label="Previous Page">Prev</button>
+        <span className="text-white font-semibold">Page {pagination.page} of {pagination.pages}</span>
+        <button onClick={handleNextPage} disabled={page === pagination.pages || loading} className="px-4 py-2 bg-gray-700 text-white rounded focus:ring-2 focus:ring-blue-500 disabled:opacity-50" aria-label="Next Page">Next</button>
+      </div>
     </div>
   );
 };
