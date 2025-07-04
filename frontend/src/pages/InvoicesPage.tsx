@@ -268,23 +268,39 @@ const InvoicesPage: React.FC = () => {
       console.log('Fetching clients from API...')
       const res = await apiGet('/clients')
       console.log('Clients API Response:', res)
+      console.log('Full response structure:', JSON.stringify(res, null, 2))
       
-      // Handle different response structures
+      // Handle the actual API response structure
       let clientsArray = [];
-      if (res && res.data && res.data.clients) {
+      if (res && res.success && res.data && res.data.clients) {
+        // MongoDB server format: { success: true, data: { clients: [...], pagination: {...} } }
         clientsArray = res.data.clients;
+        console.log('Using MongoDB server format - found clients:', clientsArray.length)
+      } else if (res && res.data && res.data.clients) {
+        // Alternative format: { data: { clients: [...] } }
+        clientsArray = res.data.clients;
+        console.log('Using alternative format - found clients:', clientsArray.length)
       } else if (res && Array.isArray(res.clients)) {
+        // Direct clients array format: { clients: [...] }
         clientsArray = res.clients;
+        console.log('Using direct clients format - found clients:', clientsArray.length)
       } else if (res && Array.isArray(res)) {
+        // Direct array format: [...]
         clientsArray = res;
+        console.log('Using direct array format - found clients:', clientsArray.length)
       } else {
         console.warn('Unexpected clients response structure:', res);
+        console.warn('Available keys:', Object.keys(res || {}));
         clientsArray = []; // Default to empty array
       }
       
+      console.log('Setting clients array:', clientsArray)
       setClients(clientsArray)
     } catch (error) {
       console.error('Error fetching clients:', error)
+      console.error('Error details:', error.message)
+      // Set empty array on error to prevent crashes
+      setClients([])
     }
   }
 
@@ -673,12 +689,26 @@ const InvoicesPage: React.FC = () => {
     <div className="space-y-8">
       {/* Header Section */}
       <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-3xl blur-3xl"></div>
-        <div className="relative bg-gradient-to-r from-secondary-200/60 to-secondary-300/60 backdrop-blur-lg rounded-2xl p-8 border border-secondary-300/30">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-blue-600/10 rounded-3xl blur-3xl"></div>
+        <div className="relative bg-gradient-to-r from-gray-800/60 to-gray-900/60 backdrop-blur-lg rounded-2xl p-8 border border-gray-700/30">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gradient-secondary">Invoices</h1>
-              <p className="text-secondary-700 mt-2">Manage and track your invoices</p>
+              <h1 className="text-3xl font-bold text-white">Invoices</h1>
+              <p className="text-gray-300 mt-2">Manage your invoices and track payments</p>
+              {/* Debug info */}
+              <div className="mt-2 text-sm text-gray-400">
+                <p>Total Revenue: {formatCurrency(totalRevenue)}</p>
+                <p>Debug: {clients.length} clients loaded</p>
+                <button
+                  onClick={() => {
+                    console.log('Debug: Current clients state:', clients);
+                    fetchClients();
+                  }}
+                  className="mt-1 px-2 py-1 bg-yellow-600 text-white rounded text-xs"
+                >
+                  Test Fetch Clients
+                </button>
+              </div>
             </div>
             <div className="flex items-center space-x-3">
               <button className="btn btn-outline group">
@@ -690,19 +720,18 @@ const InvoicesPage: React.FC = () => {
                 Filter
               </button>
               <button 
+                className="btn btn-primary group" 
+                onClick={() => setShowAddModal(true)}
+              >
+                <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" />
+                New Invoice
+              </button>
+              <button
                 className="btn btn-outline group"
                 onClick={() => setShowCustomizer(true)}
               >
-                <Palette className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
-                Customize Invoice
-              </button>
-              <button 
-                className="btn btn-primary group" 
-                onClick={() => setShowAddModal(true)}
-                data-testid="add-invoice-btn"
-              >
-                <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" />
-                Add Invoice
+                <Palette className="h-4 w-4 mr-2 group-hover:rotate-12 transition-transform" />
+                Customize
               </button>
             </div>
           </div>
