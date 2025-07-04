@@ -358,10 +358,9 @@ const InvoicesPage: React.FC = () => {
         terms: newInvoice.terms || getDefaultTerms(),
       };
       
-      // Remove projectId if empty string
-      if (typeof invoiceData.projectId !== 'undefined' && !invoiceData.projectId) {
-        const { projectId, ...dataWithoutProjectId } = invoiceData;
-        Object.assign(invoiceData, dataWithoutProjectId);
+      // Remove projectId if empty string or undefined
+      if (!invoiceData.projectId || invoiceData.projectId.trim() === '') {
+        delete invoiceData.projectId;
       }
       
       console.log('Sending invoice data:', invoiceData)
