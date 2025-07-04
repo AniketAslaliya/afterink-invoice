@@ -189,6 +189,7 @@ const InvoicesPage: React.FC = () => {
   // Fetch invoices from backend on mount
   useEffect(() => {
     fetchProjects();
+    fetchClients();
     
     // Load business settings and apply to invoice customization
     const businessSettings = localStorage.getItem('businessSettings')
@@ -259,6 +260,31 @@ const InvoicesPage: React.FC = () => {
       setProjects(projectsArray)
     } catch (err: any) {
       console.error('Error fetching projects:', err.message)
+    }
+  }
+
+  const fetchClients = async () => {
+    try {
+      console.log('Fetching clients from API...')
+      const res = await apiGet('/clients')
+      console.log('Clients API Response:', res)
+      
+      // Handle different response structures
+      let clientsArray = [];
+      if (res && res.data && res.data.clients) {
+        clientsArray = res.data.clients;
+      } else if (res && Array.isArray(res.clients)) {
+        clientsArray = res.clients;
+      } else if (res && Array.isArray(res)) {
+        clientsArray = res;
+      } else {
+        console.warn('Unexpected clients response structure:', res);
+        clientsArray = []; // Default to empty array
+      }
+      
+      setClients(clientsArray)
+    } catch (error) {
+      console.error('Error fetching clients:', error)
     }
   }
 
