@@ -350,12 +350,19 @@ const InvoicesPage: React.FC = () => {
       }, 0)
       const totalAmount = subtotal + taxAmount
       
+      // DEBUG: Log the notes, terms, and termsAndConditions field values
+      console.log('Notes field value before sending:', newInvoice.notes);
+      console.log('Terms field value before sending:', newInvoice.terms);
+      console.log('Terms and Conditions field value before sending:', newInvoice.termsAndConditions);
+      
       const invoiceData: any = {
         ...newInvoice,
         clientId,
         totalAmount: totalAmount,
         currency: newInvoice.currency,
         terms: newInvoice.terms || getDefaultTerms(),
+        // Explicitly ensure notes field is included
+        notes: newInvoice.notes || '',
       };
       
       // Remove projectId if empty string or undefined
@@ -364,6 +371,10 @@ const InvoicesPage: React.FC = () => {
       }
       
       console.log('Sending invoice data:', invoiceData)
+      console.log('Notes in invoice data:', invoiceData.notes);
+      console.log('Terms in invoice data:', invoiceData.terms);
+      console.log('Terms and Conditions in invoice data:', invoiceData.termsAndConditions);
+      
       const res = await apiPost('/invoices', invoiceData)
       console.log('Invoice API Response:', res)
       
@@ -380,6 +391,11 @@ const InvoicesPage: React.FC = () => {
         console.error('Unexpected invoice response structure:', res);
         throw new Error('Unexpected API response structure. Check console for details.');
       }
+      
+      // DEBUG: Log the notes, terms, and termsAndConditions fields in the response
+      console.log('Notes in API response:', invoiceObject.notes);
+      console.log('Terms in API response:', invoiceObject.terms);
+      console.log('Terms and Conditions in API response:', invoiceObject.termsAndConditions);
       
       dispatch(fetchInvoices({ page, limit }));
       setShowAddModal(false)
@@ -399,7 +415,7 @@ const InvoicesPage: React.FC = () => {
         currency: 'INR',
         notes: '',
         terms: getDefaultTerms(),
-        termsAndConditions: getDefaultTerms(),
+        termsAndConditions: '',
       });
       // Fetch next invoice number for the next use
       generateNextInvoiceNumber();
@@ -587,6 +603,8 @@ const InvoicesPage: React.FC = () => {
 
   // Handle edit invoice
   const handleEditInvoice = (invoice: Invoice) => {
+    console.log('Editing invoice, original terms:', invoice.terms); // DEBUG
+    console.log('Editing invoice, original termsAndConditions:', (invoice as any).termsAndConditions); // DEBUG
     setEditInvoice({
       ...invoice,
       clientId: invoice.client && (invoice.client as any)._id ? (invoice.client as any)._id : '',
@@ -606,17 +624,40 @@ const InvoicesPage: React.FC = () => {
     if (!selectedInvoice || !editInvoice) return;
     try {
       setSubmitting(true);
+      
+      // DEBUG: Log the notes, terms, and termsAndConditions field values
+      console.log('Notes field value before updating:', editInvoice.notes);
+      console.log('Terms field value before updating:', editInvoice.terms);
+      console.log('Terms and Conditions field value before updating:', editInvoice.termsAndConditions);
+      
       const invoiceData = {
         ...editInvoice,
         totalAmount: handleEditCalculateTotal(),
         currency: editInvoice.currency,
+        // Explicitly ensure notes field is included
+        notes: editInvoice.notes || '',
       };
       if (typeof invoiceData.projectId !== 'undefined' && !invoiceData.projectId) {
         delete invoiceData.projectId;
       }
       console.log('Updating invoice with data:', invoiceData);
+      console.log('Notes in invoice data:', invoiceData.notes);
+      console.log('Terms in invoice data:', invoiceData.terms);
+      console.log('Terms and Conditions in invoice data:', invoiceData.termsAndConditions);
+      
       const result = await apiPut(`/invoices/${selectedInvoice._id}`, invoiceData);
       console.log('Update result:', result);
+      
+      // DEBUG: Log the notes, terms, and termsAndConditions fields in the response
+      if (result && result.data && result.data.invoice) {
+        console.log('Notes in update response:', result.data.invoice.notes);
+        console.log('Terms in update response:', result.data.invoice.terms);
+        console.log('Terms and Conditions in update response:', result.data.invoice.termsAndConditions);
+      } else if (result && result.notes) {
+        console.log('Notes in update response:', result.notes);
+        console.log('Terms in update response:', result.terms);
+        console.log('Terms and Conditions in update response:', result.termsAndConditions);
+      }
       dispatch(fetchInvoices({ page, limit }));
       setShowEditModal(false);
       setSelectedInvoice(null);
@@ -1107,13 +1148,25 @@ const InvoicesPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Terms & Conditions
+                    Payment Terms
                   </label>
                   <textarea
                     value={newInvoice.terms}
                     onChange={(e) => setNewInvoice({ ...newInvoice, terms: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    placeholder="Payment terms and conditions"
+                    placeholder="Payment terms (e.g., Net 30 days)"
+                    rows={2}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Terms & Conditions
+                  </label>
+                  <textarea
+                    value={newInvoice.termsAndConditions}
+                    onChange={(e) => setNewInvoice({ ...newInvoice, termsAndConditions: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    placeholder="Terms and conditions"
                     rows={3}
                   />
                 </div>

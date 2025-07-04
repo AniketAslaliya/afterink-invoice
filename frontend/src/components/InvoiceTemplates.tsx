@@ -95,6 +95,7 @@ export interface Invoice {
   status: string;
   notes?: string;
   terms?: string;
+  termsAndConditions?: string;
   createdAt: string;
   currency?: string;
 }
@@ -531,7 +532,7 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
               Terms & Conditions:
             </h4>
             <p className="text-sm" style={{ color: customization.colors.secondary }}>
-              {customization.termsAndConditions || invoice.terms || 'All services are subject to our standard terms and conditions.'}
+              {customization.termsAndConditions || invoice.termsAndConditions || 'All services are subject to our standard terms and conditions.'}
             </p>
           </div>
         </div>
