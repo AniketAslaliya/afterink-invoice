@@ -547,14 +547,16 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
             </div>
           )}
           {/* Terms & Conditions Section */}
-          <div>
-            <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>
-              Terms & Conditions:
-            </h4>
-            <p className="text-sm" style={{ color: customization.colors.secondary }}>
-              {customization.termsAndConditions || 'All services are subject to our standard terms and conditions.'}
-            </p>
-          </div>
+          {invoice.terms && (
+            <div>
+              <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>
+                Terms & Conditions:
+              </h4>
+              <p className="text-sm" style={{ color: customization.colors.secondary }}>
+                {customization.termsAndConditions || invoice.terms || 'All services are subject to our standard terms and conditions.'}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

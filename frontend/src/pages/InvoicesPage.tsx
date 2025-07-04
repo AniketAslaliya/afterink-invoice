@@ -169,6 +169,9 @@ const InvoicesPage: React.FC = () => {
     return saved ? JSON.parse(saved) : defaultCustomization;
   });
 
+  // Add this state for settings
+  const [appSettings, setAppSettings] = useState<any>(null);
+
   const invoices = useAppSelector((state: any) => state.invoices.invoices);
   const loading = useAppSelector((state: any) => state.invoices.loading);
   const [error, setError] = useState<string | null>(null);
@@ -211,6 +214,22 @@ const InvoicesPage: React.FC = () => {
       sessionStorage.removeItem('preselectedProject');
     }
   }, [])
+
+  // Add this effect to fetch settings
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const res = await apiGet('/settings');
+      if (res && res.data) {
+        setAppSettings(res.data);
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    }
+  };
 
   const fetchClients = async () => {
     try {
@@ -1922,7 +1941,7 @@ const InvoicesPage: React.FC = () => {
                     showPaymentTerms: invoiceCustomization.showPaymentTerms !== undefined ? invoiceCustomization.showPaymentTerms : true,
                     paymentTermsText: invoiceCustomization.paymentTermsText || 'Payment is due within 30 days of invoice date. Late payments may incur additional charges.',
                     dateFormat: invoiceCustomization.dateFormat || 'DD/MM/YYYY',
-                    termsAndConditions: invoiceCustomization.termsAndConditions || '',
+                    termsAndConditions: appSettings?.termsAndConditions || invoiceCustomization.termsAndConditions || '',
                     currency: selectedInvoice.currency || invoiceCustomization.currency || 'INR',
                   }}
                   template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}

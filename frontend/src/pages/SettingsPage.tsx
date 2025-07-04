@@ -448,17 +448,14 @@ const SettingsPage: React.FC = () => {
                       </div>
 
                       <div className="mt-8">
-                        <div className="mb-6">
-                          <label className="block text-gray-200 font-semibold mb-2">Global Terms & Conditions</label>
-                          <textarea
-                            className="w-full p-3 rounded bg-gray-800 text-gray-100 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            rows={5}
-                            value={settings.termsAndConditions || ''}
-                            onChange={e => updateSettings('termsAndConditions', '', e.target.value)}
-                            placeholder="Enter your default terms and conditions for all invoices..."
-                          />
-                          <p className="text-xs text-gray-400 mt-1">This will be used as the default for all new invoices, but can be edited per invoice.</p>
-                        </div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700">Terms and Conditions</label>
+                        <textarea
+                          className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
+                          value={settings.termsAndConditions || ''}
+                          onChange={e => updateSettings('termsAndConditions', '', e.target.value)}
+                          placeholder="Enter your terms and conditions here..."
+                        />
+                        <p className="text-xs text-gray-500 mt-1">These terms will appear on all invoices.</p>
                       </div>
                     </div>
                   )}
