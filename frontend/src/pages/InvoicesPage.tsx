@@ -147,10 +147,18 @@ const InvoicesPage: React.FC = () => {
     notes: '',
     date: new Date().toISOString().split('T')[0]
   });
-  const [newInvoice, setNewInvoice] = useState({
+  const [newInvoice, setNewInvoice] = useState<{
+    invoiceNumber: string;
+    clientId: string;
+    projectId?: string;
+    dueDate: string;
+    items: InvoiceItem[];
+    currency: string;
+    notes: string;
+    terms: string;
+  }>({
     invoiceNumber: '',
     clientId: '',
-    projectId: '',
     dueDate: '',
     items: [{
       description: '',
@@ -158,7 +166,7 @@ const InvoicesPage: React.FC = () => {
       rate: 0,
       amount: 0,
       taxRate: 0
-    }] as InvoiceItem[],
+    }],
     currency: 'INR',
     notes: '',
     terms: 'Payment is due within 30 days of invoice date.'
@@ -300,11 +308,9 @@ const InvoicesPage: React.FC = () => {
       
       const invoiceData = {
         ...newInvoice,
-        projectId: newInvoice.projectId || undefined,
-        subtotal: subtotal,
-        taxAmount: taxAmount,
-        totalAmount: totalAmount
-      }
+        totalAmount: totalAmount,
+        currency: newInvoice.currency
+      };
       
       console.log('Sending invoice data:', invoiceData)
       const res = await apiPost('/invoices', invoiceData)
@@ -334,7 +340,6 @@ const InvoicesPage: React.FC = () => {
       setNewInvoice({
         invoiceNumber: '',
         clientId: '',
-        projectId: '',
         dueDate: '',
         items: [{
           description: '',
@@ -806,6 +811,11 @@ const InvoicesPage: React.FC = () => {
         totalAmount: calculateTotal(),
         currency: newInvoice.currency
       };
+      
+      // Remove projectId if empty string
+      if (typeof invoiceData.projectId !== 'undefined' && !invoiceData.projectId) {
+        delete invoiceData.projectId;
+      }
       
       console.log('Updating invoice with data:', invoiceData);
       
