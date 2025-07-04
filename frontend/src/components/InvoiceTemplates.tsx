@@ -398,18 +398,11 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
         {/* Bill To & Project */}
         <div className="flex flex-col md:flex-row md:justify-between gap-8 mb-8">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold mb-2" style={{ color: customization.colors.primary }}>Bill To:</h3>
+            <h3 className="text-lg font-semibold mb-1" style={{ color: customization.colors.primary }}>Bill To:</h3>
             <div>
-              <p className="font-medium text-lg">{invoice.client?.companyName || 'Unknown Client'}</p>
-              <p>{invoice.client?.contactPerson?.firstName || ''} {invoice.client?.contactPerson?.lastName || ''}</p>
-              <p className="text-sm" style={{ color: customization.colors.secondary }}>{invoice.client?.contactPerson?.email || ''}</p>
-              {invoice.client?.address && showClientAddress && (
-                <div className="mt-2 text-sm" style={{ color: customization.colors.secondary }}>
-                  <p>{invoice.client.address.street || ''}</p>
-                  <p>{invoice.client.address.city || ''}, {invoice.client.address.state || ''} {invoice.client.address.zipCode || ''}</p>
-                  <p>{invoice.client.address.country || ''}</p>
-                </div>
-              )}
+              <p className="font-medium text-base">{invoice.client?.companyName || 'Unknown Client'}</p>
+              <span className="block text-sm">{invoice.client?.contactPerson?.firstName || ''} {invoice.client?.contactPerson?.lastName || ''}</span>
+              <span className="block text-xs" style={{ color: customization.colors.secondary }}>{invoice.client?.contactPerson?.email || ''}</span>
             </div>
           </div>
           {invoice.project && (
