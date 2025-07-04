@@ -345,6 +345,8 @@ const InvoicesPage: React.FC = () => {
       // Reset form
       setNewInvoice({
         invoiceNumber: '',
+        clientId: '',
+        projectId: '',
         dueDate: '',
         items: [{
           description: '',
@@ -406,7 +408,7 @@ const InvoicesPage: React.FC = () => {
   }
 
   const getFilteredProjects = () => {
-    return projects.filter(project => project.clientId === newInvoice.clientId)
+    return projects.filter((project: any) => project.clientId === newInvoice.clientId)
   }
 
   const formatCurrency = (amount: number, currency?: string) => {
@@ -541,8 +543,8 @@ const InvoicesPage: React.FC = () => {
   const handleEditInvoice = (invoice: Invoice) => {
     setEditInvoice({
       ...invoice,
-      clientId: invoice.client?._id || invoice.clientId || '',
-      projectId: (invoice as any).projectId || invoice.project?._id || '',
+      clientId: '',
+      projectId: '',
       items: invoice.items ? invoice.items.map(item => ({ ...item })) : [],
       notes: invoice.notes || '',
       terms: invoice.terms || getDefaultTerms(),
@@ -1886,12 +1888,11 @@ const InvoicesPage: React.FC = () => {
                   }}
                   customization={{
                     ...invoiceCustomization,
-                    showPaymentTerms: invoiceCustomization.showPaymentTerms !== undefined ? invoiceCustomization.showPaymentTerms : true,
                     paymentTermsText: invoiceCustomization.paymentTermsText || 'Payment is due within 30 days of invoice date. Late payments may incur additional charges.',
                     dateFormat: invoiceCustomization.dateFormat || 'DD/MM/YYYY',
                     termsAndConditions: appSettings?.termsAndConditions || invoiceCustomization.termsAndConditions || '',
                     currency: selectedInvoice.currency || invoiceCustomization.currency || 'INR',
-                  }}
+                  } as InvoiceCustomization}
                   template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
                   showClientAddress={showClientAddress}
                   ref={invoicePreviewRef}
@@ -2176,7 +2177,6 @@ const InvoicesPage: React.FC = () => {
             template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
             isPreview={false}
             showClientAddress={false}
-            showPaymentTerms={invoiceCustomization.showPaymentTerms ?? false}
           />
         </div>
       )}
