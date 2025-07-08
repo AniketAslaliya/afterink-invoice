@@ -54,6 +54,8 @@ import { DndContext, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import toast, { Toaster } from 'react-hot-toast';
+import { useAutosave, autosaveManager } from '../utils/autosave';
+import DraftManager from '../components/DraftManager';
 
 const defaultCustomization: InvoiceCustomization = {
   template: 'indian-professional',
@@ -180,9 +182,60 @@ const InvoicesPage: React.FC = () => {
   const [undoStackEdit, setUndoStackEdit] = useState<any[]>([]);
   const [redoStackEdit, setRedoStackEdit] = useState<any[]>([]);
 
+  // Add state for draft management
+  const [showDraftManager, setShowDraftManager] = useState(false);
+  const [draftSaveStatus, setDraftSaveStatus] = useState<'saving' | 'saved' | 'error' | null>(null);
+
+  // Autosave hooks for new and edit invoice forms
+  useAutosave('new-invoice', newInvoice, { delay: 2000 });
+  useAutosave('edit-invoice', editInvoice, { delay: 2000 });
+
   useEffect(() => {
     dispatch(fetchInvoices({ page, limit }));
   }, [dispatch, page, limit]);
+
+  // Check for existing drafts on mount and offer to restore
+  useEffect(() => {
+    const checkForDrafts = () => {
+      const hasDraft = autosaveManager.hasDraft('new-invoice');
+      if (hasDraft && !showAddModal) {
+        const draftAge = autosaveManager.getDraftAge('new-invoice');
+        if (draftAge !== null && draftAge < 60) { // Show notification for drafts less than 1 hour old
+          toast((t) => (
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-blue-500" />
+              <div>
+                <p className="font-medium">Draft found!</p>
+                <p className="text-sm text-gray-600">You have an unsaved invoice draft from {draftAge} minutes ago.</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setShowDraftManager(true);
+                    toast.dismiss(t.id);
+                  }}
+                  className="px-3 py-1 bg-blue-500 text-white rounded text-sm"
+                >
+                  View Drafts
+                </button>
+                <button
+                  onClick={() => toast.dismiss(t.id)}
+                  className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          ), { duration: 10000 });
+        }
+      }
+    };
+
+    checkForDrafts();
+    
+    // Cleanup old drafts on mount
+    autosaveManager.cleanupOldDrafts(7);
+  }, [showAddModal]);
 
   // Fetch all invoices for total revenue (background)
   useEffect(() => {
@@ -910,6 +963,13 @@ const InvoicesPage: React.FC = () => {
               >
                 <Palette className="h-4 w-4 mr-2 group-hover:rotate-12 transition-transform" />
                 Customize
+              </button>
+              <button
+                className="btn btn-outline group"
+                onClick={() => setShowDraftManager(true)}
+              >
+                <FileText className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
+                Drafts
               </button>
             </div>
           </div>
@@ -2284,6 +2344,19 @@ const InvoicesPage: React.FC = () => {
         <span className="text-white font-semibold">Page {pagination.page} of {pagination.pages}</span>
         <button onClick={handleNextPage} disabled={page === pagination.pages || loading} className="px-4 py-2 bg-gray-700 text-white rounded focus:ring-2 focus:ring-blue-500 disabled:opacity-50" aria-label="Next Page">Next</button>
       </div>
+
+      {/* Draft Manager */}
+      <DraftManager
+        isOpen={showDraftManager}
+        onClose={() => setShowDraftManager(false)}
+        onRestoreDraft={(draftData) => {
+          setNewInvoice(draftData);
+          setShowAddModal(true);
+          setShowDraftManager(false);
+          toast.success('Draft restored successfully!');
+        }}
+      />
+
       <Toaster position="top-right" />
     </div>
   );
