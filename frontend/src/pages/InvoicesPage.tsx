@@ -3,7 +3,7 @@
 // declare module 'html2pdf.js';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Plus, Search, Filter, Trash2, Download, Palette, Save, FileText, CheckCircle, Clock, AlertCircle, Eye, Edit, DollarSign, StickyNote, Check, Copy, Send } from 'lucide-react';
+import { Plus, Search, Filter, Trash2, Download, Palette, Save, FileText, CheckCircle, Clock, AlertCircle, Eye, Edit, DollarSign, StickyNote, Check, Copy, Send, Undo, Redo, GripVertical, Package } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../api';
 import { InvoicePreview, defaultTemplates, InvoiceCustomization } from '../components/InvoiceTemplates';
 import type { Invoice } from '../components/InvoiceTemplates';
@@ -2098,95 +2098,117 @@ const InvoicesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Invoice View Modal */}
+      {/* Invoice View Modal - Redesigned */}
       {showViewModal && selectedInvoice && (
         <div 
-          className="fixed inset-0 bg-black/60 flex items-start justify-center z-50 overflow-y-auto modal-backdrop p-4 cursor-pointer"
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-start justify-center z-50 p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowViewModal(false);
             }
           }}
-          style={{ cursor: 'pointer' }}
         >
           <div 
-            className="bg-white rounded-2xl w-full max-w-6xl shadow-2xl relative my-4 modal-content invoice-view-modal cursor-default"
+            className="bg-white rounded-2xl w-full max-w-7xl shadow-2xl relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
-            style={{ cursor: 'default' }}
+            style={{ 
+              maxHeight: 'calc(100vh - 2rem)',
+              marginTop: '1rem',
+              marginBottom: '1rem'
+            }}
           >
-            {/* Header - Sticky */}
-            <div className="modal-header rounded-t-2xl flex justify-between items-center shadow-sm">
-              <div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Invoice Preview</h2>
-                <p className="text-gray-600 text-sm md:text-base">#{selectedInvoice.invoiceNumber}</p>
-                <p className="text-xs text-gray-400 mt-1">Click outside to close • Press ESC to close</p>
-              </div>
-              <div className="flex items-center space-x-2 md:space-x-3">
-                <button
-                  onClick={() => handleDownloadPDF(selectedInvoice)}
-                  className="px-3 py-2 md:px-4 md:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1 md:space-x-2 text-sm md:text-base"
-                >
-                  <Download size={16} />
-                  <span className="hidden sm:inline">Download PDF</span>
-                  <span className="sm:hidden">PDF</span>
-                </button>
-                <button 
-                  className="text-gray-400 hover:text-gray-600 text-2xl leading-none w-8 h-8 flex items-center justify-center cursor-pointer transition-colors" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setShowViewModal(false);
-                  }}
-                  type="button"
-                  title="Close (ESC)"
-                >
-                  &times;
-                </button>
+            {/* Fixed Header */}
+            <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Invoice Preview</h2>
+                    <div className="flex items-center space-x-4 mt-1">
+                      <p className="text-lg font-semibold text-blue-600">#{selectedInvoice.invoiceNumber}</p>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        selectedInvoice.status === 'paid' ? 'bg-green-100 text-green-800' :
+                        selectedInvoice.status === 'overdue' ? 'bg-red-100 text-red-800' :
+                        selectedInvoice.status === 'sent' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {selectedInvoice.status?.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => {
+                      setSelectedInvoice(selectedInvoice);
+                      setShowViewModal(false);
+                      handleEditInvoice(selectedInvoice);
+                    }}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                  >
+                    <Edit size={16} />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    onClick={() => handleDownloadPDF(selectedInvoice)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                  >
+                    <Download size={16} />
+                    <span>Download PDF</span>
+                  </button>
+                  <button 
+                    className="text-gray-400 hover:text-gray-600 text-2xl leading-none w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors" 
+                    onClick={() => setShowViewModal(false)}
+                    type="button"
+                    title="Close (ESC)"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
             </div>
             
-            {/* Content - Scrollable */}
-            <div className="modal-body bg-white" style={{ fontFamily: invoiceCustomization.fonts.body }}>
-              <div className="invoice-preview-container">
-                <div className="flex justify-center">
+            {/* Scrollable Content */}
+            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 8rem)' }}>
+              <div className="p-6">
+                <div className="bg-gray-50 rounded-xl p-6">
                   <InvoicePreview
-                  invoice={{
-                    _id: selectedInvoice._id,
-                    invoiceNumber: selectedInvoice.invoiceNumber,
-                    client: selectedInvoice.client || { 
-                      companyName: 'Unknown Client', 
-                      contactPerson: { firstName: '', lastName: '', email: '' }, 
-                      address: { street: '', city: '', state: '', zipCode: '', country: '' } 
-                    },
-                    project: selectedInvoice.project || undefined,
-                    items: selectedInvoice.items || [{ 
-                      description: 'Professional Services', 
-                      quantity: 1, 
-                      rate: selectedInvoice.totalAmount, 
-                      amount: selectedInvoice.totalAmount, 
-                      taxRate: 0,
-                      note: selectedInvoice.notes || ''
-                    }],
-                    subtotal: selectedInvoice.totalAmount || 0,
-                    taxAmount: 0,
-                    totalAmount: selectedInvoice.totalAmount || 0,
-                    dueDate: selectedInvoice.dueDate,
-                    status: selectedInvoice.status || 'draft',
-                    notes: selectedInvoice.notes || '',
-                    terms: selectedInvoice.terms || '',
-                    createdAt: selectedInvoice.createdAt || new Date().toISOString(),
-                    currency: selectedInvoice.currency || 'INR',
-                  }}
-                  customization={Object.assign({}, invoiceCustomization, {
-                    paymentTermsText: invoiceCustomization.paymentTermsText || 'Payment is due within 30 days of invoice date. Late payments may incur additional charges.',
-                    dateFormat: invoiceCustomization.dateFormat || 'DD/MM/YYYY',
-                    termsAndConditions: ((appSettings as any)?.termsAndConditions) || invoiceCustomization.termsAndConditions || '',
-                    currency: selectedInvoice.currency || invoiceCustomization.currency || 'INR',
-                  }) as InvoiceCustomization}
-                  template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
-                  showClientAddress={showClientAddress}
-                  ref={invoicePreviewRef}
-                />
+                    invoice={{
+                      _id: selectedInvoice._id,
+                      invoiceNumber: selectedInvoice.invoiceNumber,
+                      client: selectedInvoice.client || { 
+                        companyName: 'Unknown Client', 
+                        contactPerson: { firstName: '', lastName: '', email: '' }, 
+                        address: { street: '', city: '', state: '', zipCode: '', country: '' } 
+                      },
+                      project: selectedInvoice.project || undefined,
+                      items: selectedInvoice.items || [{ 
+                        description: 'Professional Services', 
+                        quantity: 1, 
+                        rate: selectedInvoice.totalAmount, 
+                        amount: selectedInvoice.totalAmount, 
+                        taxRate: 0,
+                        note: selectedInvoice.notes || ''
+                      }],
+                      subtotal: selectedInvoice.totalAmount || 0,
+                      taxAmount: 0,
+                      totalAmount: selectedInvoice.totalAmount || 0,
+                      dueDate: selectedInvoice.dueDate,
+                      status: selectedInvoice.status || 'draft',
+                      notes: selectedInvoice.notes || '',
+                      terms: selectedInvoice.terms || '',
+                      createdAt: selectedInvoice.createdAt || new Date().toISOString(),
+                      currency: selectedInvoice.currency || 'INR',
+                    }}
+                    customization={Object.assign({}, invoiceCustomization, {
+                      paymentTermsText: invoiceCustomization.paymentTermsText || 'Payment is due within 30 days of invoice date. Late payments may incur additional charges.',
+                      dateFormat: invoiceCustomization.dateFormat || 'DD/MM/YYYY',
+                      termsAndConditions: ((appSettings as any)?.termsAndConditions) || invoiceCustomization.termsAndConditions || '',
+                      currency: selectedInvoice.currency || invoiceCustomization.currency || 'INR',
+                    }) as InvoiceCustomization}
+                    template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
+                    showClientAddress={showClientAddress}
+                    ref={invoicePreviewRef}
+                  />
                 </div>
               </div>
             </div>
@@ -2194,9 +2216,9 @@ const InvoicesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Invoice Edit Modal */}
+      {/* Invoice Edit Modal - Redesigned */}
       {showEditModal && selectedInvoice && editInvoice && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto modal-backdrop"
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-start justify-center z-50 p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowEditModal(false);
@@ -2204,279 +2226,377 @@ const InvoicesPage: React.FC = () => {
             }
           }}
         >
-          <div className="bg-gray-900 rounded-xl p-8 w-full max-w-4xl shadow-lg relative mx-4 my-8 border border-gray-700 modal-content max-h-[90vh] overflow-y-auto"
-               onClick={(e) => e.stopPropagation()}>
-            <button 
-              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none cursor-pointer" 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setShowEditModal(false);
-                setEditInvoice(null);
-              }}
-              type="button"
-            >
-              &times;
-            </button>
-            <h2 className="text-2xl font-bold mb-6 text-white">Edit Invoice</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                {/* All edit form fields and items UI go here (move existing JSX here) */}
-              {/* Basic Information */}
-              <div className="grid grid-cols-2 gap-6">
+          <div 
+            className="bg-gray-900 rounded-2xl w-full max-w-[95vw] shadow-2xl relative overflow-hidden border border-gray-700"
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              maxHeight: 'calc(100vh - 2rem)',
+              marginTop: '1rem',
+              marginBottom: '1rem'
+            }}
+          >
+            {/* Fixed Header */}
+            <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700 px-6 py-4 rounded-t-2xl">
+              <div className="flex justify-between items-center">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Client *</label>
-                  <select
-                    value={editInvoice.clientId}
-                    onChange={(e) => setEditInvoice({ ...editInvoice, clientId: e.target.value, projectId: '' })}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    required
-                  >
-                    <option value="">Select a client</option>
-                    {clients.map((client) => (
-                      <option key={client._id} value={client._id}>{client.companyName}</option>
-                    ))}
-                  </select>
+                  <h2 className="text-2xl font-bold text-white">Edit Invoice</h2>
+                  <p className="text-gray-400 mt-1">#{editInvoice.invoiceNumber}</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Project (Optional)</label>
-                  <select
-                    value={editInvoice.projectId}
-                    onChange={(e) => setEditInvoice({ ...editInvoice, projectId: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    disabled={!editInvoice.clientId}
-                  >
-                    <option value="">Select a project (optional)</option>
-                    {getFilteredProjects().map((project) => (
-                      <option key={project._id} value={project._id}>{project.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Invoice Number</label>
-                    <input
-                      type="text"
-                    value={editInvoice.invoiceNumber}
-                    onChange={(e) => setEditInvoice({ ...editInvoice, invoiceNumber: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                      placeholder="Enter invoice number"
-                    />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Due Date *</label>
-                  <input
-                    type="date"
-                    value={editInvoice.dueDate}
-                    onChange={(e) => setEditInvoice({ ...editInvoice, dueDate: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Currency</label>
-                  <select
-                    value={editInvoice.currency}
-                    onChange={(e) => setEditInvoice({ ...editInvoice, currency: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                  >
-                    <option value="INR">INR</option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="CAD">CAD</option>
-                    <option value="AUD">AUD</option>
-                  </select>
-                </div>
-              </div>
-              {/* Items */}
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-semibold text-gray-200">Invoice Items</h3>
+                <div className="flex items-center space-x-3">
+                  {/* Undo/Redo buttons */}
+                  <div className="flex items-center space-x-1 border border-gray-600 rounded-lg p-1">
                     <button
-                      type="button"
-                    onClick={handleEditAddItem}
-                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 flex items-center"
+                      onClick={undoEditInvoice}
+                      disabled={editInvoiceHistoryIndex === 0}
+                      className="p-2 text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors"
+                      title="Undo (Ctrl+Z)"
                     >
-                    <Plus className="h-4 w-4 mr-1" /> Add Item
+                      <Undo size={16} />
+                    </button>
+                    <button
+                      onClick={redoEditInvoice}
+                      disabled={editInvoiceHistoryIndex === editInvoiceHistory.length - 1}
+                      className="p-2 text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors"
+                      title="Redo (Ctrl+Y)"
+                    >
+                      <Redo size={16} />
                     </button>
                   </div>
-                    <DndContext collisionDetection={closestCenter} onDragEnd={handleEditItemsDragEnd}>
-                      <SortableContext items={editInvoice.items.map((_: InvoiceItem, i: number) => i.toString())} strategy={verticalListSortingStrategy}>
-                        {editInvoice.items.map((item, index) => (
-                          <SortableItem key={index} id={index.toString()}>
-                            <div className="border border-gray-600 rounded-md p-4 bg-gray-800">
-                        <div className="flex justify-between items-start mb-3">
-                          <h4 className="font-medium text-gray-200">Item {index + 1}</h4>
-                        {editInvoice.items.length > 1 && (
-                            <button
-                              type="button"
-                            onClick={() => handleEditRemoveItem(index)}
-                              className="text-red-400 hover:text-red-300"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-12 gap-3">
-                          <div className="col-span-5">
-                          <label className="block text-xs font-medium text-gray-400 mb-1">Description *</label>
-                            <input
-                              type="text"
-                              value={item.description}
-                            onChange={(e) => handleEditItem(index, 'description', e.target.value)}
-                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                            placeholder="Item description"
-                              required
-                            />
-                          </div>
-                          <div className="col-span-2">
-                          <label className="block text-xs font-medium text-gray-400 mb-1">Quantity *</label>
-                            <input
-                              type="number"
-                              value={item.quantity}
-                            onChange={(e) => handleEditItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                            min="0.01"
-                              step="0.01"
-                              required
-                            />
-                          </div>
-                          <div className="col-span-2">
-                          <label className="block text-xs font-medium text-gray-400 mb-1">Rate *</label>
-                            <input
-                              type="number"
-                              value={item.rate}
-                            onChange={(e) => handleEditItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                              min="0"
-                              step="0.01"
-                              required
-                            />
-                          </div>
-                          <div className="col-span-2">
-                          <label className="block text-xs font-medium text-gray-400 mb-1">Tax %</label>
-                            <input
-                              type="number"
-                              value={item.taxRate || 0}
-                            onChange={(e) => handleEditItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                              min="0"
-                              max="100"
-                              step="0.01"
-                            />
-                          </div>
-                          <div className="col-span-1">
-                          <label className="block text-xs font-medium text-gray-400 mb-1">Amount</label>
-                          <div className="px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded text-gray-300">
-                            {formatCurrency(item.amount, editInvoice.currency)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                          </SortableItem>
-                    ))}
-                      </SortableContext>
-                    </DndContext>
-                <div className="text-right">
-                  <div className="text-lg font-semibold text-white">
-                    Total: {formatCurrency(handleEditCalculateTotal(), editInvoice.currency)}
-                </div>
-                </div>
-              </div>
-              {/* Notes and Terms */}
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
-                  <textarea
-                    value={editInvoice ? editInvoice.notes : newInvoice.notes}
-                    onChange={e => editInvoice ? setEditInvoice({ ...editInvoice, notes: e.target.value }) : setNewInvoice({ ...newInvoice, notes: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    rows={4}
-                    placeholder="Add notes for this invoice..."
-                  />
-                  {/* Live preview for notes with line breaks */}
-                  <div className="mt-2 p-2 bg-gray-900 border border-gray-700 rounded text-gray-200 text-sm">
-                    <div dangerouslySetInnerHTML={{ __html: (editInvoice ? editInvoice.notes : newInvoice.notes || '').replace(/\n/g, '<br/>') }} />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Payment Terms</label>
-                  <textarea
-                    value={editInvoice ? editInvoice.terms : newInvoice.terms}
-                    onChange={e => editInvoice ? setEditInvoice({ ...editInvoice, terms: e.target.value }) : setNewInvoice({ ...newInvoice, terms: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    rows={2}
-                    placeholder="Enter payment terms..."
-                  />
-                  <button
-                    className="mt-2 px-3 py-1 bg-blue-700 text-white rounded text-xs"
+                  <button 
+                    className="text-gray-400 hover:text-white text-2xl leading-none w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-800 transition-colors" 
                     onClick={() => {
-                      localStorage.setItem('defaultPaymentTerms', editInvoice ? editInvoice.terms : newInvoice.terms);
-                      alert('Default payment terms saved!');
+                      setShowEditModal(false);
+                      setEditInvoice(null);
                     }}
                     type="button"
-                  >Save as Default</button>
+                    title="Close (ESC)"
+                  >
+                    ×
+                  </button>
                 </div>
               </div>
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-300 mb-1">Terms & Conditions</label>
-                <textarea
-                  value={editInvoice ? editInvoice.termsAndConditions : newInvoice.termsAndConditions}
-                  onChange={e => editInvoice ? setEditInvoice({ ...editInvoice, termsAndConditions: e.target.value }) : setNewInvoice({ ...newInvoice, termsAndConditions: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                  rows={2}
-                  placeholder="Enter terms & conditions..."
-                />
-                <button
-                  className="mt-2 px-3 py-1 bg-blue-700 text-white rounded text-xs"
-                  onClick={() => {
-                    localStorage.setItem('defaultTermsAndConditions', editInvoice ? editInvoice.termsAndConditions : newInvoice.termsAndConditions);
-                    alert('Default terms & conditions saved!');
-                  }}
-                  type="button"
-                >Save as Default</button>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="flex h-full">
+              {/* Left Side - Form (scrollable) */}
+              <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 8rem)' }}>
+                <div className="p-6 space-y-8">
+                  {/* Basic Information */}
+                  <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                      <FileText className="h-5 w-5 mr-2 text-blue-400" />
+                      Invoice Details
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Client *</label>
+                        <select
+                          value={editInvoice.clientId}
+                          onChange={(e) => setEditInvoice({ ...editInvoice, clientId: e.target.value, projectId: '' })}
+                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                          required
+                        >
+                          <option value="">Select a client</option>
+                          {clients.map((client) => (
+                            <option key={client._id} value={client._id}>{client.companyName}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Project (Optional)</label>
+                        <select
+                          value={editInvoice.projectId}
+                          onChange={(e) => setEditInvoice({ ...editInvoice, projectId: e.target.value })}
+                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                          disabled={!editInvoice.clientId}
+                        >
+                          <option value="">Select a project (optional)</option>
+                          {getFilteredProjects().map((project) => (
+                            <option key={project._id} value={project._id}>{project.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Invoice Number</label>
+                        <input
+                          type="text"
+                          value={editInvoice.invoiceNumber}
+                          onChange={(e) => setEditInvoice({ ...editInvoice, invoiceNumber: e.target.value })}
+                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                          placeholder="Enter invoice number"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Due Date *</label>
+                        <input
+                          type="date"
+                          value={editInvoice.dueDate}
+                          onChange={(e) => setEditInvoice({ ...editInvoice, dueDate: e.target.value })}
+                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Currency</label>
+                        <select
+                          value={editInvoice.currency}
+                          onChange={(e) => setEditInvoice({ ...editInvoice, currency: e.target.value })}
+                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                        >
+                          <option value="INR">INR</option>
+                          <option value="USD">USD</option>
+                          <option value="EUR">EUR</option>
+                          <option value="GBP">GBP</option>
+                          <option value="CAD">CAD</option>
+                          <option value="AUD">AUD</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Invoice Items */}
+                  <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-lg font-semibold text-white flex items-center">
+                        <Package className="h-5 w-5 mr-2 text-green-400" />
+                        Invoice Items
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={handleEditAddItem}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Add Item</span>
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <DndContext collisionDetection={closestCenter} onDragEnd={handleEditItemsDragEnd}>
+                        <SortableContext items={editInvoice.items.map((_: InvoiceItem, i: number) => i.toString())} strategy={verticalListSortingStrategy}>
+                          {editInvoice.items.map((item, index) => (
+                            <SortableItem key={index} id={index.toString()}>
+                              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                                <div className="flex justify-between items-center mb-4">
+                                  <h4 className="font-medium text-gray-200 flex items-center">
+                                    <GripVertical className="h-4 w-4 mr-2 text-gray-400" />
+                                    Item {index + 1}
+                                  </h4>
+                                  {editInvoice.items.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleEditRemoveItem(index)}
+                                      className="text-red-400 hover:text-red-300 p-1 rounded transition-colors"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  )}
+                                </div>
+                                
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                                  <div className="lg:col-span-5">
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Description *</label>
+                                    <input
+                                      type="text"
+                                      value={item.description}
+                                      onChange={(e) => handleEditItem(index, 'description', e.target.value)}
+                                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                      placeholder="Item description"
+                                      required
+                                    />
+                                  </div>
+                                  
+                                  <div className="lg:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Quantity *</label>
+                                    <input
+                                      type="number"
+                                      value={item.quantity}
+                                      onChange={(e) => handleEditItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                      min="0.01"
+                                      step="0.01"
+                                      required
+                                    />
+                                  </div>
+                                  
+                                  <div className="lg:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Rate *</label>
+                                    <input
+                                      type="number"
+                                      value={item.rate}
+                                      onChange={(e) => handleEditItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                      min="0"
+                                      step="0.01"
+                                      required
+                                    />
+                                  </div>
+                                  
+                                  <div className="lg:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Tax %</label>
+                                    <input
+                                      type="number"
+                                      value={item.taxRate || 0}
+                                      onChange={(e) => handleEditItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
+                                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                      min="0"
+                                      max="100"
+                                      step="0.01"
+                                    />
+                                  </div>
+                                  
+                                  <div className="lg:col-span-1">
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Amount</label>
+                                    <div className="px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 text-center">
+                                      {formatCurrency(item.amount, editInvoice.currency)}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Item Note */}
+                                <div className="mt-4">
+                                  <label className="block text-sm font-medium text-gray-400 mb-2">Notes (Optional)</label>
+                                  <textarea
+                                    value={item.note || ''}
+                                    onChange={(e) => handleEditItem(index, 'note', e.target.value)}
+                                    className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                    rows={2}
+                                    placeholder="Add notes for this item..."
+                                  />
+                                </div>
+                              </div>
+                            </SortableItem>
+                          ))}
+                        </SortableContext>
+                      </DndContext>
+                    </div>
+
+                    {/* Total */}
+                    <div className="mt-6 p-4 bg-gray-700 rounded-lg border border-gray-600">
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-white">
+                          Total: {formatCurrency(handleEditCalculateTotal(), editInvoice.currency)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Notes and Terms */}
+                  <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                      <FileText className="h-5 w-5 mr-2 text-purple-400" />
+                      Additional Information
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Payment Terms</label>
+                        <textarea
+                          value={editInvoice.terms}
+                          onChange={(e) => setEditInvoice({ ...editInvoice, terms: e.target.value })}
+                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                          rows={4}
+                          placeholder="Enter payment terms..."
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Notes</label>
+                        <textarea
+                          value={editInvoice.notes}
+                          onChange={(e) => setEditInvoice({ ...editInvoice, notes: e.target.value })}
+                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                          rows={4}
+                          placeholder="Add any additional notes..."
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-700">
-              <button
-                  onClick={() => { setShowEditModal(false); setEditInvoice(null); }}
-                className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-gray-800"
-                disabled={submitting}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdateInvoice}
-                  disabled={submitting || !editInvoice.clientId || !editInvoice.dueDate}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting ? 'Updating...' : 'Update Invoice'}
-              </button>
               </div>
+
+              {/* Right Side - Live Preview */}
+              <div className="w-1/2 border-l border-gray-700 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 8rem)' }}>
+                <div className="p-6">
+                  <div className="bg-white rounded-lg p-4 shadow-lg">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+                      <Eye className="h-5 w-5 mr-2 text-blue-600" />
+                      Live Preview
+                    </h3>
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <InvoicePreview
+                        invoice={{
+                          ...editInvoice,
+                          items: editInvoice.items,
+                          subtotal: handleEditCalculateTotal(),
+                          totalAmount: handleEditCalculateTotal(),
+                          dueDate: editInvoice.dueDate || new Date().toISOString(),
+                          status: editInvoice.status || 'draft',
+                          createdAt: editInvoice.createdAt || new Date().toISOString(),
+                          _id: 'preview',
+                          client: clients.find(c => c._id === editInvoice.clientId) || { 
+                            companyName: '', 
+                            contactPerson: { firstName: '', lastName: '', email: '' }, 
+                            address: { street: '', city: '', state: '', zipCode: '', country: '' } 
+                          },
+                          project: projects.find(p => p._id === editInvoice.projectId),
+                        }}
+                        customization={Object.assign({}, invoiceCustomization, {
+                          paymentTermsText: editInvoice.terms || getDefaultPaymentTerms(),
+                          termsAndConditions: getDefaultTermsAndConditions(),
+                          currency: editInvoice.currency || 'INR',
+                        }) as InvoiceCustomization}
+                        template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
+                        showClientAddress={showClientAddress}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
-              
-              <div className="bg-white rounded-lg p-4 shadow-md">
-                <h3 className="text-lg font-semibold mb-2 text-gray-800">Live Preview</h3>
-                <InvoicePreview
-                  invoice={{
-                    ...editInvoice,
-                    items: editInvoice.items,
-                    subtotal: handleEditCalculateTotal(),
-                    totalAmount: handleEditCalculateTotal(),
-                    dueDate: editInvoice.dueDate || new Date().toISOString(),
-                    status: editInvoice.status || 'draft',
-                    createdAt: editInvoice.createdAt || new Date().toISOString(),
-                    _id: 'preview',
-                    client: clients.find(c => c._id === editInvoice.clientId) || { companyName: '', contactPerson: { firstName: '', lastName: '', email: '' }, address: { street: '', city: '', state: '', zipCode: '', country: '' } },
-                    project: projects.find(p => p._id === editInvoice.projectId),
-                    currency: editInvoice.currency || 'INR'
-                  }}
-                  customization={invoiceCustomization}
-                  template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
-                  isPreview={true}
-                  showClientAddress={showClientAddress}
-                />
+            </div>
+
+            {/* Fixed Footer with Actions */}
+            <div className="sticky bottom-0 bg-gray-900 border-t border-gray-700 px-6 py-4 rounded-b-2xl">
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-gray-400">
+                  Press <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+Enter</kbd> to save • <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Esc</kbd> to cancel
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditInvoice(null);
+                    }}
+                    className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUpdateInvoice}
+                    disabled={submitting}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                  >
+                    {submitting ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save size={16} />
+                        <span>Save Changes</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
