@@ -181,64 +181,140 @@ a,
   }
 }
 
-/* Modal animations */
+/* Enhanced Modal animations */
 .modal-backdrop {
-  animation: fadeIn 0.3s ease-out;
+  animation: modalBackdropFadeIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .modal-content {
-  animation: slideInUp 0.3s ease-out;
+  animation: modalSlideInUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-@keyframes fadeIn {
+@keyframes modalBackdropFadeIn {
   from {
     opacity: 0;
+    backdrop-filter: blur(0px);
   }
   to {
     opacity: 1;
+    backdrop-filter: blur(8px);
   }
 }
 
-@keyframes slideInUp {
+@keyframes modalSlideInUp {
   from {
     opacity: 0;
-    transform: translateY(30px) scale(0.95);
+    transform: translateY(50px) scale(0.9);
+    filter: blur(4px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(20px) scale(0.95);
+    filter: blur(2px);
   }
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+    filter: blur(0);
   }
 }
 
-/* Card hover animations */
+/* Modal exit animations */
+.modal-backdrop.modal-exit {
+  animation: modalBackdropFadeOut 0.3s ease-in;
+}
+
+.modal-content.modal-exit {
+  animation: modalSlideOutDown 0.3s ease-in;
+}
+
+@keyframes modalBackdropFadeOut {
+  from {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+  to {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+}
+
+@keyframes modalSlideOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+    filter: blur(2px);
+  }
+}
+
+/* Enhanced Card hover animations */
 .card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.card-hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  transition: left 0.6s;
+  pointer-events: none;
+}
+
+.card-hover:hover::before {
+  left: 100%;
 }
 
 .card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 20px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
-/* Button animations */
+/* Enhanced Button animations */
 .btn-hover {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 }
 
+.btn-hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+  pointer-events: none;
+}
+
+.btn-hover:hover::before {
+  left: 100%;
+}
+
 .btn-hover:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.4);
 }
 
 .btn-hover:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(1.02);
 }
 
-/* Stagger animations for lists */
+/* Enhanced Stagger animations for lists */
 .stagger-item {
-  animation: staggerFadeIn 0.5s ease-out;
+  animation: staggerFadeIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  animation-fill-mode: both;
 }
 
 .stagger-item:nth-child(1) { animation-delay: 0.1s; }
@@ -246,15 +322,85 @@ a,
 .stagger-item:nth-child(3) { animation-delay: 0.3s; }
 .stagger-item:nth-child(4) { animation-delay: 0.4s; }
 .stagger-item:nth-child(5) { animation-delay: 0.5s; }
+.stagger-item:nth-child(6) { animation-delay: 0.6s; }
+.stagger-item:nth-child(7) { animation-delay: 0.7s; }
+.stagger-item:nth-child(8) { animation-delay: 0.8s; }
 
 @keyframes staggerFadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(30px) scale(0.95);
+    filter: blur(2px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Smooth entrance animations */
+.animate-fadeInUp {
+  animation: enhancedFadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  animation-fill-mode: both;
+}
+
+@keyframes enhancedFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Pulse animation for loading states */
+.animate-pulse-gentle {
+  animation: pulseGentle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulseGentle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+/* Floating animation for decorative elements */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Shimmer effect for loading skeletons */
+.animate-shimmer {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
   }
 }
 

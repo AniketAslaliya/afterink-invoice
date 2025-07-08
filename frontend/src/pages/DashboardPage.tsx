@@ -113,58 +113,71 @@ const DashboardPage: React.FC = () => {
   return (
     <div className="space-y-8 page-transition">
       {/* Header Section */}
-        <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-2xl p-8 border border-gray-600 card-hover">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Welcome Back! 👋</h1>
-              <p className="text-gray-300 text-lg">Here's what's happening with your business today</p>
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-600/10 rounded-3xl blur-3xl"></div>
+        <div className="relative bg-gradient-to-r from-gray-800/90 to-gray-700/90 backdrop-blur-lg rounded-2xl p-8 border border-gray-600/50 card-hover shadow-2xl">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
+            <div className="space-y-3">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent animate-fadeInUp">
+                Welcome Back! 👋
+              </h1>
+              <p className="text-gray-300 text-lg leading-relaxed animate-fadeInUp" style={{animationDelay: '0.1s'}}>
+                Here's what's happening with your business today
+              </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 animate-fadeInUp" style={{animationDelay: '0.2s'}}>
               <button
                 onClick={() => handleNavigation('/invoices')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all shadow-lg hover:shadow-xl btn-hover"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-xl font-semibold flex items-center justify-center gap-3 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-blue-500/25 btn-hover group"
               >
-                <PlusCircle size={20} />
+                <PlusCircle size={20} className="group-hover:rotate-90 transition-transform duration-300" />
                 Create Invoice
               </button>
             </div>
+          </div>
         </div>
       </div>
 
         {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Total Revenue */}
-          <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 border border-gray-600 card-hover stagger-item">
-            <div className="flex items-center justify-between mb-4">
-              <div className="bg-green-600 p-3 rounded-xl">
-                <DollarSign className="text-white" size={24} />
+          <div className="group relative overflow-hidden bg-gradient-to-br from-gray-800/90 to-gray-700/90 backdrop-blur-lg rounded-2xl p-6 border border-gray-600/50 card-hover stagger-item shadow-xl hover:shadow-2xl transition-all duration-500">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6">
+                <div className="bg-gradient-to-br from-green-500 to-green-600 p-4 rounded-2xl shadow-lg group-hover:shadow-green-500/25 transition-all duration-300 group-hover:scale-110">
+                  <DollarSign className="text-white" size={24} />
+                </div>
+                <div className="text-right space-y-1">
+                  <p className="text-green-400 text-sm font-medium tracking-wide">Total Revenue</p>
+                  <p className="text-3xl font-bold text-white group-hover:scale-105 transition-transform duration-300">{formatCurrency(stats ? stats.totalRevenue : 0)}</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-green-400 text-sm font-medium">Total Revenue</p>
-                <p className="text-2xl font-bold text-white">{formatCurrency(stats ? stats.totalRevenue : 0)}</p>
+              <div className="flex items-center gap-3 pt-3 border-t border-gray-600/30">
+                {stats ? (stats.monthlyGrowth >= 0 ? (
+                  <TrendingUp className="text-green-400 group-hover:scale-110 transition-transform duration-300" size={16} />
+                ) : (
+                  <TrendingDown className="text-red-400 group-hover:scale-110 transition-transform duration-300" size={16} />
+                )) : null}
+                <span className={`text-sm font-medium ${stats ? (stats.monthlyGrowth >= 0 ? 'text-green-400' : 'text-red-400') : ''}`}>
+                  {Math.abs(typeof stats?.monthlyGrowth === 'number' ? stats.monthlyGrowth : 0).toFixed(1)}% from last month
+                </span>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {stats ? (stats.monthlyGrowth >= 0 ? (
-                <TrendingUp className="text-green-400" size={16} />
-              ) : (
-                <TrendingDown className="text-red-400" size={16} />
-              )) : null}
-              <span className={`text-sm font-medium ${stats ? (stats.monthlyGrowth >= 0 ? 'text-green-400' : 'text-red-400') : ''}`}>
-                {Math.abs(typeof stats?.monthlyGrowth === 'number' ? stats.monthlyGrowth : 0).toFixed(1)}% from last month
-              </span>
             </div>
           </div>
 
           {/* Pending Amount */}
-          <div className="bg-gradient-to-br from-yellow-800 to-yellow-600 rounded-2xl p-6 border border-yellow-700 card-hover stagger-item">
-            <div className="flex items-center justify-between mb-4">
-              <div className="bg-yellow-600 p-3 rounded-xl">
-                <Clock className="text-white" size={24} />
-              </div>
-              <div className="text-right">
-                <p className="text-yellow-300 text-sm font-medium">Pending Amount</p>
-                <p className="text-2xl font-bold text-white">{formatCurrency(pendingAmount)}</p>
+          <div className="group relative overflow-hidden bg-gradient-to-br from-yellow-800/90 to-yellow-600/90 backdrop-blur-lg rounded-2xl p-6 border border-yellow-700/50 card-hover stagger-item shadow-xl hover:shadow-2xl hover:shadow-yellow-500/20 transition-all duration-500">
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-amber-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6">
+                <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 p-4 rounded-2xl shadow-lg group-hover:shadow-yellow-500/25 transition-all duration-300 group-hover:scale-110">
+                  <Clock className="text-white" size={24} />
+                </div>
+                <div className="text-right space-y-1">
+                  <p className="text-yellow-300 text-sm font-medium tracking-wide">Pending Amount</p>
+                  <p className="text-3xl font-bold text-white group-hover:scale-105 transition-transform duration-300">{formatCurrency(pendingAmount)}</p>
+                </div>
               </div>
             </div>
           </div>
