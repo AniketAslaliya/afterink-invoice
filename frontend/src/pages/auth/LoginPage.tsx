@@ -75,9 +75,6 @@ const LoginPage: React.FC = () => {
 
   return (
     <div>
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-secondary-950">Welcome back</h1>
         <p className="mt-2 text-sm text-secondary-700">

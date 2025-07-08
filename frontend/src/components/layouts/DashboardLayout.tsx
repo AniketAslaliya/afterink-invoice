@@ -43,9 +43,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-900">
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 flex z-40 md:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
