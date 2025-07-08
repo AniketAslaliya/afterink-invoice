@@ -87,6 +87,7 @@ export interface Invoice {
     rate: number;
     amount: number;
     taxRate?: number;
+    note?: string;
   }>;
   subtotal?: number;
   taxAmount?: number;
@@ -428,7 +429,12 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
             <tbody>
               {invoice.items.map((item, index) => (
                 <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="p-3">{item.description}</td>
+                  <td className="p-3">
+                    {item.description}
+                    {item.note && (
+                      <div className="text-xs text-gray-500 mt-1 italic">{item.note}</div>
+                    )}
+                  </td>
                   <td className="p-3 text-center">{item.quantity}</td>
                   <td className="p-3 text-right">{formatCurrency(item.rate)}</td>
                   <td className="p-3 text-right">{item.taxRate || 0}%</td>

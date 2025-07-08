@@ -15,6 +15,7 @@ type InvoiceItem = {
   rate: number;
   amount: number;
   taxRate?: number;
+  note?: string;
 };
 
 type Client = {
@@ -113,7 +114,7 @@ const InvoicesPage: React.FC = () => {
     clientId: '',
     projectId: '',
     dueDate: '',
-    items: [{ description: '', quantity: 1, rate: 0, amount: 0, taxRate: 0 }],
+    items: [{ description: '', quantity: 1, rate: 0, amount: 0, taxRate: 0, note: '' }],
     currency: 'INR',
     notes: '',
     terms: '',
@@ -353,7 +354,8 @@ const InvoicesPage: React.FC = () => {
           quantity: 1,
           rate: 0,
           amount: 0,
-          taxRate: 0
+          taxRate: 0,
+          note: ''
         }],
         currency: 'INR',
         notes: '',
@@ -380,7 +382,8 @@ const InvoicesPage: React.FC = () => {
         quantity: 1,
         rate: 0,
         amount: 0,
-        taxRate: 0
+        taxRate: 0,
+        note: ''
       }]
     })
   }
@@ -627,7 +630,7 @@ const InvoicesPage: React.FC = () => {
       ...prev,
       items: [
         ...prev.items,
-        { description: '', quantity: 1, rate: 0, amount: 0, taxRate: 0 },
+        { description: '', quantity: 1, rate: 0, amount: 0, taxRate: 0, note: '' },
       ],
     }));
   };
@@ -1874,7 +1877,8 @@ const InvoicesPage: React.FC = () => {
                       quantity: 1, 
                       rate: selectedInvoice.totalAmount, 
                       amount: selectedInvoice.totalAmount, 
-                      taxRate: 0 
+                      taxRate: 0,
+                      note: selectedInvoice.notes || ''
                     }],
                     subtotal: selectedInvoice.totalAmount || 0,
                     taxAmount: 0,
