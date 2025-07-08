@@ -13,6 +13,7 @@ export interface ISettings extends Document {
   notifications?: object;
   preferences?: object;
   security?: object;
+  paymentTerms?: string;
   termsAndConditions?: string;
 }
 
@@ -32,6 +33,10 @@ const SettingsSchema = new Schema<ISettings>({
   security: {
     type: Object,
     default: {},
+  },
+  paymentTerms: {
+    type: String,
+    default: 'Payment is due within 30 days of invoice date.',
   },
   termsAndConditions: {
     type: String,
