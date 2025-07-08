@@ -2448,28 +2448,29 @@ const InvoicesPage: React.FC = () => {
               </button>
               </div>
               </div>
-            </div>
-            <div className="bg-white rounded-lg p-4 shadow-md mt-6 md:mt-0">
-              <h3 className="text-lg font-semibold mb-2 text-gray-800">Live Preview</h3>
-              <InvoicePreview
-                invoice={{
-                  ...editInvoice,
-                  items: editInvoice.items,
-                  subtotal: handleEditCalculateTotal(),
-                  totalAmount: handleEditCalculateTotal(),
-                  dueDate: editInvoice.dueDate || new Date().toISOString(),
-                  status: editInvoice.status || 'draft',
-                  createdAt: editInvoice.createdAt || new Date().toISOString(),
-                  _id: 'preview',
-                  client: clients.find(c => c._id === editInvoice.clientId) || { companyName: '', contactPerson: { firstName: '', lastName: '', email: '' }, address: { street: '', city: '', state: '', zipCode: '', country: '' } },
-                  project: projects.find(p => p._id === editInvoice.projectId),
-                  currency: editInvoice.currency || 'INR'
-                }}
-                customization={invoiceCustomization}
-                template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
-                isPreview={true}
-                showClientAddress={showClientAddress}
-              />
+              
+              <div className="bg-white rounded-lg p-4 shadow-md">
+                <h3 className="text-lg font-semibold mb-2 text-gray-800">Live Preview</h3>
+                <InvoicePreview
+                  invoice={{
+                    ...editInvoice,
+                    items: editInvoice.items,
+                    subtotal: handleEditCalculateTotal(),
+                    totalAmount: handleEditCalculateTotal(),
+                    dueDate: editInvoice.dueDate || new Date().toISOString(),
+                    status: editInvoice.status || 'draft',
+                    createdAt: editInvoice.createdAt || new Date().toISOString(),
+                    _id: 'preview',
+                    client: clients.find(c => c._id === editInvoice.clientId) || { companyName: '', contactPerson: { firstName: '', lastName: '', email: '' }, address: { street: '', city: '', state: '', zipCode: '', country: '' } },
+                    project: projects.find(p => p._id === editInvoice.projectId),
+                    currency: editInvoice.currency || 'INR'
+                  }}
+                  customization={invoiceCustomization}
+                  template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
+                  isPreview={true}
+                  showClientAddress={showClientAddress}
+                />
+              </div>
             </div>
           </div>
         </div>
