@@ -75,8 +75,11 @@ const LoginPage: React.FC = () => {
 
   return (
     <div>
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-secondary-950">Welcome back</h2>
+        <h1 className="text-3xl font-bold text-secondary-950">Welcome back</h1>
         <p className="mt-2 text-sm text-secondary-700">
           Sign in to your account to continue
         </p>
@@ -114,7 +117,7 @@ const LoginPage: React.FC = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" id="main-content" role="main" aria-label="Login form">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-secondary-800">
             Email address
@@ -122,13 +125,18 @@ const LoginPage: React.FC = () => {
           <div className="mt-1">
             <input
               {...register('email')}
+              id="email"
               type="email"
               autoComplete="email"
               className={`input ${errors.email ? 'input-error' : ''}`}
               placeholder="Enter your email"
+              aria-describedby={errors.email ? 'email-error' : undefined}
+              aria-invalid={errors.email ? 'true' : 'false'}
             />
             {errors.email && (
-              <p className="mt-1 text-sm text-danger-600">{errors.email.message}</p>
+              <p id="email-error" className="mt-1 text-sm text-danger-600" role="alert">
+                {errors.email.message}
+              </p>
             )}
           </div>
         </div>
@@ -140,24 +148,31 @@ const LoginPage: React.FC = () => {
           <div className="mt-1 relative">
             <input
               {...register('password')}
+              id="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               className={`input pr-10 ${errors.password ? 'input-error' : ''}`}
               placeholder="Enter your password"
+              aria-describedby={errors.password ? 'password-error' : undefined}
+              aria-invalid={errors.password ? 'true' : 'false'}
             />
             <button
               type="button"
               className="absolute inset-y-0 right-0 pr-3 flex items-center"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showPassword}
             >
               {showPassword ? (
-                <EyeOff className="h-4 w-4 text-secondary-400" />
+                <EyeOff className="h-4 w-4 text-secondary-400" aria-hidden="true" />
               ) : (
-                <Eye className="h-4 w-4 text-secondary-400" />
+                <Eye className="h-4 w-4 text-secondary-400" aria-hidden="true" />
               )}
             </button>
             {errors.password && (
-              <p className="mt-1 text-sm text-danger-600">{errors.password.message}</p>
+              <p id="password-error" className="mt-1 text-sm text-danger-600" role="alert">
+                {errors.password.message}
+              </p>
             )}
           </div>
         </div>
@@ -190,12 +205,17 @@ const LoginPage: React.FC = () => {
             type="submit"
             disabled={isLoading}
             className="btn btn-primary w-full flex justify-center items-center space-x-2"
+            aria-describedby={isLoading ? 'loading-status' : undefined}
           >
             {isLoading ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" aria-hidden="true"></div>
+                <span id="loading-status" className="sr-only">Signing in, please wait</span>
+                <span>Signing in...</span>
+              </>
             ) : (
               <>
-                <LogIn className="h-4 w-4" />
+                <LogIn className="h-4 w-4" aria-hidden="true" />
                 <span>Sign in</span>
               </>
             )}

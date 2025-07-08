@@ -39,17 +39,25 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-900">
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 flex z-40 md:hidden">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 flex z-40 md:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm" 
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
           <div className="relative flex-1 flex flex-col max-w-xs w-full sidebar-modern">
             <div className="absolute top-0 right-0 -mr-12 pt-2">
               <button
                 className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
                 onClick={() => setSidebarOpen(false)}
+                aria-label="Close navigation menu"
               >
-                <X className="h-6 w-6 text-white" />
+                <X className="h-6 w-6 text-white" aria-hidden="true" />
               </button>
             </div>
             <SidebarContent currentPath={location.pathname} />
@@ -67,12 +75,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       {/* Main content */}
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         {/* Top header */}
-        <div className="dashboard-header relative z-10 flex-shrink-0 flex h-16">
+        <header className="dashboard-header relative z-10 flex-shrink-0 flex h-16" role="banner">
           <button
             className="px-4 text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 md:hidden rounded-lg mx-2"
             onClick={() => setSidebarOpen(true)}
+            aria-label="Open navigation menu"
+            aria-expanded={sidebarOpen}
           >
-            <Menu className="h-6 w-6" />
+            <Menu className="h-6 w-6" aria-hidden="true" />
           </button>
           
           <div className="flex-1 px-4 flex justify-between items-center">
@@ -83,9 +93,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             </div>
             
             <div className="ml-4 flex items-center md:ml-6 space-x-4">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2" role="img" aria-label={`User: ${user?.firstName} ${user?.lastName}, Role: ${user?.role}`}>
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-white" />
+                  <User className="w-4 h-4 text-white" aria-hidden="true" />
                 </div>
                 <div className="hidden md:block">
                   <p className="text-sm font-medium text-gray-200">
@@ -98,15 +108,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               <button
                 onClick={handleLogout}
                 className="text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg p-2 transition-colors"
+                aria-label="Log out"
               >
-                <LogOut className="h-5 w-5" />
+                <LogOut className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Page content */}
-        <main className="flex-1 relative overflow-y-auto focus:outline-none page-container">
+        <main className="flex-1 relative overflow-y-auto focus:outline-none page-container" id="main-content" role="main">
           <div className="py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
               {children}
@@ -122,13 +133,13 @@ const SidebarContent: React.FC<{ currentPath: string }> = ({ currentPath }) => {
   return (
     <div className="flex flex-col h-0 flex-1">
       <div className="relative flex items-center h-16 flex-shrink-0 px-6">
-        <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+        <h2 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
           Afterink Studio
-        </h1>
+        </h2>
       </div>
       
       <div className="flex-1 flex flex-col overflow-y-auto">
-        <nav className="flex-1 px-3 py-6 space-y-2">
+        <nav className="flex-1 px-3 py-6 space-y-2" role="navigation" aria-label="Main navigation">
           {navigation.map((item) => {
             const isActive = currentPath === item.href
             const Icon = item.icon
@@ -140,11 +151,13 @@ const SidebarContent: React.FC<{ currentPath: string }> = ({ currentPath }) => {
                 className={`menu-item-modern group flex items-center px-4 py-3 text-sm font-semibold transition-all duration-300 ${
                   isActive ? 'active text-blue-400' : 'text-gray-300 hover:text-white'
                 }`}
+                aria-current={isActive ? 'page' : undefined}
               >
                 <Icon
                   className={`mr-3 h-5 w-5 transition-all duration-300 ${
                     isActive ? 'text-blue-400' : 'text-gray-400 group-hover:text-blue-400 group-hover:scale-110'
                   }`}
+                  aria-hidden="true"
                 />
                 <span className="relative">
                   {item.name}

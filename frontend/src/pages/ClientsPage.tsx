@@ -237,20 +237,21 @@ const ClientsPage: React.FC = () => {
               <p className="text-secondary-700 mt-2">Manage your client relationships and contacts</p>
             </div>
             <div className="flex items-center space-x-3">
-              <button className="btn btn-outline group">
-                <Search className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
+              <button className="btn btn-outline group" aria-label="Search clients">
+                <Search className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" aria-hidden="true" />
                 Search
               </button>
-              <button className="btn btn-outline group">
-                <Filter className="h-4 w-4 mr-2 group-hover:rotate-12 transition-transform" />
+              <button className="btn btn-outline group" aria-label="Filter clients">
+                <Filter className="h-4 w-4 mr-2 group-hover:rotate-12 transition-transform" aria-hidden="true" />
                 Filter
               </button>
               <button 
                 className="btn btn-primary group" 
                 onClick={() => setShowAddModal(true)}
                 data-testid="add-client-btn"
+                aria-label="Add new client"
               >
-                <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" />
+                <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" aria-hidden="true" />
                 Add Client
               </button>
             </div>
@@ -260,31 +261,34 @@ const ClientsPage: React.FC = () => {
 
       {/* Add Client Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="add-client-title">
           <div className="bg-gray-900 rounded-xl p-8 w-full max-w-2xl shadow-lg relative mx-4 my-8 border border-gray-700">
             <button 
               className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none" 
               onClick={() => setShowAddModal(false)}
+              aria-label="Close dialog"
             >
               &times;
             </button>
-            <h2 className="text-2xl font-bold mb-6 text-white">Add New Client</h2>
+            <h2 id="add-client-title" className="text-2xl font-bold mb-6 text-white">Add New Client</h2>
             
             <div className="space-y-6 max-h-96 overflow-y-auto">
               {/* Company Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-200 border-b border-gray-700 pb-2">Company Information</h3>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="company-name" className="block text-sm font-medium text-gray-300 mb-1">
                     Company Name *
                   </label>
                   <input
+                    id="company-name"
                     type="text"
                     value={newClient.companyName}
                     onChange={(e) => setNewClient({ ...newClient, companyName: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                     placeholder="Enter company name"
                     required
+                    aria-required="true"
                   />
                 </div>
               </div>
@@ -294,10 +298,11 @@ const ClientsPage: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-200 border-b border-gray-700 pb-2">Contact Person</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="first-name" className="block text-sm font-medium text-gray-300 mb-1">
                       First Name
                     </label>
                     <input
+                      id="first-name"
                       type="text"
                       value={newClient.contactPerson.firstName}
                       onChange={(e) => setNewClient({ 
@@ -307,13 +312,16 @@ const ClientsPage: React.FC = () => {
                       className={`w-full px-3 py-2 bg-gray-800 border ${!newClient.contactPerson.firstName.trim() && addClientError ? 'border-red-500' : 'border-gray-600'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}
                       placeholder="First name"
                       required
+                      aria-required="true"
+                      aria-invalid={!newClient.contactPerson.firstName.trim() && addClientError ? 'true' : 'false'}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="last-name" className="block text-sm font-medium text-gray-300 mb-1">
                       Last Name
                     </label>
                     <input
+                      id="last-name"
                       type="text"
                       value={newClient.contactPerson.lastName}
                       onChange={(e) => setNewClient({ 
@@ -323,6 +331,8 @@ const ClientsPage: React.FC = () => {
                       className={`w-full px-3 py-2 bg-gray-800 border ${!newClient.contactPerson.lastName.trim() && addClientError ? 'border-red-500' : 'border-gray-600'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}
                       placeholder="Last name"
                       required
+                      aria-required="true"
+                      aria-invalid={!newClient.contactPerson.lastName.trim() && addClientError ? 'true' : 'false'}
                     />
                   </div>
                 </div>
