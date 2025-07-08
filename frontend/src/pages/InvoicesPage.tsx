@@ -50,6 +50,9 @@ type Project = {
 import { useAppSelector, useAppDispatch } from '../store';
 import { fetchInvoices } from '../store/invoicesSlice';
 import html2pdf from 'html2pdf.js';
+import { DndContext, closestCenter } from '@dnd-kit/core';
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const defaultCustomization: InvoiceCustomization = {
   template: 'indian-professional',
@@ -761,6 +764,46 @@ const InvoicesPage: React.FC = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [showEditModal, editInvoice && editInvoice.items]);
 
+  // Create a SortableItem component for dnd-kit
+  function SortableItem({ id, children }: { id: string, children: React.ReactNode }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.7 : 1,
+      cursor: 'grab',
+    };
+    return (
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        {children}
+      </div>
+    );
+  }
+
+  // Add these handlers above the return statement:
+  const handleAddItemsDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      setNewInvoice(prev => {
+        const oldIndex = Number(active.id);
+        const newIndex = Number(over.id);
+        const newItems = arrayMove(prev.items, oldIndex, newIndex);
+        return { ...prev, items: newItems };
+      });
+    }
+  };
+  const handleEditItemsDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      setEditInvoice((prev: any) => {
+        const oldIndex = Number(active.id);
+        const newIndex = Number(over.id);
+        const newItems = arrayMove(prev.items, oldIndex, newIndex);
+        return { ...prev, items: newItems };
+      });
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Header Section */}
@@ -1071,96 +1114,100 @@ const InvoicesPage: React.FC = () => {
                   </button>
                 </div>
                 
-                <div className="space-y-3">
-                  {newInvoice.items.map((item, index) => (
-                    <div key={index} className="border border-gray-600 rounded-md p-4 bg-gray-800">
-                      <div className="flex justify-between items-start mb-3">
-                        <h4 className="font-medium text-gray-200">Item {index + 1}</h4>
-                        {newInvoice.items.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeItem(index)}
-                            className="text-red-400 hover:text-red-300"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                      
-                      <div className="grid grid-cols-12 gap-3">
-                        <div className="col-span-5">
-                          <label className="block text-xs font-medium text-gray-400 mb-1">
-                            Description *
-                          </label>
-                          <input
-                            type="text"
-                            value={item.description}
-                            onChange={(e) => updateItem(index, 'description', e.target.value)}
-                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                            placeholder="Item description"
-                            required
-                            onBlur={() => { if (!item.description.trim()) setValidationErrors(prev => ({ ...prev, [`desc-${index}`]: 'Description is required' })); else setValidationErrors(prev => { const e = { ...prev }; delete e[`desc-${index}`]; return e; }); }}
-                          />
-                          {validationErrors[`desc-${index}`] && <div className="text-red-500 text-sm mt-1">{validationErrors[`desc-${index}`]}</div>}
-                        </div>
-                        <div className="col-span-2">
-                          <label className="block text-xs font-medium text-gray-400 mb-1">
-                            Quantity *
-                          </label>
-                          <input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                            min="0.01"
-                            step="0.01"
-                            required
-                            onBlur={() => { if (item.quantity <= 0) setValidationErrors(prev => ({ ...prev, [`qty-${index}`]: 'Quantity must be greater than 0' })); else setValidationErrors(prev => { const e = { ...prev }; delete e[`qty-${index}`]; return e; }); }}
-                          />
-                          {validationErrors[`qty-${index}`] && <div className="text-red-500 text-sm mt-1">{validationErrors[`qty-${index}`]}</div>}
-                        </div>
-                        <div className="col-span-2">
-                          <label className="block text-xs font-medium text-gray-400 mb-1">
-                            Rate *
-                          </label>
-                          <input
-                            type="number"
-                            value={item.rate}
-                            onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                            min="0"
-                            step="0.01"
-                            required
-                            onBlur={() => { if (item.rate < 0) setValidationErrors(prev => ({ ...prev, [`rate-${index}`]: 'Rate must be non-negative' })); else setValidationErrors(prev => { const e = { ...prev }; delete e[`rate-${index}`]; return e; }); }}
-                          />
-                          {validationErrors[`rate-${index}`] && <div className="text-red-500 text-sm mt-1">{validationErrors[`rate-${index}`]}</div>}
-                        </div>
-                        <div className="col-span-2">
-                          <label className="block text-xs font-medium text-gray-400 mb-1">
-                            Tax %
-                          </label>
-                          <input
-                            type="number"
-                            value={item.taxRate || 0}
-                            onChange={(e) => updateItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                          />
-                        </div>
-                        <div className="col-span-1">
-                          <label className="block text-xs font-medium text-gray-400 mb-1">
-                            Amount
-                          </label>
-                          <div className="px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded text-gray-300">
-                            ${item.amount.toFixed(2)}
+                <DndContext collisionDetection={closestCenter} onDragEnd={handleAddItemsDragEnd}>
+                  <SortableContext items={newInvoice.items.map((_: InvoiceItem, i: number) => i.toString())} strategy={verticalListSortingStrategy}>
+                    {newInvoice.items.map((item, index) => (
+                      <SortableItem key={index} id={index.toString()}>
+                        <div className="border border-gray-600 rounded-md p-4 bg-gray-800">
+                          <div className="flex justify-between items-start mb-3">
+                            <h4 className="font-medium text-gray-200">Item {index + 1}</h4>
+                            {newInvoice.items.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeItem(index)}
+                                className="text-red-400 hover:text-red-300"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                          
+                          <div className="grid grid-cols-12 gap-3">
+                            <div className="col-span-5">
+                              <label className="block text-xs font-medium text-gray-400 mb-1">
+                                Description *
+                              </label>
+                              <input
+                                type="text"
+                                value={item.description}
+                                onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                                placeholder="Item description"
+                                required
+                                onBlur={() => { if (!item.description.trim()) setValidationErrors(prev => ({ ...prev, [`desc-${index}`]: 'Description is required' })); else setValidationErrors(prev => { const e = { ...prev }; delete e[`desc-${index}`]; return e; }); }}
+                              />
+                              {validationErrors[`desc-${index}`] && <div className="text-red-500 text-sm mt-1">{validationErrors[`desc-${index}`]}</div>}
+                            </div>
+                            <div className="col-span-2">
+                              <label className="block text-xs font-medium text-gray-400 mb-1">
+                                Quantity *
+                              </label>
+                              <input
+                                type="number"
+                                value={item.quantity}
+                                onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                                className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                                min="0.01"
+                                step="0.01"
+                                required
+                                onBlur={() => { if (item.quantity <= 0) setValidationErrors(prev => ({ ...prev, [`qty-${index}`]: 'Quantity must be greater than 0' })); else setValidationErrors(prev => { const e = { ...prev }; delete e[`qty-${index}`]; return e; }); }}
+                              />
+                              {validationErrors[`qty-${index}`] && <div className="text-red-500 text-sm mt-1">{validationErrors[`qty-${index}`]}</div>}
+                            </div>
+                            <div className="col-span-2">
+                              <label className="block text-xs font-medium text-gray-400 mb-1">
+                                Rate *
+                              </label>
+                              <input
+                                type="number"
+                                value={item.rate}
+                                onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                                className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                                min="0"
+                                step="0.01"
+                                required
+                                onBlur={() => { if (item.rate < 0) setValidationErrors(prev => ({ ...prev, [`rate-${index}`]: 'Rate must be non-negative' })); else setValidationErrors(prev => { const e = { ...prev }; delete e[`rate-${index}`]; return e; }); }}
+                              />
+                              {validationErrors[`rate-${index}`] && <div className="text-red-500 text-sm mt-1">{validationErrors[`rate-${index}`]}</div>}
+                            </div>
+                            <div className="col-span-2">
+                              <label className="block text-xs font-medium text-gray-400 mb-1">
+                                Tax %
+                              </label>
+                              <input
+                                type="number"
+                                value={item.taxRate || 0}
+                                onChange={(e) => updateItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
+                                className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                              />
+                            </div>
+                            <div className="col-span-1">
+                              <label className="block text-xs font-medium text-gray-400 mb-1">
+                                Amount
+                              </label>
+                              <div className="px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded text-gray-300">
+                                ${item.amount.toFixed(2)}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      </SortableItem>
+                    ))}
+                  </SortableContext>
+                </DndContext>
 
                 <div className="text-right">
                   <div className="text-lg font-semibold text-white">
@@ -2159,79 +2206,83 @@ const InvoicesPage: React.FC = () => {
                     <Plus className="h-4 w-4 mr-1" /> Add Item
                     </button>
                   </div>
-                  <div className="space-y-3">
-                  {editInvoice.items.map((item: InvoiceItem, index: number) => (
-                      <div key={index} className="border border-gray-600 rounded-md p-4 bg-gray-800">
-                        <div className="flex justify-between items-start mb-3">
-                          <h4 className="font-medium text-gray-200">Item {index + 1}</h4>
-                        {editInvoice.items.length > 1 && (
-                            <button
-                              type="button"
-                            onClick={() => handleEditRemoveItem(index)}
-                              className="text-red-400 hover:text-red-300"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-12 gap-3">
-                          <div className="col-span-5">
-                          <label className="block text-xs font-medium text-gray-400 mb-1">Description *</label>
-                            <input
-                              type="text"
-                              value={item.description}
-                            onChange={(e) => handleEditItem(index, 'description', e.target.value)}
-                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                            placeholder="Item description"
-                              required
-                            />
-                          </div>
-                          <div className="col-span-2">
-                          <label className="block text-xs font-medium text-gray-400 mb-1">Quantity *</label>
-                            <input
-                              type="number"
-                              value={item.quantity}
-                            onChange={(e) => handleEditItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                            min="0.01"
-                              step="0.01"
-                              required
-                            />
-                          </div>
-                          <div className="col-span-2">
-                          <label className="block text-xs font-medium text-gray-400 mb-1">Rate *</label>
-                            <input
-                              type="number"
-                              value={item.rate}
-                            onChange={(e) => handleEditItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                              min="0"
-                              step="0.01"
-                              required
-                            />
-                          </div>
-                          <div className="col-span-2">
-                          <label className="block text-xs font-medium text-gray-400 mb-1">Tax %</label>
-                            <input
-                              type="number"
-                              value={item.taxRate || 0}
-                            onChange={(e) => handleEditItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                              min="0"
-                              max="100"
-                              step="0.01"
-                            />
-                          </div>
-                          <div className="col-span-1">
-                          <label className="block text-xs font-medium text-gray-400 mb-1">Amount</label>
-                          <div className="px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded text-gray-300">
-                            {formatCurrency(item.amount, editInvoice.currency)}
+                  <DndContext collisionDetection={closestCenter} onDragEnd={handleEditItemsDragEnd}>
+                    <SortableContext items={editInvoice.items.map((_: InvoiceItem, i: number) => i.toString())} strategy={verticalListSortingStrategy}>
+                      {editInvoice.items.map((item, index) => (
+                        <SortableItem key={index} id={index.toString()}>
+                          <div className="border border-gray-600 rounded-md p-4 bg-gray-800">
+                            <div className="flex justify-between items-start mb-3">
+                              <h4 className="font-medium text-gray-200">Item {index + 1}</h4>
+                              {editInvoice.items.length > 1 && (
+                                <button
+                                  type="button"
+                                onClick={() => handleEditRemoveItem(index)}
+                                  className="text-red-400 hover:text-red-300"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
+                            <div className="grid grid-cols-12 gap-3">
+                              <div className="col-span-5">
+                              <label className="block text-xs font-medium text-gray-400 mb-1">Description *</label>
+                                <input
+                                  type="text"
+                                  value={item.description}
+                                onChange={(e) => handleEditItem(index, 'description', e.target.value)}
+                                className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                                placeholder="Item description"
+                                  required
+                                />
+                              </div>
+                              <div className="col-span-2">
+                              <label className="block text-xs font-medium text-gray-400 mb-1">Quantity *</label>
+                                <input
+                                  type="number"
+                                  value={item.quantity}
+                                onChange={(e) => handleEditItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                                className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                                min="0.01"
+                                  step="0.01"
+                                  required
+                                />
+                              </div>
+                              <div className="col-span-2">
+                              <label className="block text-xs font-medium text-gray-400 mb-1">Rate *</label>
+                                <input
+                                  type="number"
+                                  value={item.rate}
+                                onChange={(e) => handleEditItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                                className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                                  min="0"
+                                  step="0.01"
+                                  required
+                                />
+                              </div>
+                              <div className="col-span-2">
+                              <label className="block text-xs font-medium text-gray-400 mb-1">Tax %</label>
+                                <input
+                                  type="number"
+                                  value={item.taxRate || 0}
+                                onChange={(e) => handleEditItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
+                                className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                                  min="0"
+                                  max="100"
+                                  step="0.01"
+                                />
+                              </div>
+                              <div className="col-span-1">
+                              <label className="block text-xs font-medium text-gray-400 mb-1">Amount</label>
+                              <div className="px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded text-gray-300">
+                                {formatCurrency(item.amount, editInvoice.currency)}
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                        </SortableItem>
+                      ))}
+                    </SortableContext>
+                  </DndContext>
                 <div className="text-right">
                   <div className="text-lg font-semibold text-white">
                     Total: {formatCurrency(handleEditCalculateTotal(), editInvoice.currency)}
