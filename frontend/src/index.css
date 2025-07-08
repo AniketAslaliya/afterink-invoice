@@ -1065,3 +1065,72 @@ a,
     transform: scale(1);
   }
 }
+
+/* Mobile touch target optimization */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Mobile-first responsive utilities */
+@media (max-width: 640px) {
+  .mobile-card-padding {
+    padding: 1rem;
+  }
+  
+  .mobile-text-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+  
+  .mobile-gap-2 {
+    gap: 0.5rem;
+  }
+  
+  .mobile-p-3 {
+    padding: 0.75rem;
+  }
+  
+  /* Enhanced mobile invoice cards */
+  .invoice-card-mobile {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+  
+  .invoice-card-mobile .action-buttons {
+    justify-content: center;
+    gap: 0.75rem;
+  }
+  
+  .invoice-card-mobile .action-button {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Mobile modal improvements */
+  .modal-mobile {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+  
+  .modal-mobile .modal-header {
+    padding: 1rem;
+    border-bottom: 1px solid #374151;
+  }
+  
+  .modal-mobile .modal-body {
+    padding: 1rem;
+  }
+  
+  /* Form improvements for mobile */
+  .form-mobile input,
+  .form-mobile select,
+  .form-mobile textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+  }
+}

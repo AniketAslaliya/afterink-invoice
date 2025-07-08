@@ -1583,59 +1583,62 @@ const InvoicesPage: React.FC = () => {
       )}
 
       {/* Advanced Search and Filters */}
-      <div className="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-600 mb-8">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Search Bar */}
-          <div className="flex-1 relative">
+      <div className="bg-gray-800 rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-600 mb-8">
+        <div className="flex flex-col gap-4">
+          {/* Search Bar - Full width on mobile */}
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Search invoices by number, client name, or amount..."
+              placeholder="Search invoices..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
+              className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 text-base"
             />
           </div>
           
-          {/* Status Filter */}
-          <select 
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
-          >
-            <option value="">All Status</option>
-            <option value="draft">Draft</option>
-            <option value="sent">Sent</option>
-            <option value="paid">Paid</option>
-            <option value="overdue">Overdue</option>
-          </select>
-          
-          {/* Date Range Filter */}
-          <input
-            type="date"
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
-            placeholder="Filter by date"
-          />
+          {/* Filters Grid - Responsive layout */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {/* Status Filter */}
+            <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white text-base"
+            >
+              <option value="">All Status</option>
+              <option value="draft">Draft</option>
+              <option value="sent">Sent</option>
+              <option value="paid">Paid</option>
+              <option value="overdue">Overdue</option>
+            </select>
+            
+            {/* Date Range Filter */}
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white text-base"
+              placeholder="Filter by date"
+            />
 
-          {/* Sort Options */}
-          <select 
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
-          >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="amount-high">Amount: High to Low</option>
-            <option value="amount-low">Amount: Low to High</option>
-            <option value="due-date">By Due Date</option>
-          </select>
+            {/* Sort Options */}
+            <select 
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white text-base sm:col-span-2 lg:col-span-1"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="amount-high">Amount: High to Low</option>
+              <option value="amount-low">Amount: Low to High</option>
+              <option value="due-date">By Due Date</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Invoice Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
         <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 border border-gray-600">
           <div className="flex items-center justify-between">
             <div>
@@ -1795,7 +1798,8 @@ const InvoicesPage: React.FC = () => {
                           {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
                         </span>
                         
-                        <div className="flex items-center gap-2">
+                        {/* Desktop Actions */}
+                        <div className="hidden sm:flex items-center gap-2">
                           <button
                             onClick={() => handleDownloadPDF(inv)}
                             className="p-2 text-gray-400 hover:text-blue-400 hover:bg-gray-600 rounded-lg transition-all"
@@ -1849,18 +1853,78 @@ const InvoicesPage: React.FC = () => {
                             <DollarSign size={18} />
                           </button>
                         </div>
+
+                        {/* Mobile Actions - Primary actions only */}
+                        <div className="flex sm:hidden items-center gap-2">
+                          <button
+                            onClick={() => handleViewInvoice(inv)}
+                            className="p-3 text-gray-400 hover:text-green-400 hover:bg-gray-600 rounded-lg transition-all touch-target"
+                            title="View Invoice"
+                          >
+                            <Eye size={20} />
+                          </button>
+                          
+                          <button
+                            onClick={() => handleEditInvoice(inv)}
+                            className="p-3 text-gray-400 hover:text-blue-400 hover:bg-gray-600 rounded-lg transition-all touch-target"
+                            title="Edit Invoice"
+                          >
+                            <Edit size={20} />
+                          </button>
+                          
+                          <button
+                            onClick={() => {
+                              setSelectedInvoice(inv);
+                              setPaymentData(prev => ({ ...prev, amount: inv.totalAmount }));
+                              setShowPaymentModal(true);
+                            }}
+                            className="p-3 text-gray-400 hover:text-yellow-400 hover:bg-gray-600 rounded-lg transition-all touch-target"
+                            title="Update Payment"
+                          >
+                            <DollarSign size={20} />
+                          </button>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Mobile-only sections */}
-                    <div className="md:hidden mt-4 pt-4 border-t border-gray-600">
-                      <div className="flex justify-between items-center">
+                    {/* Mobile-only sections - Enhanced layout */}
+                    <div className="sm:hidden mt-4 pt-4 border-t border-gray-600">
+                      <div className="flex justify-between items-center mb-3">
                         <div>
                           <p className="text-gray-400 text-sm">Due: {new Date(inv.dueDate).toLocaleDateString()}</p>
+                          <p className="text-gray-500 text-xs mt-1">{inv.client?.companyName || 'Unknown Client'}</p>
                         </div>
-                        <div>
-                          <p className="font-bold text-white">{formatCurrency(inv.totalAmount || 0, inv.currency)}</p>
+                        <div className="text-right">
+                          <p className="font-bold text-white text-lg">{formatCurrency(inv.totalAmount || 0, inv.currency)}</p>
                         </div>
+                      </div>
+                      
+                      {/* Mobile Quick Actions Row */}
+                      <div className="flex justify-center gap-4 mt-3">
+                        <button
+                          onClick={() => handleDownloadPDF(inv)}
+                          className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all text-sm"
+                        >
+                          <Download size={16} />
+                          <span>Download</span>
+                        </button>
+                        
+                        <button
+                          onClick={() => handleDuplicateInvoice(inv)}
+                          className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all text-sm"
+                        >
+                          <Copy size={16} />
+                          <span>Duplicate</span>
+                        </button>
+                        
+                        <button
+                          onClick={() => handleSendInvoice(inv)}
+                          className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all text-sm"
+                          disabled={submitting}
+                        >
+                          <Send size={16} />
+                          <span>Send</span>
+                        </button>
                       </div>
                     </div>
                   </div>
