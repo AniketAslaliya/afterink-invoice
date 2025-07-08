@@ -53,6 +53,7 @@ import html2pdf from 'html2pdf.js';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import toast, { Toaster } from 'react-hot-toast';
 
 const defaultCustomization: InvoiceCustomization = {
   template: 'indian-professional',
@@ -172,6 +173,12 @@ const InvoicesPage: React.FC = () => {
 
   // Add state for validation errors
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
+
+  // Add state for undo/redo stacks for add and edit invoice forms
+  const [undoStack, setUndoStack] = useState<any[]>([]);
+  const [redoStack, setRedoStack] = useState<any[]>([]);
+  const [undoStackEdit, setUndoStackEdit] = useState<any[]>([]);
+  const [redoStackEdit, setRedoStackEdit] = useState<any[]>([]);
 
   useEffect(() => {
     dispatch(fetchInvoices({ page, limit }));
@@ -432,6 +439,7 @@ const InvoicesPage: React.FC = () => {
       generateNextInvoiceNumber();
       
       console.log('Invoice created successfully!')
+      toast.success(<span>Invoice created! <a href="#" onClick={() => handleViewInvoice(invoiceObject)} className="underline text-blue-600 ml-2">View</a> <a href="#" onClick={() => handleDownloadPDF(invoiceObject)} className="underline text-green-600 ml-2">Download</a></span>);
     } catch (err: any) {
       console.error('Error creating invoice:', err)
       alert('Error creating invoice: ' + err.message)
@@ -674,6 +682,7 @@ const InvoicesPage: React.FC = () => {
       setShowEditModal(false);
       setSelectedInvoice(null);
       setEditInvoice(null);
+      toast.success(<span>Invoice updated! <a href="#" onClick={() => handleViewInvoice(result.data.invoice)} className="underline text-blue-600 ml-2">View</a> <a href="#" onClick={() => handleDownloadPDF(result.data.invoice)} className="underline text-green-600 ml-2">Download</a></span>);
     } catch (error: any) {
       console.error('Error updating invoice:', error);
       alert('Error updating invoice: ' + error.message);
@@ -803,6 +812,56 @@ const InvoicesPage: React.FC = () => {
       });
     }
   };
+
+  // 1. Wrap setNewInvoice and setEditInvoice to push previous state to undoStack/undoStackEdit and clear redoStack/redoStackEdit
+  const updateNewInvoice = (updater: (prev: any) => any) => {
+    setUndoStack((prev) => [...prev, newInvoice]);
+    setRedoStack([]);
+    setNewInvoice(updater);
+  };
+  const updateEditInvoice = (updater: (prev: any) => any) => {
+    setUndoStackEdit((prev) => [...prev, editInvoice]);
+    setRedoStackEdit([]);
+    setEditInvoice(updater);
+  };
+  // Replace all setNewInvoice with updateNewInvoice, setEditInvoice with updateEditInvoice in form handlers.
+  // 2. Add Undo/Redo buttons near modal titles:
+  // <div className="flex items-center gap-2 mb-4">
+  //   <h2 className="text-2xl font-bold text-white">Create New Invoice</h2>
+  //   <button onClick={undoNewInvoice} disabled={undoStack.length === 0} className="ml-2 px-2 py-1 bg-gray-700 text-white rounded disabled:opacity-50">Undo</button>
+  //   <button onClick={redoNewInvoice} disabled={redoStack.length === 0} className="px-2 py-1 bg-gray-700 text-white rounded disabled:opacity-50">Redo</button>
+  // </div>
+  // Repeat for edit modal.
+  // 3. Add undo/redo handlers:
+  const undoNewInvoice = () => {
+    if (undoStack.length > 0) {
+      setRedoStack((prev) => [newInvoice, ...prev]);
+      setNewInvoice(undoStack[undoStack.length - 1]);
+      setUndoStack(undoStack.slice(0, -1));
+    }
+  };
+  const redoNewInvoice = () => {
+    if (redoStack.length > 0) {
+      setUndoStack((prev) => [...prev, newInvoice]);
+      setNewInvoice(redoStack[0]);
+      setRedoStack(redoStack.slice(1));
+    }
+  };
+  const undoEditInvoice = () => {
+    if (undoStackEdit.length > 0) {
+      setRedoStackEdit((prev) => [editInvoice, ...prev]);
+      setEditInvoice(undoStackEdit[undoStackEdit.length - 1]);
+      setUndoStackEdit(undoStackEdit.slice(0, -1));
+    }
+  };
+  const redoEditInvoice = () => {
+    if (redoStackEdit.length > 0) {
+      setUndoStackEdit((prev) => [...prev, editInvoice]);
+      setEditInvoice(redoStackEdit[0]);
+      setRedoStackEdit(redoStackEdit.slice(1));
+    }
+  };
+  // 4. Add useEffect for keyboard shortcuts for both modals.
 
   return (
     <div className="space-y-8">
@@ -2225,6 +2284,7 @@ const InvoicesPage: React.FC = () => {
         <span className="text-white font-semibold">Page {pagination.page} of {pagination.pages}</span>
         <button onClick={handleNextPage} disabled={page === pagination.pages || loading} className="px-4 py-2 bg-gray-700 text-white rounded focus:ring-2 focus:ring-blue-500 disabled:opacity-50" aria-label="Next Page">Next</button>
       </div>
+      <Toaster position="top-right" />
     </div>
   );
 };
