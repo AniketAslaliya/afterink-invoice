@@ -181,6 +181,10 @@ const InvoicesPage: React.FC = () => {
   const [redoStack, setRedoStack] = useState<any[]>([]);
   const [undoStackEdit, setUndoStackEdit] = useState<any[]>([]);
   const [redoStackEdit, setRedoStackEdit] = useState<any[]>([]);
+  
+  // Add state for edit invoice history tracking
+  const [editInvoiceHistory, setEditInvoiceHistory] = useState<any[]>([]);
+  const [editInvoiceHistoryIndex, setEditInvoiceHistoryIndex] = useState(0);
 
   // Add state for draft management
   const [showDraftManager, setShowDraftManager] = useState(false);
@@ -990,17 +994,15 @@ const InvoicesPage: React.FC = () => {
     }
   };
   const undoEditInvoice = () => {
-    if (undoStackEdit.length > 0) {
-      setRedoStackEdit((prev) => [editInvoice, ...prev]);
-      setEditInvoice(undoStackEdit[undoStackEdit.length - 1]);
-      setUndoStackEdit(undoStackEdit.slice(0, -1));
+    if (editInvoiceHistoryIndex > 0) {
+      setEditInvoiceHistoryIndex(editInvoiceHistoryIndex - 1);
+      setEditInvoice(editInvoiceHistory[editInvoiceHistoryIndex - 1]);
     }
   };
   const redoEditInvoice = () => {
-    if (redoStackEdit.length > 0) {
-      setUndoStackEdit((prev) => [...prev, editInvoice]);
-      setEditInvoice(redoStackEdit[0]);
-      setRedoStackEdit(redoStackEdit.slice(1));
+    if (editInvoiceHistoryIndex < editInvoiceHistory.length - 1) {
+      setEditInvoiceHistoryIndex(editInvoiceHistoryIndex + 1);
+      setEditInvoice(editInvoiceHistory[editInvoiceHistoryIndex + 1]);
     }
   };
   // 4. Add useEffect for keyboard shortcuts for both modals.
