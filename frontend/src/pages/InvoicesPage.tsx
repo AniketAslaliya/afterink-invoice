@@ -167,6 +167,9 @@ const InvoicesPage: React.FC = () => {
   // Add state for noteSaved checkmarks
   const [noteSaved, setNoteSaved] = useState<boolean[]>([]);
 
+  // Add state for validation errors
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
+
   useEffect(() => {
     dispatch(fetchInvoices({ page, limit }));
   }, [dispatch, page, limit]);
@@ -1074,7 +1077,9 @@ const InvoicesPage: React.FC = () => {
                             className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
                             placeholder="Item description"
                             required
+                            onBlur={() => { if (!item.description.trim()) setValidationErrors(prev => ({ ...prev, [`desc-${index}`]: 'Description is required' })); else setValidationErrors(prev => { const e = { ...prev }; delete e[`desc-${index}`]; return e; }); }}
                           />
+                          {validationErrors[`desc-${index}`] && <div className="text-red-500 text-sm mt-1">{validationErrors[`desc-${index}`]}</div>}
                         </div>
                         <div className="col-span-2">
                           <label className="block text-xs font-medium text-gray-400 mb-1">
@@ -1088,7 +1093,9 @@ const InvoicesPage: React.FC = () => {
                             min="0.01"
                             step="0.01"
                             required
+                            onBlur={() => { if (item.quantity <= 0) setValidationErrors(prev => ({ ...prev, [`qty-${index}`]: 'Quantity must be greater than 0' })); else setValidationErrors(prev => { const e = { ...prev }; delete e[`qty-${index}`]; return e; }); }}
                           />
+                          {validationErrors[`qty-${index}`] && <div className="text-red-500 text-sm mt-1">{validationErrors[`qty-${index}`]}</div>}
                         </div>
                         <div className="col-span-2">
                           <label className="block text-xs font-medium text-gray-400 mb-1">
@@ -1102,7 +1109,9 @@ const InvoicesPage: React.FC = () => {
                             min="0"
                             step="0.01"
                             required
+                            onBlur={() => { if (item.rate < 0) setValidationErrors(prev => ({ ...prev, [`rate-${index}`]: 'Rate must be non-negative' })); else setValidationErrors(prev => { const e = { ...prev }; delete e[`rate-${index}`]; return e; }); }}
                           />
+                          {validationErrors[`rate-${index}`] && <div className="text-red-500 text-sm mt-1">{validationErrors[`rate-${index}`]}</div>}
                         </div>
                         <div className="col-span-2">
                           <label className="block text-xs font-medium text-gray-400 mb-1">
