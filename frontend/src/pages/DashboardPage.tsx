@@ -62,9 +62,23 @@ const DashboardPage: React.FC = () => {
   const error = useAppSelector((state: any) => state.dashboard.error);
   const dispatch = useAppDispatch();
 
-  // Calculate pending amount from stats (if available)
+  // Currency conversion utility (same rates as backend)
+  const currencyToINR = (amount: number, currency: string): number => {
+    if (currency === 'INR') return amount;
+    const rates: Record<string, number> = {
+      USD: 83,
+      EUR: 90,
+      GBP: 105,
+      CAD: 61,
+      AUD: 55,
+      INR: 1,
+    };
+    return amount * (rates[currency] || 1);
+  };
+
+  // Calculate pending amount from stats (if available) - includes all unpaid invoices with currency conversion
   const pendingAmount = stats && stats.invoices
-    ? stats.invoices.filter((inv: any) => inv.status === 'pending').reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0)
+    ? stats.invoices.filter((inv: any) => inv.status !== 'paid').reduce((sum: number, inv: any) => sum + currencyToINR(inv.totalAmount || 0, inv.currency || 'INR'), 0)
     : 0;
 
   useEffect(() => {
@@ -196,7 +210,7 @@ const DashboardPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <CheckCircle className="text-green-400" size={16} />
               <span className="text-sm text-gray-300">
-                {stats ? (stats.paidInvoices + ', ' + stats.pendingInvoices) : ''}
+                {stats ? `${stats.paidInvoices} paid, ${stats.pendingInvoices} pending` : ''}
               </span>
       </div>
           </div>

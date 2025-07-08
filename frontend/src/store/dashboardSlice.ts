@@ -67,10 +67,10 @@ const dashboardSlice = createSlice({
         // Calculate stats
         const totalRevenue = safeInvoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + currencyToINR(inv.totalAmount || 0, inv.currency || 'INR'), 0);
         const paidInvoices = safeInvoices.filter(inv => inv.status === 'paid');
-        const pendingInvoices = safeInvoices.filter(inv => inv.status === 'pending');
+        const pendingInvoices = safeInvoices.filter(inv => inv.status !== 'paid'); // All unpaid invoices
         const overdueInvoices = safeInvoices.filter(inv => {
           const dueDate = new Date(inv.dueDate);
-          return inv.status === 'pending' && dueDate < new Date();
+          return inv.status !== 'paid' && dueDate < new Date(); // Any unpaid invoice past due date
         });
 
         // Monthly calculations
