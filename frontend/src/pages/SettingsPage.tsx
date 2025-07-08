@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Save, Building, Bell, Shield, Palette, Globe, Clock, Key, Smartphone, Mail, Database, Lock, Brush } from 'lucide-react'
+import { Save, Building, Bell, Shield, Palette, Globe, Clock, Key, Smartphone, Mail, Database, Lock, Brush, FileText } from 'lucide-react'
 import { apiGet, apiPost } from '../api'
 import ThemeSettings from '../components/ThemeSettings'
 
@@ -45,6 +45,7 @@ interface AppSettings {
     allowMultipleSessions: boolean
     requireStrongPassword: boolean
   }
+  paymentTerms?: string
   termsAndConditions?: string
   bankDetails: {
     accountName: string
@@ -99,6 +100,7 @@ const SettingsPage: React.FC = () => {
       allowMultipleSessions: true,
       requireStrongPassword: true
     },
+    paymentTerms: 'Payment is due within 30 days of invoice date.',
     termsAndConditions: '',
     bankDetails: {
       accountName: 'ASLALIYA ANIKET PARESHBHAI',
@@ -179,9 +181,11 @@ const SettingsPage: React.FC = () => {
     }
   }
 
-  const updateSettings = (section: keyof AppSettings | 'termsAndConditions', field: string, value: any) => {
+  const updateSettings = (section: keyof AppSettings | 'termsAndConditions' | 'paymentTerms', field: string, value: any) => {
     if (section === 'termsAndConditions') {
       setSettings(prev => ({ ...prev, termsAndConditions: value }))
+    } else if (section === 'paymentTerms') {
+      setSettings(prev => ({ ...prev, paymentTerms: value }))
     } else {
       setSettings(prev => ({
         ...prev,
@@ -449,15 +453,40 @@ const SettingsPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="mt-8">
-                        <label className="block text-sm font-medium mb-2 text-gray-700">Terms and Conditions</label>
-                        <textarea
-                          className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
-                          value={settings.termsAndConditions || ''}
-                          onChange={e => updateSettings('termsAndConditions', '', e.target.value)}
-                          placeholder="Enter your terms and conditions here..."
-                        />
-                        <p className="text-xs text-gray-500 mt-1">These terms will appear on all invoices.</p>
+                      {/* Global Invoice Terms */}
+                      <div className="border-t border-gray-700 pt-8">
+                        <h4 className="text-lg font-semibold text-white mb-6 flex items-center">
+                          <FileText className="h-5 w-5 mr-2" />
+                          Global Invoice Terms
+                        </h4>
+                        
+                        <div className="space-y-6">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                              Payment Terms
+                            </label>
+                            <textarea
+                              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                              value={settings.paymentTerms || ''}
+                              onChange={e => updateSettings('paymentTerms', '', e.target.value)}
+                              placeholder="e.g., Payment is due within 30 days of invoice date. Late payments may incur additional charges."
+                            />
+                            <p className="text-xs text-gray-400 mt-1">Default payment terms that will be applied to all new invoices.</p>
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                              Terms and Conditions
+                            </label>
+                            <textarea
+                              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
+                              value={settings.termsAndConditions || ''}
+                              onChange={e => updateSettings('termsAndConditions', '', e.target.value)}
+                              placeholder="Enter your standard terms and conditions here..."
+                            />
+                            <p className="text-xs text-gray-400 mt-1">Standard terms and conditions that will appear on all invoices.</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}

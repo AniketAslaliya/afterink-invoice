@@ -381,8 +381,15 @@ const InvoicesPage: React.FC = () => {
     }
   }, [showAddModal]);
 
-  // Helper to get default terms
-  const getDefaultTerms = () => invoiceCustomization.termsAndConditions || 'Payment is due within 7 days of invoice date.';
+  // Helper to get default payment terms from global settings
+  const getDefaultPaymentTerms = () => {
+    return (appSettings as any)?.paymentTerms || 'Payment is due within 30 days of invoice date.';
+  };
+
+  // Helper to get default terms and conditions from global settings
+  const getDefaultTermsAndConditions = () => {
+    return (appSettings as any)?.termsAndConditions || '';
+  };
 
   const handleAddInvoice = async () => {
     let clientId = newInvoice.clientId;
@@ -430,7 +437,7 @@ const InvoicesPage: React.FC = () => {
         clientId,
         totalAmount: totalAmount,
         currency: newInvoice.currency,
-        terms: newInvoice.terms || getDefaultTerms(),
+        terms: newInvoice.terms || getDefaultPaymentTerms(),
         // Explicitly ensure notes field is included
         notes: newInvoice.notes || '',
       };
@@ -485,7 +492,7 @@ const InvoicesPage: React.FC = () => {
         }],
         currency: 'INR',
         notes: '',
-        terms: getDefaultTerms(),
+        terms: getDefaultPaymentTerms(),
         termsAndConditions: '',
       });
       // Fetch next invoice number for the next use
@@ -684,7 +691,7 @@ const InvoicesPage: React.FC = () => {
       projectId: invoice.project && (invoice.project as any)._id ? (invoice.project as any)._id : '',
       items: invoice.items ? invoice.items.map(item => ({ ...item })) : [],
       notes: invoice.notes || '',
-      terms: invoice.terms || getDefaultTerms(),
+      terms: invoice.terms || getDefaultPaymentTerms(),
       termsAndConditions: (invoice as any).termsAndConditions || '',
       currency: invoice.currency || 'INR',
     });
@@ -781,7 +788,7 @@ const InvoicesPage: React.FC = () => {
         currency: invoice.currency || 'INR',
         notes: invoice.notes || '',
         terms: invoice.terms || '',
-        termsAndConditions: (invoice as any).termsAndConditions || getDefaultTerms(),
+        termsAndConditions: (invoice as any).termsAndConditions || getDefaultTermsAndConditions(),
       };
 
       setNewInvoice(duplicatedInvoice);
