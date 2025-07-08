@@ -18,6 +18,7 @@
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@store/authStore'
+import { ThemeProvider } from './contexts/ThemeContext'
 
 // Layout components - provide consistent structure and navigation
 import AuthLayout from '@components/layouts/AuthLayout'
@@ -98,8 +99,9 @@ const PublicRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
  */
 function App() {
   return (
-    <div className="min-h-screen bg-secondary-50">
-      <Routes>
+    <ThemeProvider>
+      <div className="min-h-screen bg-secondary-50">
+        <Routes>
         {/* 
           Authentication Routes Section
           
@@ -158,6 +160,7 @@ function App() {
         />
       </Routes>
     </div>
+    </ThemeProvider>
   )
 }
 

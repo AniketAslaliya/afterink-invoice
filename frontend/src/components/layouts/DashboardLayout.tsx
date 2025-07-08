@@ -10,9 +10,12 @@ import {
   Menu, 
   X,
   LogOut,
-  User
+  User,
+  Palette
 } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
+import { useTheme } from '../../contexts/ThemeContext'
+import Avatar from '../Avatar'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -32,6 +35,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
   const { user, logout } = useAuthStore()
+  const { theme, setThemeMode } = useTheme()
 
   const handleLogout = () => {
     logout()
@@ -93,10 +97,21 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             </div>
             
             <div className="ml-4 flex items-center md:ml-6 space-x-4">
+              {/* Theme Toggle */}
+              <button
+                onClick={() => setThemeMode(theme.mode === 'dark' ? 'light' : 'dark')}
+                className="text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg p-2 transition-colors"
+                aria-label={`Switch to ${theme.mode === 'dark' ? 'light' : 'dark'} mode`}
+              >
+                <Palette className="h-5 w-5" aria-hidden="true" />
+              </button>
+              
               <div className="flex items-center space-x-2" role="img" aria-label={`User: ${user?.firstName} ${user?.lastName}, Role: ${user?.role}`}>
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-white" aria-hidden="true" />
-                </div>
+                <Avatar
+                  firstName={user?.firstName}
+                  lastName={user?.lastName}
+                  size="sm"
+                />
                 <div className="hidden md:block">
                   <p className="text-sm font-medium text-gray-200">
                     {user?.firstName} {user?.lastName}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Save, Building, Bell, Shield, Palette, Globe, Clock, Key, Smartphone, Mail, Database, Lock } from 'lucide-react'
+import { Save, Building, Bell, Shield, Palette, Globe, Clock, Key, Smartphone, Mail, Database, Lock, Brush } from 'lucide-react'
 import { apiGet, apiPost } from '../api'
+import ThemeSettings from '../components/ThemeSettings'
 
 interface AppSettings {
   business: {
@@ -197,6 +198,7 @@ const SettingsPage: React.FC = () => {
     { id: 'business', label: 'Business', icon: Building },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'preferences', label: 'Preferences', icon: Palette },
+    { id: 'theme', label: 'Theme & UI', icon: Brush },
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'bankDetails', label: 'Bank Details', icon: Database }
   ]
@@ -672,6 +674,17 @@ const SettingsPage: React.FC = () => {
                           ))}
                         </div>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Theme & UI Settings */}
+                  {activeTab === 'theme' && (
+                    <div className="space-y-8">
+                      <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
+                        <Brush className="h-5 w-5 mr-2" />
+                        Theme & Personalization
+                      </h3>
+                      <ThemeSettings />
                     </div>
                   )}
 
