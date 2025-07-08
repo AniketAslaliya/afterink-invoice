@@ -943,34 +943,34 @@ const InvoicesPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 {/* All form fields and items UI go here (move existing JSX here) */}
-                {/* Client Details Section */}
-                <div className="bg-gray-800 rounded-lg p-4 mb-4">
-                  <div className="flex items-center mb-2">
-                    <label className="block text-sm font-medium text-gray-300 mr-2">Client *</label>
-                    <select
-                      value={showNewClientFields ? '' : newInvoice.clientId}
-                      onChange={(e) => {
-                        setShowNewClientFields(false);
-                        setNewInvoice({ ...newInvoice, clientId: e.target.value, projectId: '' });
-                      }}
-                      className="px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    >
-                      <option value="">Select a client</option>
-                      {clients.map((client) => (
-                        <option key={client._id} value={client._id}>{client.companyName}</option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="ml-4 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
-                      onClick={() => {
-                        setShowNewClientFields(true);
-                        setNewInvoice({ ...newInvoice, clientId: '' });
-                      }}
-                    >
-                      Add New Client
-                    </button>
-              </div>
+              {/* Client Details Section */}
+              <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                <div className="flex items-center mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mr-2">Client *</label>
+                  <select
+                    value={showNewClientFields ? '' : newInvoice.clientId}
+                    onChange={(e) => {
+                      setShowNewClientFields(false);
+                      setNewInvoice({ ...newInvoice, clientId: e.target.value, projectId: '' });
+                    }}
+                    className="px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                  >
+                    <option value="">Select a client</option>
+                    {clients.map((client) => (
+                      <option key={client._id} value={client._id}>{client.companyName}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="ml-4 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                    onClick={() => {
+                      setShowNewClientFields(true);
+                      setNewInvoice({ ...newInvoice, clientId: '' });
+                    }}
+                  >
+                    Add New Client
+                  </button>
+          </div>
                 {showNewClientFields && (
                   <div className="grid grid-cols-2 gap-4 mt-2">
                 <div>
@@ -1125,8 +1125,8 @@ const InvoicesPage: React.FC = () => {
                   isPreview={true}
                   showClientAddress={showClientAddress}
                 />
-              </div>
-            </div>
+                  </div>
+                </div>
             {/* Sticky action buttons remain outside the grid */}
             <div className="sticky bottom-0 bg-gray-900 z-20 pt-4 pb-4 border-t border-gray-700 flex justify-end space-x-3">
               <button
@@ -1999,238 +1999,238 @@ const InvoicesPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 {/* All edit form fields and items UI go here (move existing JSX here) */}
-                {/* Basic Information */}
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Client *</label>
-                    <select
-                      value={editInvoice.clientId}
-                      onChange={(e) => setEditInvoice({ ...editInvoice, clientId: e.target.value, projectId: '' })}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                      required
-                    >
-                      <option value="">Select a client</option>
-                      {clients.map((client) => (
-                        <option key={client._id} value={client._id}>{client.companyName}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Project (Optional)</label>
-                    <select
-                      value={editInvoice.projectId}
-                      onChange={(e) => setEditInvoice({ ...editInvoice, projectId: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                      disabled={!editInvoice.clientId}
-                    >
-                      <option value="">Select a project (optional)</option>
-                      {getFilteredProjects().map((project) => (
-                        <option key={project._id} value={project._id}>{project.name}</option>
-                      ))}
-                    </select>
-                  </div>
+              {/* Basic Information */}
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Client *</label>
+                  <select
+                    value={editInvoice.clientId}
+                    onChange={(e) => setEditInvoice({ ...editInvoice, clientId: e.target.value, projectId: '' })}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    required
+                  >
+                    <option value="">Select a client</option>
+                    {clients.map((client) => (
+                      <option key={client._id} value={client._id}>{client.companyName}</option>
+                    ))}
+                  </select>
                 </div>
-                <div className="grid grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Invoice Number</label>
-                      <input
-                        type="text"
-                      value={editInvoice.invoiceNumber}
-                      onChange={(e) => setEditInvoice({ ...editInvoice, invoiceNumber: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                        placeholder="Enter invoice number"
-                      />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Due Date *</label>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Project (Optional)</label>
+                  <select
+                    value={editInvoice.projectId}
+                    onChange={(e) => setEditInvoice({ ...editInvoice, projectId: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    disabled={!editInvoice.clientId}
+                  >
+                    <option value="">Select a project (optional)</option>
+                    {getFilteredProjects().map((project) => (
+                      <option key={project._id} value={project._id}>{project.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Invoice Number</label>
                     <input
-                      type="date"
-                      value={editInvoice.dueDate}
-                      onChange={(e) => setEditInvoice({ ...editInvoice, dueDate: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                      required
+                      type="text"
+                    value={editInvoice.invoiceNumber}
+                    onChange={(e) => setEditInvoice({ ...editInvoice, invoiceNumber: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      placeholder="Enter invoice number"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Currency</label>
-                    <select
-                      value={editInvoice.currency}
-                      onChange={(e) => setEditInvoice({ ...editInvoice, currency: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    >
-                      <option value="INR">INR</option>
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                      <option value="GBP">GBP</option>
-                      <option value="CAD">CAD</option>
-                      <option value="AUD">AUD</option>
-                    </select>
-                  </div>
                 </div>
-                {/* Items */}
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-semibold text-gray-200">Invoice Items</h3>
-                      <button
-                        type="button"
-                      onClick={handleEditAddItem}
-                        className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 flex items-center"
-                      >
-                      <Plus className="h-4 w-4 mr-1" /> Add Item
-                      </button>
-                    </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Due Date *</label>
+                  <input
+                    type="date"
+                    value={editInvoice.dueDate}
+                    onChange={(e) => setEditInvoice({ ...editInvoice, dueDate: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Currency</label>
+                  <select
+                    value={editInvoice.currency}
+                    onChange={(e) => setEditInvoice({ ...editInvoice, currency: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                  >
+                    <option value="INR">INR</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="CAD">CAD</option>
+                    <option value="AUD">AUD</option>
+                  </select>
+                </div>
+              </div>
+              {/* Items */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-gray-200">Invoice Items</h3>
+                    <button
+                      type="button"
+                    onClick={handleEditAddItem}
+                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 flex items-center"
+                    >
+                    <Plus className="h-4 w-4 mr-1" /> Add Item
+                    </button>
+                  </div>
                     <DndContext collisionDetection={closestCenter} onDragEnd={handleEditItemsDragEnd}>
                       <SortableContext items={editInvoice.items.map((_: InvoiceItem, i: number) => i.toString())} strategy={verticalListSortingStrategy}>
                         {editInvoice.items.map((item, index) => (
                           <SortableItem key={index} id={index.toString()}>
                             <div className="border border-gray-600 rounded-md p-4 bg-gray-800">
-                              <div className="flex justify-between items-start mb-3">
-                                <h4 className="font-medium text-gray-200">Item {index + 1}</h4>
-                                {editInvoice.items.length > 1 && (
-                                  <button
-                                    type="button"
-                                  onClick={() => handleEditRemoveItem(index)}
-                                    className="text-red-400 hover:text-red-300"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                )}
-                              </div>
-                              <div className="grid grid-cols-12 gap-3">
-                                <div className="col-span-5">
-                                <label className="block text-xs font-medium text-gray-400 mb-1">Description *</label>
-                                  <input
-                                    type="text"
-                                    value={item.description}
-                                  onChange={(e) => handleEditItem(index, 'description', e.target.value)}
-                                  className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                                  placeholder="Item description"
-                                    required
-                                  />
-                                </div>
-                                <div className="col-span-2">
-                                <label className="block text-xs font-medium text-gray-400 mb-1">Quantity *</label>
-                                  <input
-                                    type="number"
-                                    value={item.quantity}
-                                  onChange={(e) => handleEditItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                                  className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                                  min="0.01"
-                                    step="0.01"
-                                    required
-                                  />
-                                </div>
-                                <div className="col-span-2">
-                                <label className="block text-xs font-medium text-gray-400 mb-1">Rate *</label>
-                                  <input
-                                    type="number"
-                                    value={item.rate}
-                                  onChange={(e) => handleEditItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                                  className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                                    min="0"
-                                    step="0.01"
-                                    required
-                                  />
-                                </div>
-                                <div className="col-span-2">
-                                <label className="block text-xs font-medium text-gray-400 mb-1">Tax %</label>
-                                  <input
-                                    type="number"
-                                    value={item.taxRate || 0}
-                                  onChange={(e) => handleEditItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
-                                  className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                                    min="0"
-                                    max="100"
-                                    step="0.01"
-                                  />
-                                </div>
-                                <div className="col-span-1">
-                                <label className="block text-xs font-medium text-gray-400 mb-1">Amount</label>
-                                <div className="px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded text-gray-300">
-                                  {formatCurrency(item.amount, editInvoice.currency)}
-                                  </div>
-                                </div>
-                              </div>
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="font-medium text-gray-200">Item {index + 1}</h4>
+                        {editInvoice.items.length > 1 && (
+                            <button
+                              type="button"
+                            onClick={() => handleEditRemoveItem(index)}
+                              className="text-red-400 hover:text-red-300"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-12 gap-3">
+                          <div className="col-span-5">
+                          <label className="block text-xs font-medium text-gray-400 mb-1">Description *</label>
+                            <input
+                              type="text"
+                              value={item.description}
+                            onChange={(e) => handleEditItem(index, 'description', e.target.value)}
+                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                            placeholder="Item description"
+                              required
+                            />
+                          </div>
+                          <div className="col-span-2">
+                          <label className="block text-xs font-medium text-gray-400 mb-1">Quantity *</label>
+                            <input
+                              type="number"
+                              value={item.quantity}
+                            onChange={(e) => handleEditItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                            min="0.01"
+                              step="0.01"
+                              required
+                            />
+                          </div>
+                          <div className="col-span-2">
+                          <label className="block text-xs font-medium text-gray-400 mb-1">Rate *</label>
+                            <input
+                              type="number"
+                              value={item.rate}
+                            onChange={(e) => handleEditItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                              min="0"
+                              step="0.01"
+                              required
+                            />
+                          </div>
+                          <div className="col-span-2">
+                          <label className="block text-xs font-medium text-gray-400 mb-1">Tax %</label>
+                            <input
+                              type="number"
+                              value={item.taxRate || 0}
+                            onChange={(e) => handleEditItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
+                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                              min="0"
+                              max="100"
+                              step="0.01"
+                            />
+                          </div>
+                          <div className="col-span-1">
+                          <label className="block text-xs font-medium text-gray-400 mb-1">Amount</label>
+                          <div className="px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded text-gray-300">
+                            {formatCurrency(item.amount, editInvoice.currency)}
                             </div>
+                          </div>
+                        </div>
+                      </div>
                           </SortableItem>
-                        ))}
+                    ))}
                       </SortableContext>
                     </DndContext>
-                  <div className="text-right">
-                    <div className="text-lg font-semibold text-white">
-                      Total: {formatCurrency(handleEditCalculateTotal(), editInvoice.currency)}
-                  </div>
-                  </div>
+                <div className="text-right">
+                  <div className="text-lg font-semibold text-white">
+                    Total: {formatCurrency(handleEditCalculateTotal(), editInvoice.currency)}
                 </div>
-                {/* Notes and Terms */}
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
-                    <textarea
-                      value={editInvoice ? editInvoice.notes : newInvoice.notes}
-                      onChange={e => editInvoice ? setEditInvoice({ ...editInvoice, notes: e.target.value }) : setNewInvoice({ ...newInvoice, notes: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                      rows={4}
-                      placeholder="Add notes for this invoice..."
-                    />
-                    {/* Live preview for notes with line breaks */}
-                    <div className="mt-2 p-2 bg-gray-900 border border-gray-700 rounded text-gray-200 text-sm">
-                      <div dangerouslySetInnerHTML={{ __html: (editInvoice ? editInvoice.notes : newInvoice.notes || '').replace(/\n/g, '<br/>') }} />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Payment Terms</label>
-                    <textarea
-                      value={editInvoice ? editInvoice.terms : newInvoice.terms}
-                      onChange={e => editInvoice ? setEditInvoice({ ...editInvoice, terms: e.target.value }) : setNewInvoice({ ...newInvoice, terms: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                      rows={2}
-                      placeholder="Enter payment terms..."
-                    />
-                    <button
-                      className="mt-2 px-3 py-1 bg-blue-700 text-white rounded text-xs"
-                      onClick={() => {
-                        localStorage.setItem('defaultPaymentTerms', editInvoice ? editInvoice.terms : newInvoice.terms);
-                        alert('Default payment terms saved!');
-                      }}
-                      type="button"
-                    >Save as Default</button>
-                  </div>
                 </div>
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Terms & Conditions</label>
+              </div>
+              {/* Notes and Terms */}
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
                   <textarea
-                    value={editInvoice ? editInvoice.termsAndConditions : newInvoice.termsAndConditions}
-                    onChange={e => editInvoice ? setEditInvoice({ ...editInvoice, termsAndConditions: e.target.value }) : setNewInvoice({ ...newInvoice, termsAndConditions: e.target.value })}
+                    value={editInvoice ? editInvoice.notes : newInvoice.notes}
+                    onChange={e => editInvoice ? setEditInvoice({ ...editInvoice, notes: e.target.value }) : setNewInvoice({ ...newInvoice, notes: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    rows={4}
+                    placeholder="Add notes for this invoice..."
+                  />
+                  {/* Live preview for notes with line breaks */}
+                  <div className="mt-2 p-2 bg-gray-900 border border-gray-700 rounded text-gray-200 text-sm">
+                    <div dangerouslySetInnerHTML={{ __html: (editInvoice ? editInvoice.notes : newInvoice.notes || '').replace(/\n/g, '<br/>') }} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Payment Terms</label>
+                  <textarea
+                    value={editInvoice ? editInvoice.terms : newInvoice.terms}
+                    onChange={e => editInvoice ? setEditInvoice({ ...editInvoice, terms: e.target.value }) : setNewInvoice({ ...newInvoice, terms: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                     rows={2}
-                    placeholder="Enter terms & conditions..."
+                    placeholder="Enter payment terms..."
                   />
                   <button
                     className="mt-2 px-3 py-1 bg-blue-700 text-white rounded text-xs"
                     onClick={() => {
-                      localStorage.setItem('defaultTermsAndConditions', editInvoice ? editInvoice.termsAndConditions : newInvoice.termsAndConditions);
-                      alert('Default terms & conditions saved!');
+                      localStorage.setItem('defaultPaymentTerms', editInvoice ? editInvoice.terms : newInvoice.terms);
+                      alert('Default payment terms saved!');
                     }}
                     type="button"
                   >Save as Default</button>
-                  </div>
-              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-700">
-                <button
-                    onClick={() => { setShowEditModal(false); setEditInvoice(null); }}
-                  className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-gray-800"
-                  disabled={submitting}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleUpdateInvoice}
-                    disabled={submitting || !editInvoice.clientId || !editInvoice.dueDate}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submitting ? 'Updating...' : 'Update Invoice'}
-                </button>
                 </div>
+              </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-300 mb-1">Terms & Conditions</label>
+                <textarea
+                  value={editInvoice ? editInvoice.termsAndConditions : newInvoice.termsAndConditions}
+                  onChange={e => editInvoice ? setEditInvoice({ ...editInvoice, termsAndConditions: e.target.value }) : setNewInvoice({ ...newInvoice, termsAndConditions: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                  rows={2}
+                  placeholder="Enter terms & conditions..."
+                />
+                <button
+                  className="mt-2 px-3 py-1 bg-blue-700 text-white rounded text-xs"
+                  onClick={() => {
+                    localStorage.setItem('defaultTermsAndConditions', editInvoice ? editInvoice.termsAndConditions : newInvoice.termsAndConditions);
+                    alert('Default terms & conditions saved!');
+                  }}
+                  type="button"
+                >Save as Default</button>
+                </div>
+            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-700">
+              <button
+                  onClick={() => { setShowEditModal(false); setEditInvoice(null); }}
+                className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-gray-800"
+                disabled={submitting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateInvoice}
+                  disabled={submitting || !editInvoice.clientId || !editInvoice.dueDate}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Updating...' : 'Update Invoice'}
+              </button>
+              </div>
               </div>
             </div>
             <div className="bg-white rounded-lg p-4 shadow-md mt-6 md:mt-0">
