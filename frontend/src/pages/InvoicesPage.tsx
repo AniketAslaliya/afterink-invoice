@@ -3,7 +3,7 @@
 // declare module 'html2pdf.js';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Plus, Search, Filter, Trash2, Download, Palette, Save, FileText, CheckCircle, Clock, AlertCircle, Eye, Edit, DollarSign } from 'lucide-react';
+import { Plus, Search, Filter, Trash2, Download, Palette, Save, FileText, CheckCircle, Clock, AlertCircle, Eye, Edit, DollarSign, StickyNote, Check } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../api';
 import { InvoicePreview, defaultTemplates, InvoiceCustomization } from '../components/InvoiceTemplates';
 import type { Invoice } from '../components/InvoiceTemplates';
@@ -163,6 +163,9 @@ const InvoicesPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [allInvoices, setAllInvoices] = useState<any[]>([]); // for total revenue
+
+  // Add state for noteSaved checkmarks
+  const [noteSaved, setNoteSaved] = useState<boolean[]>([]);
 
   useEffect(() => {
     dispatch(fetchInvoices({ page, limit }));
