@@ -739,6 +739,28 @@ const InvoicesPage: React.FC = () => {
     return editInvoice.items.reduce((total: number, item: InvoiceItem) => total + item.amount, 0);
   };
 
+  // Add this useEffect for add invoice modal:
+  useEffect(() => {
+    if (!showAddModal) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'Enter') { addItem(); e.preventDefault(); }
+      if (e.ctrlKey && (e.key === 'Backspace' || e.key === 'Delete')) { if (newInvoice.items.length > 1) removeItem(newInvoice.items.length - 1); e.preventDefault(); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [showAddModal, newInvoice.items]);
+
+  // Add this useEffect for edit invoice modal:
+  useEffect(() => {
+    if (!showEditModal) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'Enter') { handleEditAddItem(); e.preventDefault(); }
+      if (e.ctrlKey && (e.key === 'Backspace' || e.key === 'Delete')) { if (editInvoice && editInvoice.items.length > 1) handleEditRemoveItem(editInvoice.items.length - 1); e.preventDefault(); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [showEditModal, editInvoice && editInvoice.items]);
+
   return (
     <div className="space-y-8">
       {/* Header Section */}
