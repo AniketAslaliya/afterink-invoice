@@ -164,6 +164,11 @@ const invoiceSchema = new Schema<IInvoiceDocument>({
     maxLength: [1000, 'Terms cannot exceed 1000 characters'],
     default: 'Payment is due within 30 days of invoice date.',
   },
+  termsAndConditions: {
+    type: String,
+    trim: true,
+    maxLength: [2000, 'Terms and conditions cannot exceed 2000 characters'],
+  },
   createdBy: {
     type: Schema.Types.ObjectId,
     ref: 'User',

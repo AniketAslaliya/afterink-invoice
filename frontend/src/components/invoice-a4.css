@@ -24,6 +24,12 @@
   .no-print, .no-print * {
     display: none !important;
   }
+  
+  /* Ensure QR codes render properly in PDFs */
+  .qr-code-svg, .qr-code-svg * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
 }
 
 .invoice-a4 {
@@ -38,6 +44,13 @@
   font-family: 'Poppins', 'Inter', Arial, sans-serif;
   color: #222;
   overflow: hidden;
+}
+
+/* QR Code styling for better rendering */
+.qr-code-svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
 }
 
 @media screen and (max-width: 900px) {

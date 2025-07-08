@@ -77,6 +77,7 @@ export interface IInvoice {
   paymentNotes?: string;
   notes?: string;
   terms?: string;
+  termsAndConditions?: string;
   createdBy: Types.ObjectId | string;
   createdAt?: Date;
   updatedAt?: Date;

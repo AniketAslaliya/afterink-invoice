@@ -190,6 +190,7 @@ const InvoicesPage: React.FC = () => {
   // Fetch invoices from backend on mount
   useEffect(() => {
     fetchProjects();
+    fetchClients();
     
     // Load business settings and apply to invoice customization
     const businessSettings = localStorage.getItem('businessSettings')
@@ -263,6 +264,47 @@ const InvoicesPage: React.FC = () => {
     }
   }
 
+  const fetchClients = async () => {
+    try {
+      console.log('Fetching clients from API...')
+      const res = await apiGet('/clients')
+      console.log('Clients API Response:', res)
+      console.log('Full response structure:', JSON.stringify(res, null, 2))
+      
+      // Handle the actual API response structure
+      let clientsArray = [];
+      if (res && res.success && res.data && res.data.clients) {
+        // MongoDB server format: { success: true, data: { clients: [...], pagination: {...} } }
+        clientsArray = res.data.clients;
+        console.log('Using MongoDB server format - found clients:', clientsArray.length)
+      } else if (res && res.data && res.data.clients) {
+        // Alternative format: { data: { clients: [...] } }
+        clientsArray = res.data.clients;
+        console.log('Using alternative format - found clients:', clientsArray.length)
+      } else if (res && Array.isArray(res.clients)) {
+        // Direct clients array format: { clients: [...] }
+        clientsArray = res.clients;
+        console.log('Using direct clients format - found clients:', clientsArray.length)
+      } else if (res && Array.isArray(res)) {
+        // Direct array format: [...]
+        clientsArray = res;
+        console.log('Using direct array format - found clients:', clientsArray.length)
+      } else {
+        console.warn('Unexpected clients response structure:', res);
+        console.warn('Available keys:', Object.keys(res || {}));
+        clientsArray = []; // Default to empty array
+      }
+      
+      console.log('Setting clients array:', clientsArray)
+      setClients(clientsArray)
+    } catch (error) {
+      console.error('Error fetching clients:', error)
+      console.error('Error details:', error instanceof Error ? error.message : String(error))
+      // Set empty array on error to prevent crashes
+      setClients([])
+    }
+  }
+
   // Fetch next invoice number when modal opens
   useEffect(() => {
     if (showAddModal) {
@@ -309,21 +351,31 @@ const InvoicesPage: React.FC = () => {
       }, 0)
       const totalAmount = subtotal + taxAmount
       
+      // DEBUG: Log the notes, terms, and termsAndConditions field values
+      console.log('Notes field value before sending:', newInvoice.notes);
+      console.log('Terms field value before sending:', newInvoice.terms);
+      console.log('Terms and Conditions field value before sending:', newInvoice.termsAndConditions);
+      
       const invoiceData: any = {
         ...newInvoice,
         clientId,
         totalAmount: totalAmount,
         currency: newInvoice.currency,
         terms: newInvoice.terms || getDefaultTerms(),
+        // Explicitly ensure notes field is included
+        notes: newInvoice.notes || '',
       };
       
-      // Remove projectId if empty string
-      if (typeof invoiceData.projectId !== 'undefined' && !invoiceData.projectId) {
-        const { projectId, ...dataWithoutProjectId } = invoiceData;
-        Object.assign(invoiceData, dataWithoutProjectId);
+      // Remove projectId if empty string or undefined
+      if (!invoiceData.projectId || invoiceData.projectId.trim() === '') {
+        delete invoiceData.projectId;
       }
       
       console.log('Sending invoice data:', invoiceData)
+      console.log('Notes in invoice data:', invoiceData.notes);
+      console.log('Terms in invoice data:', invoiceData.terms);
+      console.log('Terms and Conditions in invoice data:', invoiceData.termsAndConditions);
+      
       const res = await apiPost('/invoices', invoiceData)
       console.log('Invoice API Response:', res)
       
@@ -340,6 +392,11 @@ const InvoicesPage: React.FC = () => {
         console.error('Unexpected invoice response structure:', res);
         throw new Error('Unexpected API response structure. Check console for details.');
       }
+      
+      // DEBUG: Log the notes, terms, and termsAndConditions fields in the response
+      console.log('Notes in API response:', invoiceObject.notes);
+      console.log('Terms in API response:', invoiceObject.terms);
+      console.log('Terms and Conditions in API response:', invoiceObject.termsAndConditions);
       
       dispatch(fetchInvoices({ page, limit }));
       setShowAddModal(false)
@@ -360,7 +417,7 @@ const InvoicesPage: React.FC = () => {
         currency: 'INR',
         notes: '',
         terms: getDefaultTerms(),
-        termsAndConditions: getDefaultTerms(),
+        termsAndConditions: '',
       });
       // Fetch next invoice number for the next use
       generateNextInvoiceNumber();
@@ -441,7 +498,12 @@ const InvoicesPage: React.FC = () => {
           margin: 0,
           filename: `${invoice.invoiceNumber || 'invoice'}.pdf`,
           image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2 },
+          html2canvas: { 
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff'
+          },
           jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
         });
       }
@@ -544,6 +606,8 @@ const InvoicesPage: React.FC = () => {
 
   // Handle edit invoice
   const handleEditInvoice = (invoice: Invoice) => {
+    console.log('Editing invoice, original terms:', invoice.terms); // DEBUG
+    console.log('Editing invoice, original termsAndConditions:', (invoice as any).termsAndConditions); // DEBUG
     setEditInvoice({
       ...invoice,
       clientId: invoice.client && (invoice.client as any)._id ? (invoice.client as any)._id : '',
@@ -563,17 +627,40 @@ const InvoicesPage: React.FC = () => {
     if (!selectedInvoice || !editInvoice) return;
     try {
       setSubmitting(true);
+      
+      // DEBUG: Log the notes, terms, and termsAndConditions field values
+      console.log('Notes field value before updating:', editInvoice.notes);
+      console.log('Terms field value before updating:', editInvoice.terms);
+      console.log('Terms and Conditions field value before updating:', editInvoice.termsAndConditions);
+      
       const invoiceData = {
         ...editInvoice,
         totalAmount: handleEditCalculateTotal(),
         currency: editInvoice.currency,
+        // Explicitly ensure notes field is included
+        notes: editInvoice.notes || '',
       };
       if (typeof invoiceData.projectId !== 'undefined' && !invoiceData.projectId) {
         delete invoiceData.projectId;
       }
       console.log('Updating invoice with data:', invoiceData);
+      console.log('Notes in invoice data:', invoiceData.notes);
+      console.log('Terms in invoice data:', invoiceData.terms);
+      console.log('Terms and Conditions in invoice data:', invoiceData.termsAndConditions);
+      
       const result = await apiPut(`/invoices/${selectedInvoice._id}`, invoiceData);
       console.log('Update result:', result);
+      
+      // DEBUG: Log the notes, terms, and termsAndConditions fields in the response
+      if (result && result.data && result.data.invoice) {
+        console.log('Notes in update response:', result.data.invoice.notes);
+        console.log('Terms in update response:', result.data.invoice.terms);
+        console.log('Terms and Conditions in update response:', result.data.invoice.termsAndConditions);
+      } else if (result && result.notes) {
+        console.log('Notes in update response:', result.notes);
+        console.log('Terms in update response:', result.terms);
+        console.log('Terms and Conditions in update response:', result.termsAndConditions);
+      }
       dispatch(fetchInvoices({ page, limit }));
       setShowEditModal(false);
       setSelectedInvoice(null);
@@ -650,12 +737,26 @@ const InvoicesPage: React.FC = () => {
     <div className="space-y-8">
       {/* Header Section */}
       <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-3xl blur-3xl"></div>
-        <div className="relative bg-gradient-to-r from-secondary-200/60 to-secondary-300/60 backdrop-blur-lg rounded-2xl p-8 border border-secondary-300/30">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-blue-600/10 rounded-3xl blur-3xl"></div>
+        <div className="relative bg-gradient-to-r from-gray-800/60 to-gray-900/60 backdrop-blur-lg rounded-2xl p-8 border border-gray-700/30">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gradient-secondary">Invoices</h1>
-              <p className="text-secondary-700 mt-2">Manage and track your invoices</p>
+              <h1 className="text-3xl font-bold text-white">Invoices</h1>
+              <p className="text-gray-300 mt-2">Manage your invoices and track payments</p>
+              {/* Debug info */}
+              <div className="mt-2 text-sm text-gray-400">
+                <p>Total Revenue: {formatCurrency(totalRevenue)}</p>
+                <p>Debug: {clients.length} clients loaded</p>
+                <button
+                  onClick={() => {
+                    console.log('Debug: Current clients state:', clients);
+                    fetchClients();
+                  }}
+                  className="mt-1 px-2 py-1 bg-yellow-600 text-white rounded text-xs"
+                >
+                  Test Fetch Clients
+                </button>
+              </div>
             </div>
             <div className="flex items-center space-x-3">
               <button className="btn btn-outline group">
@@ -667,19 +768,18 @@ const InvoicesPage: React.FC = () => {
                 Filter
               </button>
               <button 
+                className="btn btn-primary group" 
+                onClick={() => setShowAddModal(true)}
+              >
+                <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" />
+                New Invoice
+              </button>
+              <button
                 className="btn btn-outline group"
                 onClick={() => setShowCustomizer(true)}
               >
-                <Palette className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
-                Customize Invoice
-              </button>
-              <button 
-                className="btn btn-primary group" 
-                onClick={() => setShowAddModal(true)}
-                data-testid="add-invoice-btn"
-              >
-                <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" />
-                Add Invoice
+                <Palette className="h-4 w-4 mr-2 group-hover:rotate-12 transition-transform" />
+                Customize
               </button>
             </div>
           </div>
@@ -1051,13 +1151,25 @@ const InvoicesPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Terms & Conditions
+                    Payment Terms
                   </label>
                   <textarea
                     value={newInvoice.terms}
                     onChange={(e) => setNewInvoice({ ...newInvoice, terms: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                    placeholder="Payment terms and conditions"
+                    placeholder="Payment terms (e.g., Net 30 days)"
+                    rows={2}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Terms & Conditions
+                  </label>
+                  <textarea
+                    value={newInvoice.termsAndConditions}
+                    onChange={(e) => setNewInvoice({ ...newInvoice, termsAndConditions: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    placeholder="Terms and conditions"
                     rows={3}
                   />
                 </div>
