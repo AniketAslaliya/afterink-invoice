@@ -1257,7 +1257,7 @@ const InvoicesPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-700">
+            <div className="sticky bottom-0 bg-gray-900 z-20 pt-4 pb-4 border-t border-gray-700 flex justify-end space-x-3">
               <button
                 onClick={() => setShowAddModal(false)}
                 className="px-4 py-2 text-gray-300 border border-gray-600 rounded-md hover:bg-gray-800"
