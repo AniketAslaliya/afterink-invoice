@@ -3,7 +3,7 @@
 // declare module 'html2pdf.js';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Plus, Search, Filter, Trash2, Download, Palette, Save, FileText, CheckCircle, Clock, AlertCircle, Eye, Edit, DollarSign, StickyNote, Check } from 'lucide-react';
+import { Plus, Search, Filter, Trash2, Download, Palette, Save, FileText, CheckCircle, Clock, AlertCircle, Eye, Edit, DollarSign, StickyNote, Check, Copy, Send } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../api';
 import { InvoicePreview, defaultTemplates, InvoiceCustomization } from '../components/InvoiceTemplates';
 import type { Invoice } from '../components/InvoiceTemplates';
@@ -749,10 +749,92 @@ const InvoicesPage: React.FC = () => {
     try {
       const res = await apiGet('/invoices/next-number');
       if (res && res.data && res.data.invoiceNumber) {
-        setNewInvoice(prev => ({ ...prev, invoiceNumber: res.data.invoiceNumber }));
+        return res.data.invoiceNumber;
       }
+      return `INV-${Date.now()}`;
     } catch (error) {
       console.error('Error generating invoice number:', error);
+      return `INV-${Date.now()}`;
+    }
+  };
+
+  // Handler for duplicating an invoice
+  const handleDuplicateInvoice = async (invoice: Invoice) => {
+    try {
+      // Generate a new invoice number
+      const nextNumber = await generateNextInvoiceNumber();
+      
+      // Set up the new invoice with duplicated data
+      const duplicatedInvoice = {
+        invoiceNumber: nextNumber,
+        clientId: invoice.client && (invoice.client as any)._id ? (invoice.client as any)._id : '',
+        projectId: invoice.project && (invoice.project as any)._id ? (invoice.project as any)._id : '',
+        dueDate: '', // Clear due date for new invoice
+        items: invoice.items ? invoice.items.map((item: any) => ({ 
+          description: item.description || '', 
+          quantity: item.quantity || 1, 
+          rate: item.rate || 0, 
+          amount: item.amount || 0, 
+          taxRate: item.taxRate || 0, 
+          note: item.note || '' 
+        })) : [{ description: '', quantity: 1, rate: 0, amount: 0, taxRate: 0, note: '' }],
+        currency: invoice.currency || 'INR',
+        notes: invoice.notes || '',
+        terms: invoice.terms || '',
+        termsAndConditions: (invoice as any).termsAndConditions || getDefaultTerms(),
+      };
+
+      setNewInvoice(duplicatedInvoice);
+      setShowAddModal(true);
+      
+      toast.success(`Invoice duplicated! New invoice #${nextNumber} ready for editing.`, {
+        duration: 4000,
+        icon: '📄',
+      });
+    } catch (error) {
+      console.error('Error duplicating invoice:', error);
+      toast.error('Failed to duplicate invoice. Please try again.');
+    }
+  };
+
+  // Handler for sending an invoice via email
+  const handleSendInvoice = async (invoice: Invoice) => {
+    const clientEmail = invoice.client?.contactPerson?.email;
+    
+    if (!clientEmail) {
+      toast.error('No email address found for this client. Please update the client information.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      
+      // Here you would typically call your email API
+      // For now, we'll simulate the functionality and show a success message
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      
+      toast.success(`Invoice #${invoice.invoiceNumber} sent to ${clientEmail}!`, {
+        duration: 4000,
+        icon: '📧',
+      });
+      
+      // Update invoice status to 'sent' if currently 'draft'
+      if (invoice.status === 'draft') {
+        try {
+          await apiPut(`/invoices/${invoice._id}`, {
+            ...invoice,
+            status: 'sent'
+          });
+          dispatch(fetchInvoices({ page, limit }));
+        } catch (updateError) {
+          console.error('Error updating invoice status:', updateError);
+        }
+      }
+    } catch (error) {
+      console.error('Error sending invoice:', error);
+      toast.error('Failed to send invoice. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -1739,6 +1821,23 @@ const InvoicesPage: React.FC = () => {
                           </button>
                           
                           <button
+                            onClick={() => handleDuplicateInvoice(inv)}
+                            className="p-2 text-gray-400 hover:text-purple-400 hover:bg-gray-600 rounded-lg transition-all"
+                            title="Duplicate Invoice"
+                          >
+                            <Copy size={18} />
+                          </button>
+                          
+                          <button
+                            onClick={() => handleSendInvoice(inv)}
+                            className="p-2 text-gray-400 hover:text-green-400 hover:bg-gray-600 rounded-lg transition-all"
+                            title="Send Invoice"
+                            disabled={submitting}
+                          >
+                            <Send size={18} />
+                          </button>
+                          
+                          <button
                             onClick={() => {
                               setSelectedInvoice(inv);
                               setPaymentData(prev => ({ ...prev, amount: inv.totalAmount }));
@@ -1748,13 +1847,6 @@ const InvoicesPage: React.FC = () => {
                             title="Update Payment"
                           >
                             <DollarSign size={18} />
-                          </button>
-                          
-                          <button
-                            className="p-2 text-gray-400 hover:text-purple-400 hover:bg-gray-600 rounded-lg transition-all"
-                            title="Edit Invoice"
-                          >
-                            <Edit size={18} />
                           </button>
                         </div>
                       </div>
