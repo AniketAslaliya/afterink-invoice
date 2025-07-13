@@ -737,9 +737,6 @@ const InvoicesPage: React.FC = () => {
     }
   };
 
-  // Add validation state
-  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
-
   // Validation function
   const validateEditInvoice = () => {
     const errors: {[key: string]: string} = {};
