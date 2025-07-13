@@ -912,7 +912,8 @@ const InvoicesPage: React.FC = () => {
   useEffect(() => {
     if (!showEditModal) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 'Enter') { handleEditAddItem(); e.preventDefault(); }
+      if (e.ctrlKey && e.key === 'Enter') { handleUpdateInvoice(); e.preventDefault(); }
+      if (e.ctrlKey && e.key === 'N') { handleEditAddItem(); e.preventDefault(); }
       if (e.ctrlKey && (e.key === 'Backspace' || e.key === 'Delete')) { if (editInvoice && editInvoice.items.length > 1) handleEditRemoveItem(editInvoice.items.length - 1); e.preventDefault(); }
     };
     window.addEventListener('keydown', handler);
@@ -2569,7 +2570,7 @@ const InvoicesPage: React.FC = () => {
             <div className="sticky bottom-0 bg-gray-900 border-t border-gray-700 px-6 py-4 rounded-b-2xl">
               <div className="flex justify-between items-center">
                 <div className="text-sm text-gray-400">
-                  Press <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+Enter</kbd> to save • <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Esc</kbd> to cancel
+                  Press <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+Enter</kbd> to save • <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+N</kbd> to add item • <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Esc</kbd> to cancel
                 </div>
                 <div className="flex space-x-3">
                   <button
@@ -2584,7 +2585,7 @@ const InvoicesPage: React.FC = () => {
                   <button
                     onClick={handleUpdateInvoice}
                     disabled={submitting}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                    className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 font-semibold shadow-lg"
                   >
                     {submitting ? (
                       <>
@@ -2593,7 +2594,7 @@ const InvoicesPage: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <Save size={16} />
+                        <Save size={18} />
                         <span>Save Changes</span>
                       </>
                     )}
