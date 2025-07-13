@@ -53,6 +53,7 @@ export interface IInvoiceItem {
   rate: number;
   amount: number;
   taxRate: number;
+  note?: string;
 }
 
 export interface IInvoice {

@@ -7,6 +7,36 @@ import PDFDocument from 'pdfkit';
 
 const router = express.Router();
 
+// Helper function to split text to fit within a given width
+function splitTextToSize(text: string, maxWidth: number, doc: PDFKit.PDFDocument): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const testWidth = doc.widthOfString(testLine);
+    
+    if (testWidth <= maxWidth) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        // Word is too long, split it
+        lines.push(word);
+      }
+    }
+  }
+  
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  
+  return lines;
+}
+
 // Get all invoices with pagination and filtering
 router.get('/', authenticate, async (req: Request, res: Response) => {
   try {
@@ -466,7 +496,7 @@ router.get('/:id/pdf', authenticate, authorizeOwnerOrAdmin(), async (req: Reques
       doc.fontSize(12).font('Helvetica-Bold').text('Notes:', 50, currentY);
       currentY += 15;
       doc.fontSize(10).font('Helvetica');
-      const notesLines = doc.splitTextToSize(invoice.notes, 450);
+      const notesLines = splitTextToSize(invoice.notes, 450, doc);
       notesLines.forEach((line: string) => {
         if (currentY > 700) {
           doc.addPage();
@@ -487,7 +517,7 @@ router.get('/:id/pdf', authenticate, authorizeOwnerOrAdmin(), async (req: Reques
       doc.fontSize(12).font('Helvetica-Bold').text('Payment Terms:', 50, currentY);
       currentY += 15;
       doc.fontSize(10).font('Helvetica');
-      const termsLines = doc.splitTextToSize(invoice.terms, 450);
+      const termsLines = splitTextToSize(invoice.terms, 450, doc);
       termsLines.forEach((line: string) => {
         if (currentY > 700) {
           doc.addPage();
@@ -508,7 +538,7 @@ router.get('/:id/pdf', authenticate, authorizeOwnerOrAdmin(), async (req: Reques
       doc.fontSize(12).font('Helvetica-Bold').text('Terms & Conditions:', 50, currentY);
       currentY += 15;
       doc.fontSize(10).font('Helvetica');
-      const tcLines = doc.splitTextToSize(invoice.termsAndConditions, 450);
+      const tcLines = splitTextToSize(invoice.termsAndConditions, 450, doc);
       tcLines.forEach((line: string) => {
         if (currentY > 700) {
           doc.addPage();
