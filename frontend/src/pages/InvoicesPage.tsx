@@ -685,11 +685,23 @@ const InvoicesPage: React.FC = () => {
     setShowViewModal(true);
   };
 
+  // Add unsaved changes tracking
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [originalEditInvoice, setOriginalEditInvoice] = useState<any>(null);
+
+  // Track changes in edit invoice
+  useEffect(() => {
+    if (editInvoice && originalEditInvoice) {
+      const hasChanges = JSON.stringify(editInvoice) !== JSON.stringify(originalEditInvoice);
+      setHasUnsavedChanges(hasChanges);
+    }
+  }, [editInvoice, originalEditInvoice]);
+
   // Handle edit invoice
   const handleEditInvoice = (invoice: Invoice) => {
     console.log('Editing invoice, original terms:', invoice.terms); // DEBUG
     console.log('Editing invoice, original termsAndConditions:', (invoice as any).termsAndConditions); // DEBUG
-    setEditInvoice({
+    const editData = {
       ...invoice,
       clientId: invoice.client && (invoice.client as any)._id ? (invoice.client as any)._id : '',
       projectId: invoice.project && (invoice.project as any)._id ? (invoice.project as any)._id : '',
@@ -698,16 +710,94 @@ const InvoicesPage: React.FC = () => {
       terms: invoice.terms || getDefaultPaymentTerms(),
       termsAndConditions: (invoice as any).termsAndConditions || '',
       currency: invoice.currency || 'INR',
-    });
+    };
+    setEditInvoice(editData);
+    setOriginalEditInvoice(JSON.parse(JSON.stringify(editData))); // Deep copy
     setSelectedInvoice(invoice);
     setShowEditModal(true);
+    setHasUnsavedChanges(false);
+    setValidationErrors({});
+  };
+
+  // Handle modal close with unsaved changes warning
+  const handleCloseEditModal = () => {
+    if (hasUnsavedChanges) {
+      if (window.confirm('You have unsaved changes. Are you sure you want to close without saving?')) {
+        setShowEditModal(false);
+        setEditInvoice(null);
+        setOriginalEditInvoice(null);
+        setHasUnsavedChanges(false);
+        setValidationErrors({});
+      }
+    } else {
+      setShowEditModal(false);
+      setEditInvoice(null);
+      setOriginalEditInvoice(null);
+      setValidationErrors({});
+    }
+  };
+
+  // Add validation state
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
+
+  // Validation function
+  const validateEditInvoice = () => {
+    const errors: {[key: string]: string} = {};
+    
+    // Client validation
+    if (!editInvoice.clientId) {
+      errors.clientId = 'Client is required';
+    }
+    
+    // Due date validation
+    if (!editInvoice.dueDate) {
+      errors.dueDate = 'Due date is required';
+    } else if (new Date(editInvoice.dueDate) < new Date()) {
+      errors.dueDate = 'Due date cannot be in the past';
+    }
+    
+    // Invoice number validation
+    if (!editInvoice.invoiceNumber?.trim()) {
+      errors.invoiceNumber = 'Invoice number is required';
+    }
+    
+    // Items validation
+    if (!editInvoice.items || editInvoice.items.length === 0) {
+      errors.items = 'At least one item is required';
+    } else {
+      editInvoice.items.forEach((item, index) => {
+        if (!item.description?.trim()) {
+          errors[`item${index}Description`] = 'Item description is required';
+        }
+        if (item.quantity <= 0) {
+          errors[`item${index}Quantity`] = 'Quantity must be greater than 0';
+        }
+        if (item.rate < 0) {
+          errors[`item${index}Rate`] = 'Rate cannot be negative';
+        }
+        if (item.taxRate < 0 || item.taxRate > 100) {
+          errors[`item${index}TaxRate`] = 'Tax rate must be between 0 and 100';
+        }
+      });
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   // Handle update invoice
   const handleUpdateInvoice = async () => {
     if (!selectedInvoice || !editInvoice) return;
+    
+    // Validate form before submission
+    if (!validateEditInvoice()) {
+      toast.error('Please fix the validation errors before saving');
+      return;
+    }
+    
     try {
       setSubmitting(true);
+      setValidationErrors({});
       
       // DEBUG: Log the notes, terms, and termsAndConditions field values
       console.log('Notes field value before updating:', editInvoice.notes);
@@ -749,7 +839,18 @@ const InvoicesPage: React.FC = () => {
       toast.success(<span>Invoice updated! <a href="#" onClick={() => handleViewInvoice(result.data.invoice)} className="underline text-blue-600 ml-2">View</a> <a href="#" onClick={() => handleDownloadPDF(result.data.invoice)} className="underline text-green-600 ml-2">Download</a></span>);
     } catch (error: any) {
       console.error('Error updating invoice:', error);
-      alert('Error updating invoice: ' + error.message);
+      if (error.response?.data?.error?.details) {
+        // Handle validation errors from backend
+        const backendErrors = error.response.data.error.details;
+        const formattedErrors: {[key: string]: string} = {};
+        backendErrors.forEach((err: any) => {
+          formattedErrors[err.path || err.param] = err.msg;
+        });
+        setValidationErrors(formattedErrors);
+        toast.error('Please fix the validation errors');
+      } else {
+        toast.error('Error updating invoice: ' + (error.message || 'Unknown error'));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -854,7 +955,7 @@ const InvoicesPage: React.FC = () => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (showViewModal) setShowViewModal(false);
-        if (showEditModal) setShowEditModal(false);
+        if (showEditModal) handleCloseEditModal();
         if (showAddModal) setShowAddModal(false);
         if (showPaymentModal) setShowPaymentModal(false);
       }
@@ -2224,8 +2325,7 @@ const InvoicesPage: React.FC = () => {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-start justify-center z-50 p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
-              setShowEditModal(false);
-              setEditInvoice(null);
+              handleCloseEditModal();
             }
           }}
         >
@@ -2242,7 +2342,14 @@ const InvoicesPage: React.FC = () => {
             <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700 px-6 py-4 rounded-t-2xl">
               <div className="flex justify-between items-center">
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Edit Invoice</h2>
+                  <h2 className="text-2xl font-bold text-white flex items-center">
+                    Edit Invoice
+                    {hasUnsavedChanges && (
+                      <span className="ml-2 px-2 py-1 bg-yellow-600 text-white text-xs rounded-full animate-pulse">
+                        Unsaved Changes
+                      </span>
+                    )}
+                  </h2>
                   <p className="text-gray-400 mt-1">#{editInvoice.invoiceNumber}</p>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -2267,10 +2374,7 @@ const InvoicesPage: React.FC = () => {
                   </div>
                   <button 
                     className="text-gray-400 hover:text-white text-2xl leading-none w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-800 transition-colors" 
-                    onClick={() => {
-                      setShowEditModal(false);
-                      setEditInvoice(null);
-                    }}
+                    onClick={handleCloseEditModal}
                     type="button"
                     title="Close (ESC)"
                   >
@@ -2298,7 +2402,11 @@ const InvoicesPage: React.FC = () => {
                         <select
                           value={editInvoice.clientId}
                           onChange={(e) => setEditInvoice({ ...editInvoice, clientId: e.target.value, projectId: '' })}
-                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                          className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none focus:ring-2 text-white ${
+                            validationErrors.clientId 
+                              ? 'border-red-500 focus:ring-red-500' 
+                              : 'border-gray-600 focus:ring-blue-500'
+                          }`}
                           required
                         >
                           <option value="">Select a client</option>
@@ -2306,6 +2414,9 @@ const InvoicesPage: React.FC = () => {
                             <option key={client._id} value={client._id}>{client.companyName}</option>
                           ))}
                         </select>
+                        {validationErrors.clientId && (
+                          <p className="text-red-400 text-sm mt-1">{validationErrors.clientId}</p>
+                        )}
                       </div>
                       
                       <div>
@@ -2331,9 +2442,16 @@ const InvoicesPage: React.FC = () => {
                           type="text"
                           value={editInvoice.invoiceNumber}
                           onChange={(e) => setEditInvoice({ ...editInvoice, invoiceNumber: e.target.value })}
-                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                          className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none focus:ring-2 text-white ${
+                            validationErrors.invoiceNumber 
+                              ? 'border-red-500 focus:ring-red-500' 
+                              : 'border-gray-600 focus:ring-blue-500'
+                          }`}
                           placeholder="Enter invoice number"
                         />
+                        {validationErrors.invoiceNumber && (
+                          <p className="text-red-400 text-sm mt-1">{validationErrors.invoiceNumber}</p>
+                        )}
                       </div>
                       
                       <div>
@@ -2342,9 +2460,16 @@ const InvoicesPage: React.FC = () => {
                           type="date"
                           value={editInvoice.dueDate}
                           onChange={(e) => setEditInvoice({ ...editInvoice, dueDate: e.target.value })}
-                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                          className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none focus:ring-2 text-white ${
+                            validationErrors.dueDate 
+                              ? 'border-red-500 focus:ring-red-500' 
+                              : 'border-gray-600 focus:ring-blue-500'
+                          }`}
                           required
                         />
+                        {validationErrors.dueDate && (
+                          <p className="text-red-400 text-sm mt-1">{validationErrors.dueDate}</p>
+                        )}
                       </div>
                       
                       <div>
@@ -2411,10 +2536,17 @@ const InvoicesPage: React.FC = () => {
                                       type="text"
                                       value={item.description}
                                       onChange={(e) => handleEditItem(index, 'description', e.target.value)}
-                                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                      className={`w-full px-3 py-2 bg-gray-600 border rounded-lg focus:outline-none focus:ring-2 text-white ${
+                                        validationErrors[`item${index}Description`] 
+                                          ? 'border-red-500 focus:ring-red-500' 
+                                          : 'border-gray-500 focus:ring-blue-500'
+                                      }`}
                                       placeholder="Item description"
                                       required
                                     />
+                                    {validationErrors[`item${index}Description`] && (
+                                      <p className="text-red-400 text-xs mt-1">{validationErrors[`item${index}Description`]}</p>
+                                    )}
                                   </div>
                                   
                                   <div className="lg:col-span-2">
@@ -2570,14 +2702,17 @@ const InvoicesPage: React.FC = () => {
             <div className="sticky bottom-0 bg-gray-900 border-t border-gray-700 px-6 py-4 rounded-b-2xl">
               <div className="flex justify-between items-center">
                 <div className="text-sm text-gray-400">
+                  {hasUnsavedChanges && (
+                    <span className="inline-flex items-center mr-4">
+                      <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse mr-2"></div>
+                      Unsaved changes
+                    </span>
+                  )}
                   Press <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+Enter</kbd> to save • <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+N</kbd> to add item • <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Esc</kbd> to cancel
                 </div>
                 <div className="flex space-x-3">
                   <button
-                    onClick={() => {
-                      setShowEditModal(false);
-                      setEditInvoice(null);
-                    }}
+                    onClick={handleCloseEditModal}
                     className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
                   >
                     Cancel
