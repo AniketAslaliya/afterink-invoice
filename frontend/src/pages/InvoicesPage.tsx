@@ -1106,6 +1106,11 @@ const InvoicesPage: React.FC = () => {
       setEditInvoice(editInvoiceHistory[editInvoiceHistoryIndex + 1]);
     }
   };
+
+  // Helper function to format color key names
+  const formatColorKey = (key: string) => {
+    return key.replace(/([A-Z])/g, ' $1').trim();
+  };
   // 4. Add useEffect for keyboard shortcuts for both modals.
 
   return (
@@ -1683,7 +1688,7 @@ const InvoicesPage: React.FC = () => {
                     {Object.entries(invoiceCustomization.colors).map(([key, value]) => (
                       <div key={key} className="flex items-center justify-between">
                         <label className="text-gray-300 capitalize text-sm">
-                          {key.replace(/([A-Z])/g, ' $1').trim()}:
+                          {formatColorKey(key)}:
                         </label>
                         <div className="flex items-center space-x-2">
                           <div

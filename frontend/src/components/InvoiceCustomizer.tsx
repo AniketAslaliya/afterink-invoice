@@ -204,6 +204,11 @@ const InvoiceCustomizer: React.FC<InvoiceCustomizerProps> = ({
     }
   };
 
+  // Helper function to format color key names
+  const formatColorKey = (key: string) => {
+    return key.replace(/([A-Z])/g, ' $1').trim();
+  };
+
   const tabs = [
     { id: 'template', label: 'Template', icon: Layout },
     { id: 'colors', label: 'Colors', icon: Palette },
@@ -305,7 +310,7 @@ const InvoiceCustomizer: React.FC<InvoiceCustomizerProps> = ({
                 {Object.entries(customization.colors).map(([key, value]) => (
                   <div key={key} className="flex items-center justify-between">
                     <label className="text-gray-300 capitalize">
-                      {key.replace(/([A-Z])/g, ' $1').trim()}:
+                      {formatColorKey(key)}:
                     </label>
                     <div className="flex items-center space-x-3">
                       <div
