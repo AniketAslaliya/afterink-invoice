@@ -123,7 +123,7 @@ const InvoicesPage: React.FC = () => {
     items: [{ description: '', quantity: 1, rate: 0, amount: 0, taxRate: 0, note: '' }],
     currency: 'INR',
     notes: '',
-    terms: '',
+    terms: 'Payment is due within 30 days of invoice date.',
     termsAndConditions: '',
   });
   
@@ -442,8 +442,9 @@ const InvoicesPage: React.FC = () => {
         totalAmount: totalAmount,
         currency: newInvoice.currency,
         terms: newInvoice.terms || getDefaultPaymentTerms(),
-        // Explicitly ensure notes field is included
+        // Explicitly ensure notes and termsAndConditions fields are included
         notes: newInvoice.notes || '',
+        termsAndConditions: newInvoice.termsAndConditions || getDefaultTermsAndConditions(),
       };
       
       // Remove projectId if empty string or undefined
@@ -497,7 +498,7 @@ const InvoicesPage: React.FC = () => {
         currency: 'INR',
         notes: '',
         terms: getDefaultPaymentTerms(),
-        termsAndConditions: '',
+        termsAndConditions: getDefaultTermsAndConditions(),
       });
       // Fetch next invoice number for the next use
       generateNextInvoiceNumber();
@@ -805,8 +806,9 @@ const InvoicesPage: React.FC = () => {
         ...editInvoice,
         totalAmount: handleEditCalculateTotal(),
         currency: editInvoice.currency,
-        // Explicitly ensure notes field is included
+        // Explicitly ensure notes and termsAndConditions fields are included
         notes: editInvoice.notes || '',
+        termsAndConditions: editInvoice.termsAndConditions || getDefaultTermsAndConditions(),
       };
       if (typeof invoiceData.projectId !== 'undefined' && !invoiceData.projectId) {
         delete invoiceData.projectId;
@@ -1190,8 +1192,8 @@ const InvoicesPage: React.FC = () => {
               &times;
             </button>
             <h2 className="text-2xl font-bold mb-6 text-white">Create New Invoice</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
               {/* Client Details Section */}
               <div className="bg-gray-800 rounded-lg p-4 mb-4">
                 <div className="flex items-center mb-2">
@@ -1353,7 +1355,223 @@ const InvoicesPage: React.FC = () => {
                   <div className="text-red-500 text-sm mt-2">{addClientError}</div>
                 )}
               </div>
-              <div className="bg-white rounded-lg p-4 shadow-md mt-6 md:mt-0">
+
+              {/* Invoice Details Section */}
+              <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                  <FileText className="h-5 w-5 mr-2 text-blue-400" />
+                  Invoice Details
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Invoice Number</label>
+                    <input
+                      type="text"
+                      value={newInvoice.invoiceNumber}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, invoiceNumber: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      placeholder="Auto-generated if empty"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Due Date *</label>
+                    <input
+                      type="date"
+                      value={newInvoice.dueDate}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, dueDate: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Project (Optional)</label>
+                    <select
+                      value={newInvoice.projectId}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, projectId: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    >
+                      <option value="">Select a project</option>
+                      {getFilteredProjects().map((project: any) => (
+                        <option key={project._id} value={project._id}>{project.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Currency</label>
+                    <select
+                      value={newInvoice.currency}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, currency: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    >
+                      <option value="INR">INR (₹)</option>
+                      <option value="USD">USD ($)</option>
+                      <option value="EUR">EUR (€)</option>
+                      <option value="GBP">GBP (£)</option>
+                      <option value="CAD">CAD (C$)</option>
+                      <option value="AUD">AUD (A$)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Invoice Items Section */}
+              <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-white flex items-center">
+                    <Package className="h-5 w-5 mr-2 text-green-400" />
+                    Invoice Items
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={addItem}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Add Item</span>
+                  </button>
+                </div>
+                
+                <DndContext collisionDetection={closestCenter} onDragEnd={handleAddItemsDragEnd}>
+                  <SortableContext items={newInvoice.items.map((_, index) => index.toString())} strategy={verticalListSortingStrategy}>
+                    {newInvoice.items.map((item, index) => (
+                      <SortableItem key={index} id={index.toString()}>
+                        <div className="bg-gray-700 rounded-lg p-4 mb-4 border border-gray-600">
+                          <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
+                            <div className="lg:col-span-3">
+                              <label className="block text-sm font-medium text-gray-400 mb-2">Description *</label>
+                              <input
+                                type="text"
+                                value={item.description}
+                                onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                placeholder="Item description"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400 mb-2">Quantity *</label>
+                              <input
+                                type="number"
+                                value={item.quantity}
+                                onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                                className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                min="0.01"
+                                step="0.01"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400 mb-2">Rate *</label>
+                              <input
+                                type="number"
+                                value={item.rate}
+                                onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                                className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                min="0"
+                                step="0.01"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400 mb-2">Tax %</label>
+                              <input
+                                type="number"
+                                value={item.taxRate || 0}
+                                onChange={(e) => updateItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
+                                className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400 mb-2">Amount</label>
+                              <div className="px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 text-center">
+                                {formatCurrency(item.amount, newInvoice.currency)}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-4">
+                            <label className="block text-sm font-medium text-gray-400 mb-2">Notes (Optional)</label>
+                            <textarea
+                              value={item.note || ''}
+                              onChange={(e) => updateItem(index, 'note', e.target.value)}
+                              className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                              rows={2}
+                              placeholder="Add notes for this item..."
+                            />
+                          </div>
+                          
+                          {newInvoice.items.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeItem(index)}
+                              className="mt-3 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
+                            >
+                              Remove Item
+                            </button>
+                          )}
+                        </div>
+                      </SortableItem>
+                    ))}
+                  </SortableContext>
+                </DndContext>
+
+                {/* Total */}
+                <div className="mt-6 p-4 bg-gray-700 rounded-lg border border-gray-600">
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-white">
+                      Total: {formatCurrency(calculateTotal(), newInvoice.currency)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Information Section */}
+              <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                  <FileText className="h-5 w-5 mr-2 text-purple-400" />
+                  Additional Information
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Payment Terms</label>
+                    <textarea
+                      value={newInvoice.terms}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, terms: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      rows={4}
+                      placeholder="Enter payment terms..."
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Notes</label>
+                    <textarea
+                      value={newInvoice.notes}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, notes: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      rows={4}
+                      placeholder="Add any additional notes..."
+                    />
+                  </div>
+                </div>
+                
+                <div className="mt-6">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Terms & Conditions</label>
+                  <textarea
+                    value={newInvoice.termsAndConditions}
+                    onChange={(e) => setNewInvoice({ ...newInvoice, termsAndConditions: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    rows={6}
+                    placeholder="Enter terms and conditions for this invoice..."
+                  />
+                </div>
+              </div>
+              </div>
+              <div className="bg-white rounded-lg p-4 shadow-md">
                 <h3 className="text-lg font-semibold mb-2 text-gray-800">Live Preview</h3>
                 <InvoicePreview
                   invoice={{
@@ -2650,6 +2868,17 @@ const InvoicesPage: React.FC = () => {
                           placeholder="Add any additional notes..."
                         />
                       </div>
+                    </div>
+                    
+                    <div className="mt-6">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Terms & Conditions</label>
+                      <textarea
+                        value={editInvoice.termsAndConditions}
+                        onChange={(e) => setEditInvoice({ ...editInvoice, termsAndConditions: e.target.value })}
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                        rows={6}
+                        placeholder="Enter terms and conditions for this invoice..."
+                      />
                     </div>
                   </div>
                 </div>
