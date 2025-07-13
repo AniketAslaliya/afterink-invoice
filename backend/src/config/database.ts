@@ -6,10 +6,14 @@ const connectDatabase = async (): Promise<void> => {
     
     const options = {
       maxPoolSize: 10, // Maintain up to 10 socket connections
-      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+      serverSelectionTimeoutMS: 10000, // Keep trying to send operations for 10 seconds
       socketTimeoutMS: 45000, // Close sockets after 45 seconds
+      connectTimeoutMS: 10000, // Give up initial connection after 10 seconds
+      bufferCommands: false, // Disable mongoose buffering
+      bufferMaxEntries: 0, // Disable mongoose buffering
     };
 
+    console.log('🔌 Attempting to connect to MongoDB...');
     await mongoose.connect(mongoUri, options);
 
     console.log('✅ MongoDB connected successfully');
@@ -36,7 +40,9 @@ const connectDatabase = async (): Promise<void> => {
 
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error);
-    process.exit(1);
+    console.error('Please check your MONGODB_URI environment variable');
+    // Don't exit immediately, let the server start and show the error
+    throw error;
   }
 };
 
