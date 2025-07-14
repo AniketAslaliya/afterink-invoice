@@ -236,7 +236,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       success: false,
       error: {
         message: 'Internal server error during login',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined,
       },
       timestamp: new Date().toISOString(),
     } as IApiResponse);

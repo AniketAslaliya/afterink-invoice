@@ -159,7 +159,7 @@ router.get('/debug/user/:email', async (req, res) => {
       success: false,
       error: {
         message: 'Debug endpoint error',
-        details: error.message,
+        details: error instanceof Error ? error.message : 'Unknown error',
       }
     });
   }
