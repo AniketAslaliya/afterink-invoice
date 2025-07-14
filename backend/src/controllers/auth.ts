@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 import User from '../models/User';
 import { generateTokenPair, verifyRefreshToken } from '../utils/jwt';
 import { ILoginRequest, IRegisterRequest, IApiResponse } from '../types';
@@ -110,8 +111,25 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const { email, password }: ILoginRequest = req.body;
 
+    // Check database connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('Database not connected. Ready state:', mongoose.connection.readyState);
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Database connection error',
+          details: 'Database is not connected',
+        },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+      return;
+    }
+
     // Find user with password field included
+    console.log('Looking for user with email:', email);
     const user = await User.findOne({ email }).select('+password');
+    console.log('User found:', user ? 'Yes' : 'No');
+    
     if (!user) {
       res.status(401).json({
         success: false,
@@ -181,10 +199,44 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
   } catch (error) {
     console.error('Login error:', error);
+    
+    // More detailed error logging for debugging
+    if (error instanceof Error) {
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+    
+    // Check for specific error types
+    if (error instanceof Error && error.message.includes('JWT_SECRET')) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'JWT configuration error - check environment variables',
+          details: error.message,
+        },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+      return;
+    }
+    
+    if (error instanceof Error && error.message.includes('MongoDB')) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Database connection error',
+          details: error.message,
+        },
+        timestamp: new Date().toISOString(),
+      } as IApiResponse);
+      return;
+    }
+    
     res.status(500).json({
       success: false,
       error: {
         message: 'Internal server error during login',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       },
       timestamp: new Date().toISOString(),
     } as IApiResponse);
