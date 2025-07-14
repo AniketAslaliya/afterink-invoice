@@ -182,22 +182,22 @@ app.use(errorHandler);
  */
 const startServer = async () => {
   try {
-    // Start the HTTP server first
+    // Connect to database first
+    try {
+      await connectDatabase();
+    } catch (dbError) {
+      console.error('❌ Database connection failed');
+      console.error('Database error:', dbError);
+      console.log('Please check your MONGODB_URI environment variable');
+      process.exit(1);
+    }
+
+    // Start the HTTP server after database connection is established
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
       console.log(`📚 API Documentation: http://localhost:${PORT}/api`);
       console.log(`❤️  Health Check: http://localhost:${PORT}/health`);
     });
-
-    // Try to establish database connection
-    try {
-      await connectDatabase();
-    } catch (dbError) {
-      console.error('⚠️  Database connection failed, but server is running');
-      console.error('Database error:', dbError);
-      console.log('Server will continue running without database connection');
-      console.log('Please check your MONGODB_URI environment variable');
-    }
 
   } catch (error) {
     console.error('❌ Failed to start server:', error);
