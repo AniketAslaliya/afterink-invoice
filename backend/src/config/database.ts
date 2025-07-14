@@ -10,7 +10,6 @@ const connectDatabase = async (): Promise<void> => {
       socketTimeoutMS: 45000, // Close sockets after 45 seconds
       connectTimeoutMS: 10000, // Give up initial connection after 10 seconds
       bufferCommands: true, // Enable mongoose buffering for better resilience
-      bufferMaxEntries: 0, // Disable mongoose buffering
     };
 
     console.log('🔌 Attempting to connect to MongoDB...');
