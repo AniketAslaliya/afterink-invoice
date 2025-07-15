@@ -31,6 +31,9 @@ import clientRoutes from './routes/clients';
 import invoiceRoutes from './routes/invoices';
 import projectRoutes from './routes/projects';
 import settingsRoutes from './routes/settings';
+import bonusRoutes from './routes/bonuses';
+import expenseRoutes from './routes/expenses';
+import expenseReasonRoutes from './routes/expenseReasons';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -135,6 +138,9 @@ app.use('/api/clients', clientRoutes);     // Client management
 app.use('/api/invoices', invoiceRoutes);   // Invoice management
 app.use('/api/projects', projectRoutes);   // Project management
 app.use('/api/settings', settingsRoutes);   // Settings management
+app.use('/api/bonuses', bonusRoutes);      // Bonus management
+app.use('/api/expenses', expenseRoutes);  // Expense management
+app.use('/api/expense-reasons', expenseReasonRoutes); // Expense reason management
 
 /**
  * API Documentation Endpoint

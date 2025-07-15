@@ -3,6 +3,8 @@ import invoicesReducer from './invoicesSlice';
 import clientsReducer from './clientsSlice';
 import projectsReducer from './projectsSlice';
 import dashboardReducer from './dashboardSlice';
+import bonusesReducer from './bonusesSlice';
+import expensesReducer from './expensesSlice';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 
 const store = configureStore({
@@ -11,6 +13,8 @@ const store = configureStore({
     clients: clientsReducer,
     projects: projectsReducer,
     dashboard: dashboardReducer,
+    bonuses: bonusesReducer,
+    expenses: expensesReducer,
   },
 });
 

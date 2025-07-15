@@ -173,4 +173,33 @@ export interface IEmailTemplate {
     path?: string;
     content?: Buffer;
   }>;
+}
+
+export interface IBonus {
+  clientId: Types.ObjectId | string;
+  amount: number;
+  date: Date;
+  description?: string;
+  category?: string;
+  createdBy: Types.ObjectId | string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface IExpense {
+  reasonId: Types.ObjectId | string;
+  amount: number;
+  date: Date;
+  description?: string;
+  createdBy: Types.ObjectId | string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface IExpenseReason {
+  name: string;
+  description?: string;
+  createdBy: Types.ObjectId | string;
+  createdAt?: Date;
+  updatedAt?: Date;
 } 

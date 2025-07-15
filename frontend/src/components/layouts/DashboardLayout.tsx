@@ -11,7 +11,9 @@ import {
   X,
   LogOut,
   User,
-  Palette
+  Palette,
+  Gift,
+  Receipt
 } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { useTheme } from '../../contexts/ThemeContext'
@@ -26,6 +28,8 @@ const navigation = [
   { name: 'Clients', href: '/clients', icon: Users },
   { name: 'Invoices', href: '/invoices', icon: FileText },
   { name: 'Projects', href: '/projects', icon: FolderOpen },
+  { name: 'Bonuses', href: '/bonuses', icon: Gift },
+  { name: 'Expenses', href: '/expenses', icon: Receipt },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'Profile', href: '/profile', icon: User },
