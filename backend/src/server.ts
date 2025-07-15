@@ -16,6 +16,7 @@ import compression from 'compression';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose'; // Added for health check
 
 // Database configuration
 import { connectDatabase } from './config/database';
@@ -118,11 +119,15 @@ app.use('/uploads', express.static('uploads'));
  * Returns server status, timestamp, and environment information.
  */
 app.get('/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  
   res.status(200).json({
     status: 'OK',
     message: 'Afterink Invoice API is running',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
+    database: dbStatus,
+    uptime: process.uptime(),
   });
 });
 
@@ -183,15 +188,23 @@ app.use(errorHandler);
  */
 const startServer = async () => {
   try {
-    // Establish database connection before starting server
-    await connectDatabase();
-    
-    // Start the HTTP server
-    app.listen(PORT, '0.0.0.0', () => {
+    // Connect to database first
+    try {
+      await connectDatabase();
+    } catch (dbError) {
+      console.error('❌ Database connection failed');
+      console.error('Database error:', dbError);
+      console.log('Please check your MONGODB_URI environment variable');
+      process.exit(1);
+    }
+
+    // Start the HTTP server after database connection is established
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
       console.log(`📚 API Documentation: http://localhost:${PORT}/api`);
       console.log(`❤️  Health Check: http://localhost:${PORT}/health`);
     });
+
   } catch (error) {
     console.error('❌ Failed to start server:', error);
     process.exit(1);

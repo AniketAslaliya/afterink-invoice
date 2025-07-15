@@ -40,6 +40,11 @@ const invoiceItemSchema = new Schema<IInvoiceItem>({
     min: [0, 'Tax rate must be non-negative'],
     max: [100, 'Tax rate cannot exceed 100%'],
   },
+  note: {
+    type: String,
+    trim: true,
+    maxLength: [500, 'Item note cannot exceed 500 characters'],
+  },
 }, { _id: false });
 
 const invoiceSchema = new Schema<IInvoiceDocument>({

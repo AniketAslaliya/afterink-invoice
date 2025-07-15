@@ -123,7 +123,7 @@ const InvoicesPage: React.FC = () => {
     items: [{ description: '', quantity: 1, rate: 0, amount: 0, taxRate: 0, note: '' }],
     currency: 'INR',
     notes: '',
-    terms: '',
+    terms: 'Payment is due within 30 days of invoice date.',
     termsAndConditions: '',
   });
   
@@ -442,8 +442,9 @@ const InvoicesPage: React.FC = () => {
         totalAmount: totalAmount,
         currency: newInvoice.currency,
         terms: newInvoice.terms || getDefaultPaymentTerms(),
-        // Explicitly ensure notes field is included
+        // Explicitly ensure notes and termsAndConditions fields are included
         notes: newInvoice.notes || '',
+        termsAndConditions: newInvoice.termsAndConditions || getDefaultTermsAndConditions(),
       };
       
       // Remove projectId if empty string or undefined
@@ -497,7 +498,7 @@ const InvoicesPage: React.FC = () => {
         currency: 'INR',
         notes: '',
         terms: getDefaultPaymentTerms(),
-        termsAndConditions: '',
+        termsAndConditions: getDefaultTermsAndConditions(),
       });
       // Fetch next invoice number for the next use
       generateNextInvoiceNumber();
@@ -685,11 +686,23 @@ const InvoicesPage: React.FC = () => {
     setShowViewModal(true);
   };
 
+  // Add unsaved changes tracking
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [originalEditInvoice, setOriginalEditInvoice] = useState<any>(null);
+
+  // Track changes in edit invoice
+  useEffect(() => {
+    if (editInvoice && originalEditInvoice) {
+      const hasChanges = JSON.stringify(editInvoice) !== JSON.stringify(originalEditInvoice);
+      setHasUnsavedChanges(hasChanges);
+    }
+  }, [editInvoice, originalEditInvoice]);
+
   // Handle edit invoice
   const handleEditInvoice = (invoice: Invoice) => {
     console.log('Editing invoice, original terms:', invoice.terms); // DEBUG
     console.log('Editing invoice, original termsAndConditions:', (invoice as any).termsAndConditions); // DEBUG
-    setEditInvoice({
+    const editData = {
       ...invoice,
       clientId: invoice.client && (invoice.client as any)._id ? (invoice.client as any)._id : '',
       projectId: invoice.project && (invoice.project as any)._id ? (invoice.project as any)._id : '',
@@ -698,16 +711,91 @@ const InvoicesPage: React.FC = () => {
       terms: invoice.terms || getDefaultPaymentTerms(),
       termsAndConditions: (invoice as any).termsAndConditions || '',
       currency: invoice.currency || 'INR',
-    });
+    };
+    setEditInvoice(editData);
+    setOriginalEditInvoice(JSON.parse(JSON.stringify(editData))); // Deep copy
     setSelectedInvoice(invoice);
     setShowEditModal(true);
+    setHasUnsavedChanges(false);
+    setValidationErrors({});
+  };
+
+  // Handle modal close with unsaved changes warning
+  const handleCloseEditModal = () => {
+    if (hasUnsavedChanges) {
+      if (window.confirm('You have unsaved changes. Are you sure you want to close without saving?')) {
+        setShowEditModal(false);
+        setEditInvoice(null);
+        setOriginalEditInvoice(null);
+        setHasUnsavedChanges(false);
+        setValidationErrors({});
+      }
+    } else {
+      setShowEditModal(false);
+      setEditInvoice(null);
+      setOriginalEditInvoice(null);
+      setValidationErrors({});
+    }
+  };
+
+  // Validation function
+  const validateEditInvoice = () => {
+    const errors: {[key: string]: string} = {};
+    
+    // Client validation
+    if (!editInvoice.clientId) {
+      errors.clientId = 'Client is required';
+    }
+    
+    // Due date validation
+    if (!editInvoice.dueDate) {
+      errors.dueDate = 'Due date is required';
+    } else if (new Date(editInvoice.dueDate) < new Date()) {
+      errors.dueDate = 'Due date cannot be in the past';
+    }
+    
+    // Invoice number validation
+    if (!editInvoice.invoiceNumber?.trim()) {
+      errors.invoiceNumber = 'Invoice number is required';
+    }
+    
+    // Items validation
+    if (!editInvoice.items || editInvoice.items.length === 0) {
+      errors.items = 'At least one item is required';
+    } else {
+      editInvoice.items.forEach((item, index) => {
+        if (!item.description?.trim()) {
+          errors[`item${index}Description`] = 'Item description is required';
+        }
+        if (item.quantity <= 0) {
+          errors[`item${index}Quantity`] = 'Quantity must be greater than 0';
+        }
+        if (item.rate < 0) {
+          errors[`item${index}Rate`] = 'Rate cannot be negative';
+        }
+        if (item.taxRate < 0 || item.taxRate > 100) {
+          errors[`item${index}TaxRate`] = 'Tax rate must be between 0 and 100';
+        }
+      });
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   // Handle update invoice
   const handleUpdateInvoice = async () => {
     if (!selectedInvoice || !editInvoice) return;
+    
+    // Validate form before submission
+    if (!validateEditInvoice()) {
+      toast.error('Please fix the validation errors before saving');
+      return;
+    }
+    
     try {
       setSubmitting(true);
+      setValidationErrors({});
       
       // DEBUG: Log the notes, terms, and termsAndConditions field values
       console.log('Notes field value before updating:', editInvoice.notes);
@@ -718,8 +806,9 @@ const InvoicesPage: React.FC = () => {
         ...editInvoice,
         totalAmount: handleEditCalculateTotal(),
         currency: editInvoice.currency,
-        // Explicitly ensure notes field is included
+        // Explicitly ensure notes and termsAndConditions fields are included
         notes: editInvoice.notes || '',
+        termsAndConditions: editInvoice.termsAndConditions || getDefaultTermsAndConditions(),
       };
       if (typeof invoiceData.projectId !== 'undefined' && !invoiceData.projectId) {
         delete invoiceData.projectId;
@@ -749,7 +838,18 @@ const InvoicesPage: React.FC = () => {
       toast.success(<span>Invoice updated! <a href="#" onClick={() => handleViewInvoice(result.data.invoice)} className="underline text-blue-600 ml-2">View</a> <a href="#" onClick={() => handleDownloadPDF(result.data.invoice)} className="underline text-green-600 ml-2">Download</a></span>);
     } catch (error: any) {
       console.error('Error updating invoice:', error);
-      alert('Error updating invoice: ' + error.message);
+      if (error.response?.data?.error?.details) {
+        // Handle validation errors from backend
+        const backendErrors = error.response.data.error.details;
+        const formattedErrors: {[key: string]: string} = {};
+        backendErrors.forEach((err: any) => {
+          formattedErrors[err.path || err.param] = err.msg;
+        });
+        setValidationErrors(formattedErrors);
+        toast.error('Please fix the validation errors');
+      } else {
+        toast.error('Error updating invoice: ' + (error.message || 'Unknown error'));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -854,7 +954,7 @@ const InvoicesPage: React.FC = () => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (showViewModal) setShowViewModal(false);
-        if (showEditModal) setShowEditModal(false);
+        if (showEditModal) handleCloseEditModal();
         if (showAddModal) setShowAddModal(false);
         if (showPaymentModal) setShowPaymentModal(false);
       }
@@ -912,7 +1012,8 @@ const InvoicesPage: React.FC = () => {
   useEffect(() => {
     if (!showEditModal) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 'Enter') { handleEditAddItem(); e.preventDefault(); }
+      if (e.ctrlKey && e.key === 'Enter') { handleUpdateInvoice(); e.preventDefault(); }
+      if (e.ctrlKey && e.key === 'N') { handleEditAddItem(); e.preventDefault(); }
       if (e.ctrlKey && (e.key === 'Backspace' || e.key === 'Delete')) { if (editInvoice && editInvoice.items.length > 1) handleEditRemoveItem(editInvoice.items.length - 1); e.preventDefault(); }
     };
     window.addEventListener('keydown', handler);
@@ -1005,6 +1106,11 @@ const InvoicesPage: React.FC = () => {
       setEditInvoice(editInvoiceHistory[editInvoiceHistoryIndex + 1]);
     }
   };
+
+  // Helper function to format color key names
+  const formatColorKey = (key: string) => {
+    return key.replace(/([A-Z])/g, ' $1').trim();
+  };
   // 4. Add useEffect for keyboard shortcuts for both modals.
 
   return (
@@ -1077,8 +1183,10 @@ const InvoicesPage: React.FC = () => {
             }
           }}
         >
-          <div className="bg-gray-900 rounded-xl p-8 w-full max-w-4xl shadow-lg relative mx-4 my-8 border border-gray-700 modal-content max-h-[90vh] overflow-y-auto"
-               onClick={(e) => e.stopPropagation()}>
+          <div 
+            className="bg-gray-900 rounded-xl p-8 w-full max-w-4xl shadow-lg relative mx-4 my-8 border border-gray-700 modal-content max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button 
               className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none cursor-pointer" 
               onClick={(e) => {
@@ -1091,170 +1199,386 @@ const InvoicesPage: React.FC = () => {
               &times;
             </button>
             <h2 className="text-2xl font-bold mb-6 text-white">Create New Invoice</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-              {/* Client Details Section */}
-              <div className="bg-gray-800 rounded-lg p-4 mb-4">
-                <div className="flex items-center mb-2">
-                  <label className="block text-sm font-medium text-gray-300 mr-2">Client *</label>
-                  <select
-                    value={showNewClientFields ? '' : newInvoice.clientId}
-                    onChange={(e) => {
-                      setShowNewClientFields(false);
-                      setNewInvoice({ ...newInvoice, clientId: e.target.value, projectId: '' });
-                    }}
-                    className="px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                  >
-                    <option value="">Select a client</option>
-                    {clients.map((client) => (
-                      <option key={client._id} value={client._id}>{client.companyName}</option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    className="ml-4 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
-                    onClick={() => {
-                      setShowNewClientFields(true);
-                      setNewInvoice({ ...newInvoice, clientId: '' });
-                    }}
-                  >
-                    Add New Client
-                  </button>
-          </div>
-                {showNewClientFields && (
-                  <div className="grid grid-cols-2 gap-4 mt-2">
-                <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1">Company Name *</label>
-                      <input
-                        type="text"
-                        value={newClient.companyName}
-                        onChange={e => setNewClient({ ...newClient, companyName: e.target.value })}
-                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                        placeholder="Company name"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1">Status</label>
-                  <select
-                        value={newClient.status}
-                        onChange={e => setNewClient({ ...newClient, status: e.target.value as any })}
-                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                  >
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                        <option value="prospect">Prospect</option>
-                  </select>
-        </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1">First Name *</label>
-                      <input
-                        type="text"
-                        value={newClient.contactPerson.firstName}
-                        onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, firstName: e.target.value } })}
-                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                        placeholder="First name"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1">Last Name *</label>
-                      <input
-                        type="text"
-                        value={newClient.contactPerson.lastName}
-                        onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, lastName: e.target.value } })}
-                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                        placeholder="Last name"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1">Email</label>
-                      <input
-                        type="email"
-                        value={newClient.contactPerson.email}
-                        onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, email: e.target.value } })}
-                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                        placeholder="Email"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1">Phone</label>
-                      <input
-                        type="tel"
-                        value={newClient.contactPerson.phone}
-                        onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, phone: e.target.value } })}
-                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                        placeholder="Phone"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1">Position</label>
-                      <input
-                        type="text"
-                        value={newClient.contactPerson.position}
-                        onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, position: e.target.value } })}
-                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                        placeholder="Position"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1">Country Code</label>
-                      <input
-                        type="text"
-                        value={newClient.contactPerson.countryCode}
-                        onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, countryCode: e.target.value } })}
-                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                        placeholder="Country code"
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <label className="block text-xs font-medium text-gray-400 mb-1">Address</label>
-                      <input
-                        type="text"
-                        value={newClient.address.street}
-                        onChange={e => setNewClient({ ...newClient, address: { ...newClient.address, street: e.target.value } })}
-                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white mb-1"
-                        placeholder="Street address"
-                      />
-                      <div className="grid grid-cols-3 gap-2 mt-1">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                {/* Client Details Section */}
+                <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                  <div className="flex items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mr-2">Client *</label>
+                    <select
+                      value={showNewClientFields ? '' : newInvoice.clientId}
+                      onChange={(e) => {
+                        setShowNewClientFields(false);
+                        setNewInvoice({ ...newInvoice, clientId: e.target.value, projectId: '' });
+                      }}
+                      className="px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    >
+                      <option value="">Select a client</option>
+                      {clients.map((client) => (
+                        <option key={client._id} value={client._id}>{client.companyName}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="ml-4 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                      onClick={() => {
+                        setShowNewClientFields(true);
+                        setNewInvoice({ ...newInvoice, clientId: '' });
+                      }}
+                    >
+                      Add New Client
+                    </button>
+                  </div>
+                  {showNewClientFields && (
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1">Company Name *</label>
                         <input
                           type="text"
-                          value={newClient.address.city}
-                          onChange={e => setNewClient({ ...newClient, address: { ...newClient.address, city: e.target.value } })}
+                          value={newClient.companyName}
+                          onChange={e => setNewClient({ ...newClient, companyName: e.target.value })}
                           className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                          placeholder="City"
-                        />
-                        <input
-                          type="text"
-                          value={newClient.address.state}
-                          onChange={e => setNewClient({ ...newClient, address: { ...newClient.address, state: e.target.value } })}
-                          className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                          placeholder="State"
-                        />
-                        <input
-                          type="text"
-                          value={newClient.address.zipCode}
-                          onChange={e => setNewClient({ ...newClient, address: { ...newClient.address, zipCode: e.target.value } })}
-                          className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
-                          placeholder="Zip code"
+                          placeholder="Company name"
+                          required
                         />
                       </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1">Status</label>
+                        <select
+                          value={newClient.status}
+                          onChange={e => setNewClient({ ...newClient, status: e.target.value as any })}
+                          className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                        >
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                          <option value="prospect">Prospect</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1">First Name *</label>
+                        <input
+                          type="text"
+                          value={newClient.contactPerson.firstName}
+                          onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, firstName: e.target.value } })}
+                          className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                          placeholder="First name"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1">Last Name *</label>
+                        <input
+                          type="text"
+                          value={newClient.contactPerson.lastName}
+                          onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, lastName: e.target.value } })}
+                          className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                          placeholder="Last name"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1">Email</label>
+                        <input
+                          type="email"
+                          value={newClient.contactPerson.email}
+                          onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, email: e.target.value } })}
+                          className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                          placeholder="Email"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1">Phone</label>
+                        <input
+                          type="tel"
+                          value={newClient.contactPerson.phone}
+                          onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, phone: e.target.value } })}
+                          className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                          placeholder="Phone"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1">Position</label>
+                        <input
+                          type="text"
+                          value={newClient.contactPerson.position}
+                          onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, position: e.target.value } })}
+                          className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                          placeholder="Position"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1">Country Code</label>
+                        <input
+                          type="text"
+                          value={newClient.contactPerson.countryCode}
+                          onChange={e => setNewClient({ ...newClient, contactPerson: { ...newClient.contactPerson, countryCode: e.target.value } })}
+                          className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                          placeholder="Country code"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-xs font-medium text-gray-400 mb-1">Address</label>
+                        <input
+                          type="text"
+                          value={newClient.address.street}
+                          onChange={e => setNewClient({ ...newClient, address: { ...newClient.address, street: e.target.value } })}
+                          className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white mb-1"
+                          placeholder="Street address"
+                        />
+                        <div className="grid grid-cols-3 gap-2 mt-1">
+                          <input
+                            type="text"
+                            value={newClient.address.city}
+                            onChange={e => setNewClient({ ...newClient, address: { ...newClient.address, city: e.target.value } })}
+                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                            placeholder="City"
+                          />
+                          <input
+                            type="text"
+                            value={newClient.address.state}
+                            onChange={e => setNewClient({ ...newClient, address: { ...newClient.address, state: e.target.value } })}
+                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                            placeholder="State"
+                          />
+                          <input
+                            type="text"
+                            value={newClient.address.zipCode}
+                            onChange={e => setNewClient({ ...newClient, address: { ...newClient.address, zipCode: e.target.value } })}
+                            className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                            placeholder="Zip code"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          value={newClient.address.country}
+                          onChange={e => setNewClient({ ...newClient, address: { ...newClient.address, country: e.target.value } })}
+                          className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white mt-1"
+                          placeholder="Country"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {addClientError && (
+                    <div className="text-red-500 text-sm mt-2">{addClientError}</div>
+                  )}
+                </div>
+
+                {/* Invoice Details Section */}
+                <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                    <FileText className="h-5 w-5 mr-2 text-blue-400" />
+                    Invoice Details
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Invoice Number</label>
                       <input
                         type="text"
-                        value={newClient.address.country}
-                        onChange={e => setNewClient({ ...newClient, address: { ...newClient.address, country: e.target.value } })}
-                        className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white mt-1"
-                        placeholder="Country"
+                        value={newInvoice.invoiceNumber}
+                        onChange={(e) => setNewInvoice({ ...newInvoice, invoiceNumber: e.target.value })}
+                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                        placeholder="Auto-generated if empty"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Due Date *</label>
+                      <input
+                        type="date"
+                        value={newInvoice.dueDate}
+                        onChange={(e) => setNewInvoice({ ...newInvoice, dueDate: e.target.value })}
+                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Project (Optional)</label>
+                      <select
+                        value={newInvoice.projectId}
+                        onChange={(e) => setNewInvoice({ ...newInvoice, projectId: e.target.value })}
+                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      >
+                        <option value="">Select a project</option>
+                        {getFilteredProjects().map((project: any) => (
+                          <option key={project._id} value={project._id}>{project.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Currency</label>
+                      <select
+                        value={newInvoice.currency}
+                        onChange={(e) => setNewInvoice({ ...newInvoice, currency: e.target.value })}
+                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      >
+                        <option value="INR">INR (₹)</option>
+                        <option value="USD">USD ($)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="GBP">GBP (£)</option>
+                        <option value="CAD">CAD (C$)</option>
+                        <option value="AUD">AUD (A$)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Invoice Items Section */}
+                <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-white flex items-center">
+                      <Package className="h-5 w-5 mr-2 text-green-400" />
+                      Invoice Items
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={addItem}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Add Item</span>
+                    </button>
+                  </div>
+                  
+                  <DndContext collisionDetection={closestCenter} onDragEnd={handleAddItemsDragEnd}>
+                    <SortableContext items={newInvoice.items.map((_, index) => index.toString())} strategy={verticalListSortingStrategy}>
+                      {newInvoice.items.map((item, index) => (
+                        <SortableItem key={index} id={index.toString()}>
+                          <div className="bg-gray-700 rounded-lg p-4 mb-4 border border-gray-600">
+                            <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
+                              <div className="lg:col-span-3">
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Description *</label>
+                                <input
+                                  type="text"
+                                  value={item.description}
+                                  onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                  className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                  placeholder="Item description"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Quantity *</label>
+                                <input
+                                  type="number"
+                                  value={item.quantity}
+                                  onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                                  className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                  min="0.01"
+                                  step="0.01"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Rate *</label>
+                                <input
+                                  type="number"
+                                  value={item.rate}
+                                  onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                                  className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                  min="0"
+                                  step="0.01"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Tax %</label>
+                                <input
+                                  type="number"
+                                  value={item.taxRate || 0}
+                                  onChange={(e) => updateItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
+                                  className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                  min="0"
+                                  max="100"
+                                  step="0.01"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Amount</label>
+                                <div className="px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 text-center">
+                                  {formatCurrency(item.amount, newInvoice.currency)}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-4">
+                              <label className="block text-sm font-medium text-gray-400 mb-2">Notes (Optional)</label>
+                              <textarea
+                                value={item.note || ''}
+                                onChange={(e) => updateItem(index, 'note', e.target.value)}
+                                className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                rows={2}
+                                placeholder="Add notes for this item..."
+                              />
+                            </div>
+                            
+                            {newInvoice.items.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeItem(index)}
+                                className="mt-3 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
+                              >
+                                Remove Item
+                              </button>
+                            )}
+                          </div>
+                        </SortableItem>
+                      ))}
+                    </SortableContext>
+                  </DndContext>
+
+                  {/* Total */}
+                  <div className="mt-6 p-4 bg-gray-700 rounded-lg border border-gray-600">
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-white">
+                        Total: {formatCurrency(calculateTotal(), newInvoice.currency)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Information Section */}
+                <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                    <FileText className="h-5 w-5 mr-2 text-purple-400" />
+                    Additional Information
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Payment Terms</label>
+                      <textarea
+                        value={newInvoice.terms}
+                        onChange={(e) => setNewInvoice({ ...newInvoice, terms: e.target.value })}
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                        rows={4}
+                        placeholder="Enter payment terms..."
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Notes</label>
+                      <textarea
+                        value={newInvoice.notes}
+                        onChange={(e) => setNewInvoice({ ...newInvoice, notes: e.target.value })}
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                        rows={4}
+                        placeholder="Add any additional notes..."
                       />
                     </div>
                   </div>
-                )}
-                {addClientError && (
-                  <div className="text-red-500 text-sm mt-2">{addClientError}</div>
-                )}
+                  
+                  <div className="mt-6">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Terms & Conditions</label>
+                    <textarea
+                      value={newInvoice.termsAndConditions}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, termsAndConditions: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      rows={6}
+                      placeholder="Enter terms and conditions for this invoice..."
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="bg-white rounded-lg p-4 shadow-md mt-6 md:mt-0">
+              <div className="bg-white rounded-lg p-4 shadow-md">
                 <h3 className="text-lg font-semibold mb-2 text-gray-800">Live Preview</h3>
                 <InvoicePreview
                   invoice={{
@@ -1275,9 +1599,8 @@ const InvoicesPage: React.FC = () => {
                   isPreview={true}
                   showClientAddress={showClientAddress}
                 />
-                  </div>
-                </div>
               </div>
+            </div>
             {/* Sticky action buttons remain outside the grid */}
             <div className="sticky bottom-0 bg-gray-900 z-20 pt-4 pb-4 border-t border-gray-700 flex justify-end space-x-3">
               <button
@@ -1366,7 +1689,7 @@ const InvoicesPage: React.FC = () => {
                     {Object.entries(invoiceCustomization.colors).map(([key, value]) => (
                       <div key={key} className="flex items-center justify-between">
                         <label className="text-gray-300 capitalize text-sm">
-                          {key.replace(/([A-Z])/g, ' $1').trim()}:
+                          {formatColorKey(key)}:
                         </label>
                         <div className="flex items-center space-x-2">
                           <div
@@ -2223,8 +2546,7 @@ const InvoicesPage: React.FC = () => {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-start justify-center z-50 p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
-              setShowEditModal(false);
-              setEditInvoice(null);
+              handleCloseEditModal();
             }
           }}
         >
@@ -2241,7 +2563,14 @@ const InvoicesPage: React.FC = () => {
             <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700 px-6 py-4 rounded-t-2xl">
               <div className="flex justify-between items-center">
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Edit Invoice</h2>
+                  <h2 className="text-2xl font-bold text-white flex items-center">
+                    Edit Invoice
+                    {hasUnsavedChanges && (
+                      <span className="ml-2 px-2 py-1 bg-yellow-600 text-white text-xs rounded-full animate-pulse">
+                        Unsaved Changes
+                      </span>
+                    )}
+                  </h2>
                   <p className="text-gray-400 mt-1">#{editInvoice.invoiceNumber}</p>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -2266,10 +2595,7 @@ const InvoicesPage: React.FC = () => {
                   </div>
                   <button 
                     className="text-gray-400 hover:text-white text-2xl leading-none w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-800 transition-colors" 
-                    onClick={() => {
-                      setShowEditModal(false);
-                      setEditInvoice(null);
-                    }}
+                    onClick={handleCloseEditModal}
                     type="button"
                     title="Close (ESC)"
                   >
@@ -2297,7 +2623,11 @@ const InvoicesPage: React.FC = () => {
                         <select
                           value={editInvoice.clientId}
                           onChange={(e) => setEditInvoice({ ...editInvoice, clientId: e.target.value, projectId: '' })}
-                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                          className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none focus:ring-2 text-white ${
+                            validationErrors.clientId 
+                              ? 'border-red-500 focus:ring-red-500' 
+                              : 'border-gray-600 focus:ring-blue-500'
+                          }`}
                           required
                         >
                           <option value="">Select a client</option>
@@ -2305,6 +2635,9 @@ const InvoicesPage: React.FC = () => {
                             <option key={client._id} value={client._id}>{client.companyName}</option>
                           ))}
                         </select>
+                        {validationErrors.clientId && (
+                          <p className="text-red-400 text-sm mt-1">{validationErrors.clientId}</p>
+                        )}
                       </div>
                       
                       <div>
@@ -2330,9 +2663,16 @@ const InvoicesPage: React.FC = () => {
                           type="text"
                           value={editInvoice.invoiceNumber}
                           onChange={(e) => setEditInvoice({ ...editInvoice, invoiceNumber: e.target.value })}
-                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                          className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none focus:ring-2 text-white ${
+                            validationErrors.invoiceNumber 
+                              ? 'border-red-500 focus:ring-red-500' 
+                              : 'border-gray-600 focus:ring-blue-500'
+                          }`}
                           placeholder="Enter invoice number"
                         />
+                        {validationErrors.invoiceNumber && (
+                          <p className="text-red-400 text-sm mt-1">{validationErrors.invoiceNumber}</p>
+                        )}
                       </div>
                       
                       <div>
@@ -2341,9 +2681,16 @@ const InvoicesPage: React.FC = () => {
                           type="date"
                           value={editInvoice.dueDate}
                           onChange={(e) => setEditInvoice({ ...editInvoice, dueDate: e.target.value })}
-                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                          className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none focus:ring-2 text-white ${
+                            validationErrors.dueDate 
+                              ? 'border-red-500 focus:ring-red-500' 
+                              : 'border-gray-600 focus:ring-blue-500'
+                          }`}
                           required
                         />
+                        {validationErrors.dueDate && (
+                          <p className="text-red-400 text-sm mt-1">{validationErrors.dueDate}</p>
+                        )}
                       </div>
                       
                       <div>
@@ -2410,10 +2757,17 @@ const InvoicesPage: React.FC = () => {
                                       type="text"
                                       value={item.description}
                                       onChange={(e) => handleEditItem(index, 'description', e.target.value)}
-                                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                      className={`w-full px-3 py-2 bg-gray-600 border rounded-lg focus:outline-none focus:ring-2 text-white ${
+                                        validationErrors[`item${index}Description`] 
+                                          ? 'border-red-500 focus:ring-red-500' 
+                                          : 'border-gray-500 focus:ring-blue-500'
+                                      }`}
                                       placeholder="Item description"
                                       required
                                     />
+                                    {validationErrors[`item${index}Description`] && (
+                                      <p className="text-red-400 text-xs mt-1">{validationErrors[`item${index}Description`]}</p>
+                                    )}
                                   </div>
                                   
                                   <div className="lg:col-span-2">
@@ -2521,6 +2875,17 @@ const InvoicesPage: React.FC = () => {
                         />
                       </div>
                     </div>
+                    
+                    <div className="mt-6">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Terms & Conditions</label>
+                      <textarea
+                        value={editInvoice.termsAndConditions}
+                        onChange={(e) => setEditInvoice({ ...editInvoice, termsAndConditions: e.target.value })}
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                        rows={6}
+                        placeholder="Enter terms and conditions for this invoice..."
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2569,14 +2934,17 @@ const InvoicesPage: React.FC = () => {
             <div className="sticky bottom-0 bg-gray-900 border-t border-gray-700 px-6 py-4 rounded-b-2xl">
               <div className="flex justify-between items-center">
                 <div className="text-sm text-gray-400">
-                  Press <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+Enter</kbd> to save • <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Esc</kbd> to cancel
+                  {hasUnsavedChanges && (
+                    <span className="inline-flex items-center mr-4">
+                      <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse mr-2"></div>
+                      Unsaved changes
+                    </span>
+                  )}
+                  Press <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+Enter</kbd> to save • <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+N</kbd> to add item • <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Esc</kbd> to cancel
                 </div>
                 <div className="flex space-x-3">
                   <button
-                    onClick={() => {
-                      setShowEditModal(false);
-                      setEditInvoice(null);
-                    }}
+                    onClick={handleCloseEditModal}
                     className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
                   >
                     Cancel
@@ -2584,7 +2952,7 @@ const InvoicesPage: React.FC = () => {
                   <button
                     onClick={handleUpdateInvoice}
                     disabled={submitting}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                    className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 font-semibold shadow-lg"
                   >
                     {submitting ? (
                       <>
@@ -2593,7 +2961,7 @@ const InvoicesPage: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <Save size={16} />
+                        <Save size={18} />
                         <span>Save Changes</span>
                       </>
                     )}

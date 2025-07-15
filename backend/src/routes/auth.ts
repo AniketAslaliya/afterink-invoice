@@ -11,6 +11,7 @@ import {
   resendVerification,
 } from '../controllers/auth';
 import { authenticate } from '../middleware/auth';
+import User from '../models/User';
 
 const router = express.Router();
 
@@ -126,5 +127,42 @@ router.post(
   ],
   resendVerification
 );
+
+// Debug endpoint to check if user exists (remove in production)
+router.get('/debug/user/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const user = await User.findOne({ email }).select('-password');
+    
+    res.json({
+      success: true,
+      data: {
+        userExists: !!user,
+        user: user ? {
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          isActive: user.isActive,
+        } : null,
+        envCheck: {
+          jwtSecret: !!process.env.JWT_SECRET,
+          jwtRefreshSecret: !!process.env.JWT_REFRESH_SECRET,
+          mongodbUri: !!process.env.MONGODB_URI,
+          nodeEnv: process.env.NODE_ENV,
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: {
+        message: 'Debug endpoint error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      }
+    });
+  }
+});
 
 export default router; 
