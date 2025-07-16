@@ -114,7 +114,10 @@ const DashboardPage: React.FC = () => {
 
   const totalBonuses = bonuses.reduce((sum, b) => sum + (b.amount || 0), 0);
   const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-  const netRevenue = (stats ? stats.totalRevenue : 0) + totalBonuses - totalExpenses;
+  // Total revenue should be stats.totalRevenue + totalBonuses (do NOT subtract expenses)
+  const totalRevenue = (stats ? stats.totalRevenue : 0) + totalBonuses;
+  // Net revenue includes expenses
+  const netRevenue = totalRevenue - totalExpenses;
 
   if (loading) {
     return (
@@ -182,7 +185,8 @@ const DashboardPage: React.FC = () => {
                 </div>
                 <div className="text-right space-y-1">
                   <p className="text-green-400 text-sm font-medium tracking-wide">Total Revenue</p>
-                  <p className="text-3xl font-bold text-white group-hover:scale-105 transition-transform duration-300">{formatCurrency(stats ? stats.totalRevenue : 0)}</p>
+                  <p className="text-3xl font-bold text-white group-hover:scale-105 transition-transform duration-300">{formatCurrency(totalRevenue)}</p>
+                  <p className="text-green-300 text-xs mt-1">All-time earnings (includes bonuses, not expenses)</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 pt-3 border-t border-gray-600/30">

@@ -38,6 +38,7 @@ interface ReportData {
   pendingAmount: number
   totalBonuses: number;
   totalExpenses: number;
+  netRevenue: number;
 }
 
 interface Invoice {
@@ -348,7 +349,7 @@ const ReportsPage: React.FC = () => {
       const netRevenue = totalRevenue + totalBonuses - totalExpenses;
 
       setReportData({
-        totalRevenue: totalRevenue + totalBonuses,
+        totalRevenue: totalRevenue + totalBonuses, // <-- this is correct for total revenue
         monthlyRevenue,
         totalInvoices,
         paidInvoices,
@@ -364,6 +365,7 @@ const ReportsPage: React.FC = () => {
         pendingAmount,
         totalBonuses,
         totalExpenses,
+        netRevenue, // <-- add netRevenue to reportData
       })
 
       setWeeklyRevenue(weeklyRevenue);
@@ -528,7 +530,7 @@ const ReportsPage: React.FC = () => {
                 <div>
                   <p className="text-green-400 text-sm font-medium">Total Revenue</p>
                   <p className="text-2xl font-bold text-white">{formatCurrency(reportData.totalRevenue)}</p>
-                  <p className="text-green-300 text-xs mt-1">All-time earnings</p>
+                  <p className="text-green-300 text-xs mt-1">All-time earnings (includes bonuses, not expenses)</p>
                 </div>
                 <div className="bg-green-600 p-3 rounded-xl">
                   <DollarSign className="h-6 w-6 text-white" />
@@ -582,6 +584,19 @@ const ReportsPage: React.FC = () => {
                 </div>
                 <div className="bg-orange-600 p-3 rounded-xl">
                   <Award className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+            <div className="bg-gradient-to-br from-emerald-800/90 to-emerald-700/90 backdrop-blur-lg rounded-2xl p-6 border border-emerald-700/50 card-hover stagger-item shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-500">
+              <div className="relative">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 rounded-2xl shadow-lg group-hover:shadow-emerald-500/25 transition-all duration-300 group-hover:scale-110">
+                    <BarChart3 className="text-white" size={24} />
+                  </div>
+                  <div className="text-right space-y-1">
+                    <p className="text-emerald-300 text-sm font-medium tracking-wide">Net Revenue</p>
+                    <p className="text-3xl font-bold text-white group-hover:scale-105 transition-transform duration-300">{formatCurrency(reportData.netRevenue)}</p>
+                  </div>
                 </div>
               </div>
             </div>
