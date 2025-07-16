@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchExpenses } from '../store/expensesSlice';
 import { apiGet, apiPost, apiPut, apiDelete } from '../api';
 import { useAuthStore } from '../store/authStore';
+import { Plus, Search, Filter, Receipt, BarChart3 } from 'lucide-react';
 
 const ExpensesPage = () => {
   const dispatch = useDispatch();
@@ -13,8 +14,9 @@ const ExpensesPage = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ reasonId: '', amount: '', date: '', description: '' });
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [filters, setFilters] = useState({ reasonId: '', startDate: '', endDate: '', minAmount: '', maxAmount: '' });
+  const [filters, setFilters] = useState({ reasonId: '', startDate: '', endDate: '', minAmount: '', maxAmount: '', search: '' });
   const { user } = useAuthStore();
+  const [showAdd, setShowAdd] = useState(false);
 
   useEffect(() => {
     dispatch(fetchExpenses() as any);
@@ -31,6 +33,7 @@ const ExpensesPage = () => {
     try {
       await apiPost('/expenses', { ...form, amount: Number(form.amount) });
       setForm({ reasonId: '', amount: '', date: '', description: '' });
+      setShowAdd(false);
       dispatch(fetchExpenses() as any);
     } catch (err) {
       alert('Failed to add expense');
@@ -78,6 +81,12 @@ const ExpensesPage = () => {
     }
   };
 
+  const canEditOrDelete = (e: any) => {
+    if (!user) return false;
+    return user.role === 'admin' || user.role === 'manager' || e.createdBy === user._id;
+  };
+
+  // Filtering and searching
   const filteredExpenses = expenses.filter((e: any) => {
     const reasonMatch = !filters.reasonId || (e.reasonId?._id || e.reasonId) === filters.reasonId;
     const date = e.date ? new Date(e.date) : null;
@@ -85,57 +94,110 @@ const ExpensesPage = () => {
     const endDateMatch = !filters.endDate || (date && date <= new Date(filters.endDate));
     const minAmountMatch = !filters.minAmount || e.amount >= Number(filters.minAmount);
     const maxAmountMatch = !filters.maxAmount || e.amount <= Number(filters.maxAmount);
-    return reasonMatch && startDateMatch && endDateMatch && minAmountMatch && maxAmountMatch;
+    const searchMatch = !filters.search || (
+      (e.description || '').toLowerCase().includes(filters.search.toLowerCase()) ||
+      (e.reasonId?.name || '').toLowerCase().includes(filters.search.toLowerCase())
+    );
+    return reasonMatch && startDateMatch && endDateMatch && minAmountMatch && maxAmountMatch && searchMatch;
   });
 
-  const canEditOrDelete = (e: any) => {
-    if (!user) return false;
-    return user.role === 'admin' || user.role === 'manager' || e.createdBy === user._id;
-  };
+  // Summary stats
+  const totalExpenses = expenses.reduce((sum: number, e: any) => sum + (e.amount || 0), 0);
+  const thisMonthExpenses = expenses.filter((e: any) => {
+    const d = e.date ? new Date(e.date) : null;
+    const now = new Date();
+    return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).reduce((sum: number, e: any) => sum + (e.amount || 0), 0);
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Expenses</h1>
-      <form onSubmit={handleSubmit} className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-        <select name="reasonId" value={form.reasonId} onChange={handleChange} required className="p-2 border rounded">
-          <option value="">Select Reason</option>
-          {reasons.map((r: any) => (
-            <option key={r._id} value={r._id}>{r.name}</option>
-          ))}
-        </select>
-        <input name="amount" type="number" value={form.amount} onChange={handleChange} placeholder="Amount" required className="p-2 border rounded" />
-        <input name="date" type="date" value={form.date} onChange={handleChange} required className="p-2 border rounded" />
-        <input name="description" value={form.description} onChange={handleChange} placeholder="Description" className="p-2 border rounded" />
-        <button type="submit" disabled={submitting} className="col-span-1 md:col-span-4 bg-blue-600 text-white p-2 rounded mt-2">{submitting ? 'Adding...' : 'Add Expense'}</button>
-      </form>
-      <div className="mb-4 grid grid-cols-1 md:grid-cols-5 gap-4">
-        <select name="reasonId" value={filters.reasonId} onChange={e => setFilters(f => ({ ...f, reasonId: e.target.value }))} className="p-2 border rounded">
-          <option value="">All Reasons</option>
-          {reasons.map((r: any) => (
-            <option key={r._id} value={r._id}>{r.name}</option>
-          ))}
-        </select>
-        <input type="date" value={filters.startDate} onChange={e => setFilters(f => ({ ...f, startDate: e.target.value }))} className="p-2 border rounded" placeholder="Start Date" />
-        <input type="date" value={filters.endDate} onChange={e => setFilters(f => ({ ...f, endDate: e.target.value }))} className="p-2 border rounded" placeholder="End Date" />
-        <input type="number" value={filters.minAmount} onChange={e => setFilters(f => ({ ...f, minAmount: e.target.value }))} className="p-2 border rounded" placeholder="Min Amount" />
-        <input type="number" value={filters.maxAmount} onChange={e => setFilters(f => ({ ...f, maxAmount: e.target.value }))} className="p-2 border rounded" placeholder="Max Amount" />
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold mb-1 flex items-center gap-2"><Receipt className="inline-block text-red-400" /> Expenses</h1>
+          <p className="text-gray-400">Track all business expenses and their impact on revenue.</p>
+        </div>
+        <button onClick={() => setShowAdd((v) => !v)} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-md">
+          <Plus size={18} /> Add Expense
+        </button>
       </div>
-      {loading ? <p>Loading...</p> : error ? <p className="text-red-500">{error}</p> : (
-        <table className="min-w-full bg-white border">
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-gradient-to-br from-red-800 to-red-600 rounded-xl p-6 flex items-center gap-4 shadow-lg">
+          <Receipt className="text-white bg-red-500 rounded-full p-2" size={40} />
+          <div>
+            <div className="text-white text-lg font-bold">Total Expenses</div>
+            <div className="text-2xl text-red-200 font-bold">₹{totalExpenses.toLocaleString()}</div>
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-purple-800 to-purple-600 rounded-xl p-6 flex items-center gap-4 shadow-lg">
+          <BarChart3 className="text-white bg-purple-500 rounded-full p-2" size={40} />
+          <div>
+            <div className="text-white text-lg font-bold">This Month</div>
+            <div className="text-2xl text-purple-200 font-bold">₹{thisMonthExpenses.toLocaleString()}</div>
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-xl p-6 flex items-center gap-4 shadow-lg">
+          <Search className="text-white bg-gray-500 rounded-full p-2" size={40} />
+          <div>
+            <div className="text-white text-lg font-bold">Expenses Found</div>
+            <div className="text-2xl text-gray-200 font-bold">{filteredExpenses.length}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Search & Filter Bar */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
+        <div className="flex flex-1 gap-2">
+          <input type="text" value={filters.search} onChange={e => setFilters(f => ({ ...f, search: e.target.value }))} placeholder="Search expenses..." className="p-2 border rounded w-full md:w-64" />
+          <select name="reasonId" value={filters.reasonId} onChange={e => setFilters(f => ({ ...f, reasonId: e.target.value }))} className="p-2 border rounded">
+            <option value="">All Reasons</option>
+            {reasons.map((r: any) => (
+              <option key={r._id} value={r._id}>{r.name}</option>
+            ))}
+          </select>
+          <input type="date" value={filters.startDate} onChange={e => setFilters(f => ({ ...f, startDate: e.target.value }))} className="p-2 border rounded" />
+          <input type="date" value={filters.endDate} onChange={e => setFilters(f => ({ ...f, endDate: e.target.value }))} className="p-2 border rounded" />
+          <input type="number" value={filters.minAmount} onChange={e => setFilters(f => ({ ...f, minAmount: e.target.value }))} className="p-2 border rounded" placeholder="Min Amount" />
+          <input type="number" value={filters.maxAmount} onChange={e => setFilters(f => ({ ...f, maxAmount: e.target.value }))} className="p-2 border rounded" placeholder="Max Amount" />
+        </div>
+      </div>
+
+      {/* Add Expense Form (collapsible) */}
+      {showAdd && (
+        <form onSubmit={handleSubmit} className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 bg-gray-800 p-4 rounded-xl shadow-lg">
+          <select name="reasonId" value={form.reasonId} onChange={handleChange} required className="p-2 border rounded">
+            <option value="">Select Reason</option>
+            {reasons.map((r: any) => (
+              <option key={r._id} value={r._id}>{r.name}</option>
+            ))}
+          </select>
+          <input name="amount" type="number" value={form.amount} onChange={handleChange} placeholder="Amount" required className="p-2 border rounded" />
+          <input name="date" type="date" value={form.date} onChange={handleChange} required className="p-2 border rounded" />
+          <input name="description" value={form.description} onChange={handleChange} placeholder="Description" className="p-2 border rounded" />
+          <button type="submit" disabled={submitting} className="col-span-1 md:col-span-4 bg-red-600 text-white p-2 rounded mt-2">{submitting ? 'Adding...' : 'Add Expense'}</button>
+        </form>
+      )}
+
+      {/* Table/List of Expenses */}
+      <div className="bg-gray-900 rounded-xl shadow-lg overflow-x-auto">
+        <table className="min-w-full bg-gray-900 text-white">
           <thead>
             <tr>
-              <th className="border px-4 py-2">Reason</th>
-              <th className="border px-4 py-2">Amount</th>
-              <th className="border px-4 py-2">Date</th>
-              <th className="border px-4 py-2">Description</th>
+              <th className="border-b border-gray-700 px-4 py-3 text-left">Reason</th>
+              <th className="border-b border-gray-700 px-4 py-3 text-left">Amount</th>
+              <th className="border-b border-gray-700 px-4 py-3 text-left">Date</th>
+              <th className="border-b border-gray-700 px-4 py-3 text-left">Description</th>
+              <th className="border-b border-gray-700 px-4 py-3 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredExpenses.map((e: any) => (
-              <tr key={e._id}>
+              <tr key={e._id} className="hover:bg-gray-800 transition-colors">
                 {editId === e._id ? (
                   <>
-                    <td className="border px-4 py-2">
+                    <td className="border-b border-gray-800 px-4 py-2">
                       <select name="reasonId" value={editForm.reasonId} onChange={handleEditChange} required className="p-2 border rounded">
                         <option value="">Select Reason</option>
                         {reasons.map((r: any) => (
@@ -143,21 +205,21 @@ const ExpensesPage = () => {
                         ))}
                       </select>
                     </td>
-                    <td className="border px-4 py-2"><input name="amount" type="number" value={editForm.amount} onChange={handleEditChange} className="p-2 border rounded" /></td>
-                    <td className="border px-4 py-2"><input name="date" type="date" value={editForm.date} onChange={handleEditChange} className="p-2 border rounded" /></td>
-                    <td className="border px-4 py-2"><input name="description" value={editForm.description} onChange={handleEditChange} className="p-2 border rounded" /></td>
-                    <td className="border px-4 py-2">
+                    <td className="border-b border-gray-800 px-4 py-2"><input name="amount" type="number" value={editForm.amount} onChange={handleEditChange} className="p-2 border rounded" /></td>
+                    <td className="border-b border-gray-800 px-4 py-2"><input name="date" type="date" value={editForm.date} onChange={handleEditChange} className="p-2 border rounded" /></td>
+                    <td className="border-b border-gray-800 px-4 py-2"><input name="description" value={editForm.description} onChange={handleEditChange} className="p-2 border rounded" /></td>
+                    <td className="border-b border-gray-800 px-4 py-2">
                       <button onClick={handleEditSubmit} className="bg-green-600 text-white px-2 py-1 rounded mr-2">Save</button>
                       <button onClick={() => setEditId(null)} className="bg-gray-400 text-white px-2 py-1 rounded">Cancel</button>
                     </td>
                   </>
                 ) : (
                   <>
-                    <td className="border px-4 py-2">{e.reasonId?.name || e.reasonId}</td>
-                    <td className="border px-4 py-2">{e.amount}</td>
-                    <td className="border px-4 py-2">{e.date ? new Date(e.date).toLocaleDateString() : ''}</td>
-                    <td className="border px-4 py-2">{e.description}</td>
-                    <td className="border px-4 py-2">
+                    <td className="border-b border-gray-800 px-4 py-2">{e.reasonId?.name || e.reasonId}</td>
+                    <td className="border-b border-gray-800 px-4 py-2">₹{e.amount}</td>
+                    <td className="border-b border-gray-800 px-4 py-2">{e.date ? new Date(e.date).toLocaleDateString() : ''}</td>
+                    <td className="border-b border-gray-800 px-4 py-2">{e.description}</td>
+                    <td className="border-b border-gray-800 px-4 py-2">
                       {canEditOrDelete(e) && (
                         <>
                           <button onClick={() => handleEdit(e)} className="bg-yellow-500 text-white px-2 py-1 rounded mr-2">Edit</button>
@@ -171,7 +233,7 @@ const ExpensesPage = () => {
             ))}
           </tbody>
         </table>
-      )}
+      </div>
     </div>
   );
 };
