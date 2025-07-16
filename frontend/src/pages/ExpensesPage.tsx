@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchExpenses } from '../store/expensesSlice';
 import { apiGet, apiPost, apiPut, apiDelete } from '../api';
+import { useAuthStore } from '../store/authStore';
 
 const ExpensesPage = () => {
   const dispatch = useDispatch();
@@ -13,6 +14,7 @@ const ExpensesPage = () => {
   const [editForm, setEditForm] = useState({ reasonId: '', amount: '', date: '', description: '' });
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [filters, setFilters] = useState({ reasonId: '', startDate: '', endDate: '', minAmount: '', maxAmount: '' });
+  const { user } = useAuthStore();
 
   useEffect(() => {
     dispatch(fetchExpenses() as any);
@@ -86,6 +88,11 @@ const ExpensesPage = () => {
     return reasonMatch && startDateMatch && endDateMatch && minAmountMatch && maxAmountMatch;
   });
 
+  const canEditOrDelete = (e: any) => {
+    if (!user) return false;
+    return user.role === 'admin' || user.role === 'manager' || e.createdBy === user._id;
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Expenses</h1>
@@ -151,8 +158,12 @@ const ExpensesPage = () => {
                     <td className="border px-4 py-2">{e.date ? new Date(e.date).toLocaleDateString() : ''}</td>
                     <td className="border px-4 py-2">{e.description}</td>
                     <td className="border px-4 py-2">
-                      <button onClick={() => handleEdit(e)} className="bg-yellow-500 text-white px-2 py-1 rounded mr-2">Edit</button>
-                      <button onClick={() => handleDelete(e._id)} className="bg-red-600 text-white px-2 py-1 rounded" disabled={deletingId === e._id}>{deletingId === e._id ? 'Deleting...' : 'Delete'}</button>
+                      {canEditOrDelete(e) && (
+                        <>
+                          <button onClick={() => handleEdit(e)} className="bg-yellow-500 text-white px-2 py-1 rounded mr-2">Edit</button>
+                          <button onClick={() => handleDelete(e._id)} className="bg-red-600 text-white px-2 py-1 rounded" disabled={deletingId === e._id}>{deletingId === e._id ? 'Deleting...' : 'Delete'}</button>
+                        </>
+                      )}
                     </td>
                   </>
                 )}
