@@ -9,6 +9,7 @@ const ExpenseReasonsPage = () => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const fetchReasons = async () => {
     setLoading(true);
@@ -37,12 +38,13 @@ const ExpenseReasonsPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setErrorMsg(null);
     try {
       await apiPost('/expense-reasons', form);
       setForm({ name: '', description: '' });
       fetchReasons();
     } catch {
-      alert('Failed to add reason');
+      setErrorMsg('Failed to add reason. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -85,10 +87,11 @@ const ExpenseReasonsPage = () => {
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Expense Reasons</h1>
       <form onSubmit={handleSubmit} className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <input name="name" value={form.name} onChange={handleChange} placeholder="Reason Name" required className="p-2 border rounded" />
-        <input name="description" value={form.description} onChange={handleChange} placeholder="Description" className="p-2 border rounded" />
+        <input name="name" value={form.name} onChange={handleChange} placeholder="Reason Name" required className="p-2 border rounded" disabled={false} />
+        <input name="description" value={form.description} onChange={handleChange} placeholder="Description" className="p-2 border rounded" disabled={false} />
         <button type="submit" disabled={submitting} className="bg-blue-600 text-white p-2 rounded">{submitting ? 'Adding...' : 'Add Reason'}</button>
       </form>
+      {errorMsg && <div className="text-red-500 mb-2">{errorMsg}</div>}
       {loading ? <p>Loading...</p> : (
         <table className="min-w-full bg-white border">
           <thead>
