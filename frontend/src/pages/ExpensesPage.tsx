@@ -166,9 +166,9 @@ const ExpensesPage = () => {
 
       {/* Add Expense Form (collapsible) */}
       {showAdd && (
-        <form onSubmit={handleSubmit} className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 bg-gray-800 p-4 rounded-xl shadow-lg">
-          <select name="reasonId" value={form.reasonId} onChange={handleChange} required className="p-2 border rounded">
-            <option value="">Select Reason</option>
+        <form onSubmit={handleSubmit} className="mb-6 grid grid-cols-1 md:grid-cols-5 gap-4 bg-gray-800 p-4 rounded-xl shadow-lg">
+          <select name="reasonId" value={form.reasonId} onChange={handleChange} required className="p-2 border rounded" disabled={reasons.length === 0}>
+            <option value="">{reasons.length === 0 ? 'No reasons available' : 'Select Reason'}</option>
             {reasons.map((r: any) => (
               <option key={r._id} value={r._id}>{r.name}</option>
             ))}
@@ -176,7 +176,10 @@ const ExpensesPage = () => {
           <input name="amount" type="number" value={form.amount} onChange={handleChange} placeholder="Amount" required className="p-2 border rounded" />
           <input name="date" type="date" value={form.date} onChange={handleChange} required className="p-2 border rounded" />
           <input name="description" value={form.description} onChange={handleChange} placeholder="Description" className="p-2 border rounded" />
-          <button type="submit" disabled={submitting} className="col-span-1 md:col-span-4 bg-red-600 text-white p-2 rounded mt-2">{submitting ? 'Adding...' : 'Add Expense'}</button>
+          <button type="submit" disabled={submitting || reasons.length === 0} className="col-span-1 md:col-span-5 bg-red-600 text-white p-2 rounded mt-2">{submitting ? 'Adding...' : 'Add Expense'}</button>
+          {reasons.length === 0 && (
+            <div className="col-span-1 md:col-span-5 text-yellow-400 text-sm mt-2">No expense reasons found. Please add one in the Expense Reasons page.</div>
+          )}
         </form>
       )}
 
