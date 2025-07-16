@@ -36,6 +36,8 @@ interface ReportData {
     value: number
   }>
   pendingAmount: number
+  totalBonuses: number;
+  totalExpenses: number;
 }
 
 interface Invoice {
@@ -102,10 +104,21 @@ const ReportsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview')
   const [weeklyRevenue, setWeeklyRevenue] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [bonuses, setBonuses] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchReportData()
-  }, [selectedPeriod, refreshKey])
+    fetchReportData();
+    // Fetch bonuses and expenses for report metrics
+    (async () => {
+      try {
+        const bonusRes = await apiGet('/bonuses');
+        setBonuses(bonusRes.data || bonusRes);
+        const expenseRes = await apiGet('/expenses');
+        setExpenses(expenseRes.data || expenseRes);
+      } catch {}
+    })();
+  }, [selectedPeriod, refreshKey]);
 
   const fetchReportData = async () => {
     try {
@@ -330,8 +343,12 @@ const ReportsPage: React.FC = () => {
         }))
         .filter(item => item.count > 0)
 
+      const totalBonuses = bonuses.reduce((sum: number, b: any) => sum + (b.amount || 0), 0);
+      const totalExpenses = expenses.reduce((sum: number, e: any) => sum + (e.amount || 0), 0);
+      const netRevenue = totalRevenue + totalBonuses - totalExpenses;
+
       setReportData({
-        totalRevenue,
+        totalRevenue: totalRevenue + totalBonuses,
         monthlyRevenue,
         totalInvoices,
         paidInvoices,
@@ -344,7 +361,9 @@ const ReportsPage: React.FC = () => {
         monthlyStats,
         clientStats,
         statusBreakdown,
-        pendingAmount
+        pendingAmount,
+        totalBonuses,
+        totalExpenses,
       })
 
       setWeeklyRevenue(weeklyRevenue);
@@ -503,7 +522,7 @@ const ReportsPage: React.FC = () => {
       {activeTab === 'overview' && (
         <div className="space-y-8">
           {/* Key Metrics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
             <div className="bg-gradient-to-br from-green-900/30 to-green-800/30 rounded-2xl p-6 border border-green-700/30 metric-card">
               <div className="flex items-center justify-between">
                 <div>
@@ -516,7 +535,20 @@ const ReportsPage: React.FC = () => {
                 </div>
               </div>
             </div>
-
+            <div className="bg-gradient-to-br from-blue-800 to-blue-600 rounded-2xl p-6 border border-blue-700 flex items-center gap-4 shadow-lg">
+              <BarChart3 className="text-white bg-blue-500 rounded-full p-2" size={40} />
+              <div>
+                <div className="text-white text-lg font-bold">Total Bonuses</div>
+                <div className="text-2xl text-blue-200 font-bold">{formatCurrency(reportData.totalBonuses)}</div>
+              </div>
+            </div>
+            <div className="bg-gradient-to-br from-red-800 to-red-600 rounded-2xl p-6 border border-red-700 flex items-center gap-4 shadow-lg">
+              <BarChart3 className="text-white bg-red-500 rounded-full p-2" size={40} />
+              <div>
+                <div className="text-white text-lg font-bold">Total Expenses</div>
+                <div className="text-2xl text-red-200 font-bold">{formatCurrency(reportData.totalExpenses)}</div>
+              </div>
+            </div>
             <div className="bg-gradient-to-br from-blue-900/30 to-blue-800/30 rounded-2xl p-6 border border-blue-700/30 metric-card">
               <div className="flex items-center justify-between">
                 <div>
@@ -529,7 +561,6 @@ const ReportsPage: React.FC = () => {
                 </div>
               </div>
             </div>
-
             <div className="bg-gradient-to-br from-purple-900/30 to-purple-800/30 rounded-2xl p-6 border border-purple-700/30 metric-card">
               <div className="flex items-center justify-between">
                 <div>
@@ -542,7 +573,6 @@ const ReportsPage: React.FC = () => {
                 </div>
               </div>
             </div>
-
             <div className="bg-gradient-to-br from-orange-900/30 to-orange-800/30 rounded-2xl p-6 border border-orange-700/30 metric-card">
               <div className="flex items-center justify-between">
                 <div>

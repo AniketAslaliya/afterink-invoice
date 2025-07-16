@@ -97,7 +97,7 @@ const DashboardPage: React.FC = () => {
         setExpenses(expenseRes.data || expenseRes);
       } catch {}
     })();
-  }, []);
+  }, [dispatch, bonuses.length, expenses.length]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -272,34 +272,20 @@ const DashboardPage: React.FC = () => {
           </div>
 
           {/* Total Bonuses */}
-          <div className="group relative overflow-hidden bg-gradient-to-br from-blue-800/90 to-blue-700/90 backdrop-blur-lg rounded-2xl p-6 border border-blue-700/50 card-hover stagger-item shadow-xl hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="relative">
-              <div className="flex items-center justify-between mb-6">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 rounded-2xl shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300 group-hover:scale-110">
-                  <PlusCircle className="text-white" size={24} />
-                </div>
-                <div className="text-right space-y-1">
-                  <p className="text-blue-300 text-sm font-medium tracking-wide">Total Bonuses</p>
-                  <p className="text-3xl font-bold text-white group-hover:scale-105 transition-transform duration-300">{formatCurrency(totalBonuses)}</p>
-                </div>
-              </div>
+          <div className="bg-gradient-to-br from-blue-800 to-blue-600 rounded-2xl p-6 border border-blue-700 flex items-center gap-4 shadow-lg">
+            <PlusCircle className="text-white bg-blue-500 rounded-full p-2" size={40} />
+            <div>
+              <div className="text-white text-lg font-bold">Total Bonuses</div>
+              <div className="text-2xl text-blue-200 font-bold">{formatCurrency(totalBonuses)}</div>
             </div>
           </div>
 
           {/* Total Expenses */}
-          <div className="group relative overflow-hidden bg-gradient-to-br from-red-800/90 to-red-700/90 backdrop-blur-lg rounded-2xl p-6 border border-red-700/50 card-hover stagger-item shadow-xl hover:shadow-2xl hover:shadow-red-500/20 transition-all duration-500">
-            <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="relative">
-              <div className="flex items-center justify-between mb-6">
-                <div className="bg-gradient-to-br from-red-500 to-red-600 p-4 rounded-2xl shadow-lg group-hover:shadow-red-500/25 transition-all duration-300 group-hover:scale-110">
-                  <TrendingDown className="text-white" size={24} />
-                </div>
-                <div className="text-right space-y-1">
-                  <p className="text-red-300 text-sm font-medium tracking-wide">Total Expenses</p>
-                  <p className="text-3xl font-bold text-white group-hover:scale-105 transition-transform duration-300">{formatCurrency(totalExpenses)}</p>
-                </div>
-              </div>
+          <div className="bg-gradient-to-br from-red-800 to-red-600 rounded-2xl p-6 border border-red-700 flex items-center gap-4 shadow-lg">
+            <TrendingDown className="text-white bg-red-500 rounded-full p-2" size={40} />
+            <div>
+              <div className="text-white text-lg font-bold">Total Expenses</div>
+              <div className="text-2xl text-red-200 font-bold">{formatCurrency(totalExpenses)}</div>
             </div>
           </div>
 

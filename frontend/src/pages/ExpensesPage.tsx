@@ -110,35 +110,41 @@ const ExpensesPage = () => {
   }).reduce((sum: number, e: any) => sum + (e.amount || 0), 0);
 
   return (
-    <div className="container mx-auto p-4">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold mb-1 flex items-center gap-2"><Receipt className="inline-block text-red-400" /> Expenses</h1>
-          <p className="text-gray-400">Track all business expenses and their impact on revenue.</p>
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-red-600/10 rounded-3xl blur-3xl"></div>
+        <div className="relative bg-gradient-to-r from-gray-800/60 to-gray-900/60 backdrop-blur-lg rounded-2xl p-8 border border-gray-700/30">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-white flex items-center gap-2"><Receipt className="inline-block text-red-400" /> Expenses</h1>
+              <p className="text-gray-300 mt-2">Track all business expenses and their impact on revenue.</p>
+            </div>
+            <button onClick={() => setShowAdd((v) => !v)} className="btn btn-primary group">
+              <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" />
+              Add Expense
+            </button>
+          </div>
         </div>
-        <button onClick={() => setShowAdd((v) => !v)} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-md">
-          <Plus size={18} /> Add Expense
-        </button>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-red-800 to-red-600 rounded-xl p-6 flex items-center gap-4 shadow-lg">
+        <div className="bg-gradient-to-br from-red-800 to-red-600 rounded-2xl p-6 border border-red-700 flex items-center gap-4 shadow-lg">
           <Receipt className="text-white bg-red-500 rounded-full p-2" size={40} />
           <div>
             <div className="text-white text-lg font-bold">Total Expenses</div>
             <div className="text-2xl text-red-200 font-bold">₹{totalExpenses.toLocaleString()}</div>
           </div>
         </div>
-        <div className="bg-gradient-to-br from-purple-800 to-purple-600 rounded-xl p-6 flex items-center gap-4 shadow-lg">
+        <div className="bg-gradient-to-br from-purple-800 to-purple-600 rounded-2xl p-6 border border-purple-700 flex items-center gap-4 shadow-lg">
           <BarChart3 className="text-white bg-purple-500 rounded-full p-2" size={40} />
           <div>
             <div className="text-white text-lg font-bold">This Month</div>
             <div className="text-2xl text-purple-200 font-bold">₹{thisMonthExpenses.toLocaleString()}</div>
           </div>
         </div>
-        <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-xl p-6 flex items-center gap-4 shadow-lg">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 border border-gray-700 flex items-center gap-4 shadow-lg">
           <Search className="text-white bg-gray-500 rounded-full p-2" size={40} />
           <div>
             <div className="text-white text-lg font-bold">Expenses Found</div>
@@ -148,35 +154,46 @@ const ExpensesPage = () => {
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
-        <div className="flex flex-1 gap-2">
-          <input type="text" value={filters.search} onChange={e => setFilters(f => ({ ...f, search: e.target.value }))} placeholder="Search expenses..." className="p-2 border rounded w-full md:w-64" />
-          <select name="reasonId" value={filters.reasonId} onChange={e => setFilters(f => ({ ...f, reasonId: e.target.value }))} className="p-2 border rounded">
-            <option value="">All Reasons</option>
-            {reasons.map((r: any) => (
-              <option key={r._id} value={r._id}>{r.name}</option>
-            ))}
-          </select>
-          <input type="date" value={filters.startDate} onChange={e => setFilters(f => ({ ...f, startDate: e.target.value }))} className="p-2 border rounded" />
-          <input type="date" value={filters.endDate} onChange={e => setFilters(f => ({ ...f, endDate: e.target.value }))} className="p-2 border rounded" />
-          <input type="number" value={filters.minAmount} onChange={e => setFilters(f => ({ ...f, minAmount: e.target.value }))} className="p-2 border rounded" placeholder="Min Amount" />
-          <input type="number" value={filters.maxAmount} onChange={e => setFilters(f => ({ ...f, maxAmount: e.target.value }))} className="p-2 border rounded" placeholder="Max Amount" />
+      <div className="bg-gray-800 rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-600 mb-8">
+        <div className="flex flex-col gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="Search expenses..."
+              value={filters.search}
+              onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
+              className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-white placeholder-gray-400 text-base"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <select name="reasonId" value={filters.reasonId} onChange={e => setFilters(f => ({ ...f, reasonId: e.target.value }))} className="px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-white text-base">
+              <option value="">All Reasons</option>
+              {reasons.map((r: any) => (
+                <option key={r._id} value={r._id}>{r.name}</option>
+              ))}
+            </select>
+            <input type="date" value={filters.startDate} onChange={e => setFilters(f => ({ ...f, startDate: e.target.value }))} className="px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-white text-base" />
+            <input type="date" value={filters.endDate} onChange={e => setFilters(f => ({ ...f, endDate: e.target.value }))} className="px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-white text-base" />
+            <input type="number" value={filters.minAmount} onChange={e => setFilters(f => ({ ...f, minAmount: e.target.value }))} className="px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-white text-base" placeholder="Min Amount" />
+            <input type="number" value={filters.maxAmount} onChange={e => setFilters(f => ({ ...f, maxAmount: e.target.value }))} className="px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-white text-base" placeholder="Max Amount" />
+          </div>
         </div>
       </div>
 
       {/* Add Expense Form (collapsible) */}
       {showAdd && (
-        <form onSubmit={handleSubmit} className="mb-6 grid grid-cols-1 md:grid-cols-5 gap-4 bg-gray-800 p-4 rounded-xl shadow-lg">
-          <select name="reasonId" value={form.reasonId} onChange={handleChange} required className="p-2 border rounded" disabled={reasons.length === 0}>
+        <form onSubmit={handleSubmit} className="mb-6 grid grid-cols-1 md:grid-cols-5 gap-4 bg-gray-900 p-6 rounded-2xl border border-gray-700 shadow-lg">
+          <select name="reasonId" value={form.reasonId} onChange={handleChange} required className="px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white" disabled={reasons.length === 0}>
             <option value="">{reasons.length === 0 ? 'No reasons available' : 'Select Reason'}</option>
             {reasons.map((r: any) => (
               <option key={r._id} value={r._id}>{r.name}</option>
             ))}
           </select>
-          <input name="amount" type="number" value={form.amount} onChange={handleChange} placeholder="Amount" required className="p-2 border rounded" />
-          <input name="date" type="date" value={form.date} onChange={handleChange} required className="p-2 border rounded" />
-          <input name="description" value={form.description} onChange={handleChange} placeholder="Description" className="p-2 border rounded" />
-          <button type="submit" disabled={submitting || reasons.length === 0} className="col-span-1 md:col-span-5 bg-red-600 text-white p-2 rounded mt-2">{submitting ? 'Adding...' : 'Add Expense'}</button>
+          <input name="amount" type="number" value={form.amount} onChange={handleChange} placeholder="Amount" required className="px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white" />
+          <input name="date" type="date" value={form.date} onChange={handleChange} required className="px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white" />
+          <input name="description" value={form.description} onChange={handleChange} placeholder="Description" className="px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white" />
+          <button type="submit" disabled={submitting || reasons.length === 0} className="col-span-1 md:col-span-5 btn btn-primary mt-2">{submitting ? 'Adding...' : 'Add Expense'}</button>
           {reasons.length === 0 && (
             <div className="col-span-1 md:col-span-5 text-yellow-400 text-sm mt-2">No expense reasons found. Please add one in the Expense Reasons page.</div>
           )}
@@ -184,7 +201,7 @@ const ExpensesPage = () => {
       )}
 
       {/* Table/List of Expenses */}
-      <div className="bg-gray-900 rounded-xl shadow-lg overflow-x-auto">
+      <div className="bg-gray-900 rounded-2xl border border-gray-700 shadow-lg overflow-x-auto">
         <table className="min-w-full bg-gray-900 text-white">
           <thead>
             <tr>
@@ -201,19 +218,19 @@ const ExpensesPage = () => {
                 {editId === e._id ? (
                   <>
                     <td className="border-b border-gray-800 px-4 py-2">
-                      <select name="reasonId" value={editForm.reasonId} onChange={handleEditChange} required className="p-2 border rounded">
+                      <select name="reasonId" value={editForm.reasonId} onChange={handleEditChange} required className="px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white">
                         <option value="">Select Reason</option>
                         {reasons.map((r: any) => (
                           <option key={r._id} value={r._id}>{r.name}</option>
                         ))}
                       </select>
                     </td>
-                    <td className="border-b border-gray-800 px-4 py-2"><input name="amount" type="number" value={editForm.amount} onChange={handleEditChange} className="p-2 border rounded" /></td>
-                    <td className="border-b border-gray-800 px-4 py-2"><input name="date" type="date" value={editForm.date} onChange={handleEditChange} className="p-2 border rounded" /></td>
-                    <td className="border-b border-gray-800 px-4 py-2"><input name="description" value={editForm.description} onChange={handleEditChange} className="p-2 border rounded" /></td>
+                    <td className="border-b border-gray-800 px-4 py-2"><input name="amount" type="number" value={editForm.amount} onChange={handleEditChange} className="px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white" /></td>
+                    <td className="border-b border-gray-800 px-4 py-2"><input name="date" type="date" value={editForm.date} onChange={handleEditChange} className="px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white" /></td>
+                    <td className="border-b border-gray-800 px-4 py-2"><input name="description" value={editForm.description} onChange={handleEditChange} className="px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white" /></td>
                     <td className="border-b border-gray-800 px-4 py-2">
-                      <button onClick={handleEditSubmit} className="bg-green-600 text-white px-2 py-1 rounded mr-2">Save</button>
-                      <button onClick={() => setEditId(null)} className="bg-gray-400 text-white px-2 py-1 rounded">Cancel</button>
+                      <button onClick={handleEditSubmit} className="btn btn-primary mr-2">Save</button>
+                      <button onClick={() => setEditId(null)} className="btn btn-outline">Cancel</button>
                     </td>
                   </>
                 ) : (
@@ -225,8 +242,8 @@ const ExpensesPage = () => {
                     <td className="border-b border-gray-800 px-4 py-2">
                       {canEditOrDelete(e) && (
                         <>
-                          <button onClick={() => handleEdit(e)} className="bg-yellow-500 text-white px-2 py-1 rounded mr-2">Edit</button>
-                          <button onClick={() => handleDelete(e._id)} className="bg-red-600 text-white px-2 py-1 rounded" disabled={deletingId === e._id}>{deletingId === e._id ? 'Deleting...' : 'Delete'}</button>
+                          <button onClick={() => handleEdit(e)} className="btn btn-outline mr-2">Edit</button>
+                          <button onClick={() => handleDelete(e._id)} className="btn btn-outline text-red-500" disabled={deletingId === e._id}>{deletingId === e._id ? 'Deleting...' : 'Delete'}</button>
                         </>
                       )}
                     </td>
