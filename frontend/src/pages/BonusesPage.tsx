@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchBonuses } from '../store/bonusesSlice';
 import { fetchClients } from '../store/clientsSlice';
-import { apiPost } from '../api';
+import { apiPost, apiPut, apiDelete } from '../api';
 
 const BonusesPage = () => {
   const dispatch = useDispatch();
@@ -10,6 +10,9 @@ const BonusesPage = () => {
   const { clients } = useSelector((state: any) => state.clients);
   const [form, setForm] = useState({ clientId: '', amount: '', date: '', description: '', category: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ clientId: '', amount: '', date: '', description: '', category: '' });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     dispatch(fetchBonuses() as any);
@@ -31,6 +34,46 @@ const BonusesPage = () => {
       alert('Failed to add bonus');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleEdit = (bonus: any) => {
+    setEditId(bonus._id);
+    setEditForm({
+      clientId: bonus.clientId?._id || bonus.clientId,
+      amount: bonus.amount,
+      date: bonus.date ? bonus.date.slice(0, 10) : '',
+      description: bonus.description || '',
+      category: bonus.category || '',
+    });
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editId) return;
+    try {
+      await apiPut(`/bonuses/${editId}`, { ...editForm, amount: Number(editForm.amount) });
+      setEditId(null);
+      dispatch(fetchBonuses() as any);
+    } catch (err) {
+      alert('Failed to update bonus');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this bonus?')) return;
+    setDeletingId(id);
+    try {
+      await apiDelete(`/bonuses/${id}`);
+      dispatch(fetchBonuses() as any);
+    } catch (err) {
+      alert('Failed to delete bonus');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -64,11 +107,38 @@ const BonusesPage = () => {
           <tbody>
             {bonuses.map((b: any) => (
               <tr key={b._id}>
-                <td className="border px-4 py-2">{b.clientId?.companyName || b.clientId}</td>
-                <td className="border px-4 py-2">{b.amount}</td>
-                <td className="border px-4 py-2">{b.date ? new Date(b.date).toLocaleDateString() : ''}</td>
-                <td className="border px-4 py-2">{b.category}</td>
-                <td className="border px-4 py-2">{b.description}</td>
+                {editId === b._id ? (
+                  <>
+                    <td className="border px-4 py-2">
+                      <select name="clientId" value={editForm.clientId} onChange={handleEditChange} required className="p-2 border rounded">
+                        <option value="">Select Client</option>
+                        {clients.map((c: any) => (
+                          <option key={c._id} value={c._id}>{c.companyName}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="border px-4 py-2"><input name="amount" type="number" value={editForm.amount} onChange={handleEditChange} className="p-2 border rounded" /></td>
+                    <td className="border px-4 py-2"><input name="date" type="date" value={editForm.date} onChange={handleEditChange} className="p-2 border rounded" /></td>
+                    <td className="border px-4 py-2"><input name="category" value={editForm.category} onChange={handleEditChange} className="p-2 border rounded" /></td>
+                    <td className="border px-4 py-2"><input name="description" value={editForm.description} onChange={handleEditChange} className="p-2 border rounded" /></td>
+                    <td className="border px-4 py-2">
+                      <button onClick={handleEditSubmit} className="bg-green-600 text-white px-2 py-1 rounded mr-2">Save</button>
+                      <button onClick={() => setEditId(null)} className="bg-gray-400 text-white px-2 py-1 rounded">Cancel</button>
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td className="border px-4 py-2">{b.clientId?.companyName || b.clientId}</td>
+                    <td className="border px-4 py-2">{b.amount}</td>
+                    <td className="border px-4 py-2">{b.date ? new Date(b.date).toLocaleDateString() : ''}</td>
+                    <td className="border px-4 py-2">{b.category}</td>
+                    <td className="border px-4 py-2">{b.description}</td>
+                    <td className="border px-4 py-2">
+                      <button onClick={() => handleEdit(b)} className="bg-yellow-500 text-white px-2 py-1 rounded mr-2">Edit</button>
+                      <button onClick={() => handleDelete(b._id)} className="bg-red-600 text-white px-2 py-1 rounded" disabled={deletingId === b._id}>{deletingId === b._id ? 'Deleting...' : 'Delete'}</button>
+                    </td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
