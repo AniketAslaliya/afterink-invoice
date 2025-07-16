@@ -38,6 +38,9 @@ import ReportsPage from '@pages/ReportsPage'
 import SettingsPage from '@pages/SettingsPage'
 import ProfilePage from '@pages/ProfilePage'
 import NotFoundPage from '@pages/NotFoundPage'
+import BonusesPage from '@pages/BonusesPage';
+import ExpensesPage from '@pages/ExpensesPage';
+import ExpenseReasonsPage from '@pages/ExpenseReasonsPage';
 
 /**
  * Route Protection Components
@@ -147,6 +150,9 @@ function App() {
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   <Route path="profile" element={<ProfilePage />} />
+                  <Route path="bonuses" element={<BonusesPage />} />
+                  <Route path="expenses" element={<ExpensesPage />} />
+                  <Route path="expense-reasons" element={<ExpenseReasonsPage />} />
                   
                   {/* Default route redirects to dashboard */}
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
