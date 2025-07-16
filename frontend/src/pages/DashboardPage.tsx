@@ -38,6 +38,8 @@ import { apiGet } from '../api';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../store';
 import { fetchDashboardStats } from '../store/dashboardSlice';
+import { fetchBonuses } from '../store/bonusesSlice';
+import { fetchExpenses } from '../store/expensesSlice';
 // Dashboard layout is handled by App.tsx routing
 
 interface DashboardStats {
@@ -62,6 +64,9 @@ const DashboardPage: React.FC = () => {
   const error = useAppSelector((state: any) => state.dashboard.error);
   const dispatch = useAppDispatch();
 
+  const [bonuses, setBonuses] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
+
   // Currency conversion utility (same rates as backend)
   const currencyToINR = (amount: number, currency: string): number => {
     if (currency === 'INR') return amount;
@@ -83,6 +88,15 @@ const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     dispatch(fetchDashboardStats());
+    // Fetch bonuses and expenses for dashboard metrics
+    (async () => {
+      try {
+        const bonusRes = await apiGet('/bonuses');
+        setBonuses(bonusRes.data || bonusRes);
+        const expenseRes = await apiGet('/expenses');
+        setExpenses(expenseRes.data || expenseRes);
+      } catch {}
+    })();
   }, []);
 
   const formatCurrency = (amount: number) => {
@@ -97,6 +111,10 @@ const DashboardPage: React.FC = () => {
   const handleNavigation = (path: string) => {
     navigate(path);
   };
+
+  const totalBonuses = bonuses.reduce((sum, b) => sum + (b.amount || 0), 0);
+  const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+  const netRevenue = (stats ? stats.totalRevenue : 0) + totalBonuses - totalExpenses;
 
   if (loading) {
     return (
@@ -251,6 +269,54 @@ const DashboardPage: React.FC = () => {
                 Avg: {typeof stats?.averageInvoiceValue === 'number' ? stats.averageInvoiceValue.toFixed(1) : '0.0'}
               </span>
         </div>
+          </div>
+
+          {/* Total Bonuses */}
+          <div className="group relative overflow-hidden bg-gradient-to-br from-blue-800/90 to-blue-700/90 backdrop-blur-lg rounded-2xl p-6 border border-blue-700/50 card-hover stagger-item shadow-xl hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 rounded-2xl shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300 group-hover:scale-110">
+                  <PlusCircle className="text-white" size={24} />
+                </div>
+                <div className="text-right space-y-1">
+                  <p className="text-blue-300 text-sm font-medium tracking-wide">Total Bonuses</p>
+                  <p className="text-3xl font-bold text-white group-hover:scale-105 transition-transform duration-300">{formatCurrency(totalBonuses)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Total Expenses */}
+          <div className="group relative overflow-hidden bg-gradient-to-br from-red-800/90 to-red-700/90 backdrop-blur-lg rounded-2xl p-6 border border-red-700/50 card-hover stagger-item shadow-xl hover:shadow-2xl hover:shadow-red-500/20 transition-all duration-500">
+            <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6">
+                <div className="bg-gradient-to-br from-red-500 to-red-600 p-4 rounded-2xl shadow-lg group-hover:shadow-red-500/25 transition-all duration-300 group-hover:scale-110">
+                  <TrendingDown className="text-white" size={24} />
+                </div>
+                <div className="text-right space-y-1">
+                  <p className="text-red-300 text-sm font-medium tracking-wide">Total Expenses</p>
+                  <p className="text-3xl font-bold text-white group-hover:scale-105 transition-transform duration-300">{formatCurrency(totalExpenses)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Net Revenue */}
+          <div className="group relative overflow-hidden bg-gradient-to-br from-emerald-800/90 to-emerald-700/90 backdrop-blur-lg rounded-2xl p-6 border border-emerald-700/50 card-hover stagger-item shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-500">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6">
+                <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 rounded-2xl shadow-lg group-hover:shadow-emerald-500/25 transition-all duration-300 group-hover:scale-110">
+                  <BarChart3 className="text-white" size={24} />
+                </div>
+                <div className="text-right space-y-1">
+                  <p className="text-emerald-300 text-sm font-medium tracking-wide">Net Revenue</p>
+                  <p className="text-3xl font-bold text-white group-hover:scale-105 transition-transform duration-300">{formatCurrency(netRevenue)}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
