@@ -141,6 +141,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Apply theme to CSS variables
   useEffect(() => {
     const root = document.documentElement;
+    const body = document.body;
     
     // Set CSS custom properties
     Object.entries(theme.colors).forEach(([key, value]) => {
@@ -157,9 +158,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     if (theme.mode === 'dark') {
       document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
+      body.classList.add('dark');
+      body.classList.remove('light');
+      // Apply dark theme background
+      body.style.backgroundColor = '#111827';
+      body.style.color = '#f9fafb';
     } else {
       document.documentElement.classList.add('light');
       document.documentElement.classList.remove('dark');
+      body.classList.add('light');
+      body.classList.remove('dark');
+      // Apply light theme background
+      body.style.backgroundColor = '#ffffff';
+      body.style.color = '#111827';
     }
     
     // Set animation preferences
@@ -171,6 +182,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     
     // Save to localStorage
     localStorage.setItem('afterink-theme', JSON.stringify(theme));
+    
+    console.log(`Theme applied: ${theme.mode} mode`);
   }, [theme]);
 
   // Save personalization to localStorage

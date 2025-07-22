@@ -102,11 +102,30 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             <div className="ml-4 flex items-center md:ml-6 space-x-4">
               {/* Theme Toggle */}
               <button
-                onClick={() => setThemeMode(theme.mode === 'dark' ? 'light' : 'dark')}
-                className="text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg p-2 transition-colors"
+                onClick={() => {
+                  const newMode = theme.mode === 'dark' ? 'light' : 'dark';
+                  setThemeMode(newMode);
+                  console.log(`Theme switched to: ${newMode}`);
+                }}
+                className={`relative p-2 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  theme.mode === 'dark' 
+                    ? 'text-blue-400 bg-blue-900/20 hover:bg-blue-900/30' 
+                    : 'text-yellow-400 bg-yellow-900/20 hover:bg-yellow-900/30'
+                }`}
                 aria-label={`Switch to ${theme.mode === 'dark' ? 'light' : 'dark'} mode`}
+                title={`Current: ${theme.mode} mode - Click to switch to ${theme.mode === 'dark' ? 'light' : 'dark'} mode`}
               >
-                <Palette className="h-5 w-5" aria-hidden="true" />
+                {theme.mode === 'dark' ? (
+                  <div className="relative">
+                    <Palette className="h-5 w-5" aria-hidden="true" />
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Palette className="h-5 w-5" aria-hidden="true" />
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                  </div>
+                )}
               </button>
               
               <div className="flex items-center space-x-2" role="img" aria-label={`User: ${user?.firstName} ${user?.lastName}, Role: ${user?.role}`}>
