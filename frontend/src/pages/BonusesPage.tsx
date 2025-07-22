@@ -137,14 +137,14 @@ const BonusesPage = () => {
           <Gift className="text-white bg-blue-500 rounded-full p-2" size={40} />
           <div>
             <div className="text-white text-lg font-bold">Total Bonuses</div>
-            <div className="text-2xl text-blue-200 font-bold"> 9{totalBonuses.toLocaleString()}</div>
+            <div className="text-2xl text-blue-200 font-bold">₹{totalBonuses.toLocaleString()}</div>
           </div>
         </div>
         <div className="bg-gradient-to-br from-purple-800 to-purple-600 rounded-2xl p-6 border border-purple-700 flex items-center gap-4 shadow-lg">
           <BarChart3 className="text-white bg-purple-500 rounded-full p-2" size={40} />
           <div>
             <div className="text-white text-lg font-bold">This Month</div>
-            <div className="text-2xl text-purple-200 font-bold"> 9{thisMonthBonuses.toLocaleString()}</div>
+            <div className="text-2xl text-purple-200 font-bold">₹{thisMonthBonuses.toLocaleString()}</div>
           </div>
         </div>
         <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 border border-gray-700 flex items-center gap-4 shadow-lg">
@@ -240,7 +240,7 @@ const BonusesPage = () => {
                 ) : (
                   <>
                     <td className="border-b border-gray-800 px-4 py-2">{b.clientId?.companyName || b.clientId}</td>
-                    <td className="border-b border-gray-800 px-4 py-2"> 9{b.amount}</td>
+                    <td className="border-b border-gray-800 px-4 py-2">₹{b.amount.toLocaleString()}</td>
                     <td className="border-b border-gray-800 px-4 py-2">{b.date ? new Date(b.date).toLocaleDateString() : ''}</td>
                     <td className="border-b border-gray-800 px-4 py-2">{b.category}</td>
                     <td className="border-b border-gray-800 px-4 py-2">{b.description}</td>
