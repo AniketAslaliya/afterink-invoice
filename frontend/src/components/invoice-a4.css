@@ -44,6 +44,7 @@
   font-family: 'Poppins', 'Inter', Arial, sans-serif;
   color: #222;
   overflow: hidden;
+  transform: none !important;
 }
 
 /* QR Code styling for better rendering */
@@ -55,9 +56,9 @@
 
 @media screen and (max-width: 900px) {
   .invoice-a4 {
-    width: 100vw;
+    width: calc(100vw - 24px);
     min-width: 0;
     max-width: 100vw;
-    padding: 8vw 2vw;
+    padding: 24px 12px;
   }
 } 

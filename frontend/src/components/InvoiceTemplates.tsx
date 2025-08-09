@@ -235,7 +235,7 @@ interface InvoicePreviewProps {
   showClientAddress?: boolean;
 }
 
-export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewProps>(({
+export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewProps>(({ 
   invoice,
   customization,
   template,
@@ -244,6 +244,14 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
 }, ref) => {
   console.log('Invoice data:', invoice);
   const invoiceRef = useRef<HTMLDivElement>(null);
+  const setRefs = (node: HTMLDivElement | null) => {
+    invoiceRef.current = node;
+    if (typeof ref === 'function') {
+      ref(node);
+    } else if (ref && 'current' in (ref as any)) {
+      (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    }
+  };
 
   // Replace dynamic bankDetails and upiString with hardcoded values
   const bankDetails = {
@@ -339,8 +347,8 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
         <button onClick={handleDownloadPDF} className="btn btn-primary mb-4">Download PDF</button>
       </div>
       <div 
-        ref={ref}
-        className={`invoice-a4 max-w-none mx-auto p-0 ${isPreview ? 'scale-75 transform-gpu' : ''}`}
+        ref={setRefs}
+        className={`invoice-a4 max-w-none mx-auto p-0`}
         style={{
           ...A4_STYLE,
           fontFamily: 'Inter, Poppins, Merriweather, Roboto, sans-serif',

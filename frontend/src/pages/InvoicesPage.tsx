@@ -50,7 +50,7 @@ type Project = {
 import { useAppSelector, useAppDispatch } from '../store';
 import { fetchInvoices } from '../store/invoicesSlice';
 import html2pdf from 'html2pdf.js';
-import { DndContext, closestCenter } from '@dnd-kit/core';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import toast, { Toaster } from 'react-hot-toast';
@@ -1020,19 +1020,23 @@ const InvoicesPage: React.FC = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [showEditModal, editInvoice && editInvoice.items]);
 
-  // Create a SortableItem component for dnd-kit
-  function SortableItem({ id, children }: { id: string, children: React.ReactNode }) {
+  // Configure drag sensors with small activation distance to avoid interfering with input editing
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 6 },
+    })
+  );
+
+  // Create a SortableItem that exposes drag handle props
+  function SortableItem({ id, children }: { id: string, children: (params: { attributes: any; listeners: any; setNodeRef: (node: HTMLElement | null) => void; isDragging: boolean; style: React.CSSProperties; }) => React.ReactNode }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-    const style = {
+    const style: React.CSSProperties = {
       transform: CSS.Transform.toString(transform),
       transition,
       opacity: isDragging ? 0.7 : 1,
-      cursor: 'grab',
     };
     return (
-      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-        {children}
-      </div>
+      <>{children({ attributes, listeners, setNodeRef, isDragging, style })}</>
     );
   }
 
@@ -1438,88 +1442,98 @@ const InvoicesPage: React.FC = () => {
                     </button>
                   </div>
                   
-                  <DndContext collisionDetection={closestCenter} onDragEnd={handleAddItemsDragEnd}>
+                  <DndContext collisionDetection={closestCenter} onDragEnd={handleAddItemsDragEnd} sensors={sensors}>
                     <SortableContext items={newInvoice.items.map((_, index) => index.toString())} strategy={verticalListSortingStrategy}>
                       {newInvoice.items.map((item, index) => (
                         <SortableItem key={index} id={index.toString()}>
-                          <div className="bg-gray-700 rounded-lg p-4 mb-4 border border-gray-600">
-                            <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
-                              <div className="lg:col-span-3">
-                                <label className="block text-sm font-medium text-gray-400 mb-2">Description *</label>
-                                <input
-                                  type="text"
-                                  value={item.description}
-                                  onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                  className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                                  placeholder="Item description"
-                                  required
-                                />
+                          {({ attributes, listeners, setNodeRef, style }) => (
+                            <div ref={setNodeRef} style={style} className="bg-gray-700 rounded-lg p-4 mb-4 border border-gray-600">
+                              <div className="flex justify-between items-center mb-4">
+                                <h4 className="font-medium text-gray-200 flex items-center">
+                                  <button type="button" className="p-1 mr-2 text-gray-400 hover:text-gray-300 cursor-grab" aria-label="Reorder item" {...attributes} {...listeners}>
+                                    <GripVertical className="h-4 w-4" />
+                                  </button>
+                                  Item {index + 1}
+                                </h4>
                               </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">Quantity *</label>
-                                <input
-                                  type="number"
-                                  value={item.quantity}
-                                  onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                                  className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                                  min="0.01"
-                                  step="0.01"
-                                  required
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">Rate *</label>
-                                <input
-                                  type="number"
-                                  value={item.rate}
-                                  onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                                  className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                                  min="0"
-                                  step="0.01"
-                                  required
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">Tax %</label>
-                                <input
-                                  type="number"
-                                  value={item.taxRate || 0}
-                                  onChange={(e) => updateItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
-                                  className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                                  min="0"
-                                  max="100"
-                                  step="0.01"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">Amount</label>
-                                <div className="px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 text-center">
-                                  {formatCurrency(item.amount, newInvoice.currency)}
+                              <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
+                                <div className="lg:col-span-3">
+                                  <label className="block text-sm font-medium text-gray-400 mb-2">Description *</label>
+                                  <input
+                                    type="text"
+                                    value={item.description}
+                                    onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                    className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                    placeholder="Item description"
+                                    required
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-400 mb-2">Quantity *</label>
+                                  <input
+                                    type="number"
+                                    value={item.quantity}
+                                    onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                                    className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                    min="0.01"
+                                    step="0.01"
+                                    required
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-400 mb-2">Rate *</label>
+                                  <input
+                                    type="number"
+                                    value={item.rate}
+                                    onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                                    className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                    min="0"
+                                    step="0.01"
+                                    required
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-400 mb-2">Tax %</label>
+                                  <input
+                                    type="number"
+                                    value={item.taxRate || 0}
+                                    onChange={(e) => updateItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
+                                    className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-400 mb-2">Amount</label>
+                                  <div className="px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 text-center">
+                                    {formatCurrency(item.amount, newInvoice.currency)}
+                                  </div>
                                 </div>
                               </div>
+                              
+                              <div className="mt-4">
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Notes (Optional)</label>
+                                <textarea
+                                  value={item.note || ''}
+                                  onChange={(e) => updateItem(index, 'note', e.target.value)}
+                                  className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                  rows={2}
+                                  placeholder="Add notes for this item..."
+                                />
+                              </div>
+                              
+                              {newInvoice.items.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeItem(index)}
+                                  className="mt-3 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
+                                >
+                                  Remove Item
+                                </button>
+                              )}
                             </div>
-                            
-                            <div className="mt-4">
-                              <label className="block text-sm font-medium text-gray-400 mb-2">Notes (Optional)</label>
-                              <textarea
-                                value={item.note || ''}
-                                onChange={(e) => updateItem(index, 'note', e.target.value)}
-                                className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                                rows={2}
-                                placeholder="Add notes for this item..."
-                              />
-                            </div>
-                            
-                            {newInvoice.items.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeItem(index)}
-                                className="mt-3 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
-                              >
-                                Remove Item
-                              </button>
-                            )}
-                          </div>
+                          )}
                         </SortableItem>
                       ))}
                     </SortableContext>
@@ -2729,106 +2743,110 @@ const InvoicesPage: React.FC = () => {
                     </div>
 
                     <div className="space-y-4">
-                      <DndContext collisionDetection={closestCenter} onDragEnd={handleEditItemsDragEnd}>
+                      <DndContext collisionDetection={closestCenter} onDragEnd={handleEditItemsDragEnd} sensors={sensors}>
                         <SortableContext items={editInvoice.items.map((_: InvoiceItem, i: number) => i.toString())} strategy={verticalListSortingStrategy}>
                           {editInvoice.items.map((item, index) => (
                             <SortableItem key={index} id={index.toString()}>
-                              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
-                                <div className="flex justify-between items-center mb-4">
-                                  <h4 className="font-medium text-gray-200 flex items-center">
-                                    <GripVertical className="h-4 w-4 mr-2 text-gray-400" />
-                                    Item {index + 1}
-                                  </h4>
-                                  {editInvoice.items.length > 1 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleEditRemoveItem(index)}
-                                      className="text-red-400 hover:text-red-300 p-1 rounded transition-colors"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
-                                  )}
-                                </div>
-                                
-                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                                  <div className="lg:col-span-5">
-                                    <label className="block text-sm font-medium text-gray-400 mb-2">Description *</label>
-                                    <input
-                                      type="text"
-                                      value={item.description}
-                                      onChange={(e) => handleEditItem(index, 'description', e.target.value)}
-                                      className={`w-full px-3 py-2 bg-gray-600 border rounded-lg focus:outline-none focus:ring-2 text-white ${
-                                        validationErrors[`item${index}Description`] 
-                                          ? 'border-red-500 focus:ring-red-500' 
-                                          : 'border-gray-500 focus:ring-blue-500'
-                                      }`}
-                                      placeholder="Item description"
-                                      required
-                                    />
-                                    {validationErrors[`item${index}Description`] && (
-                                      <p className="text-red-400 text-xs mt-1">{validationErrors[`item${index}Description`]}</p>
+                              {({ attributes, listeners, setNodeRef, style }) => (
+                                <div ref={setNodeRef} style={style} className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                                  <div className="flex justify-between items-center mb-4">
+                                    <h4 className="font-medium text-gray-200 flex items-center">
+                                      <button type="button" className="p-1 mr-2 text-gray-400 hover:text-gray-300 cursor-grab" aria-label="Reorder item" {...attributes} {...listeners}>
+                                        <GripVertical className="h-4 w-4" />
+                                      </button>
+                                      Item {index + 1}
+                                    </h4>
+                                    {editInvoice.items.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleEditRemoveItem(index)}
+                                        className="text-red-400 hover:text-red-300 p-1 rounded transition-colors"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </button>
                                     )}
                                   </div>
                                   
-                                  <div className="lg:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-400 mb-2">Quantity *</label>
-                                    <input
-                                      type="number"
-                                      value={item.quantity}
-                                      onChange={(e) => handleEditItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                                      min="0.01"
-                                      step="0.01"
-                                      required
-                                    />
-                                  </div>
-                                  
-                                  <div className="lg:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-400 mb-2">Rate *</label>
-                                    <input
-                                      type="number"
-                                      value={item.rate}
-                                      onChange={(e) => handleEditItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                                      min="0"
-                                      step="0.01"
-                                      required
-                                    />
-                                  </div>
-                                  
-                                  <div className="lg:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-400 mb-2">Tax %</label>
-                                    <input
-                                      type="number"
-                                      value={item.taxRate || 0}
-                                      onChange={(e) => handleEditItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
-                                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                                      min="0"
-                                      max="100"
-                                      step="0.01"
-                                    />
-                                  </div>
-                                  
-                                  <div className="lg:col-span-1">
-                                    <label className="block text-sm font-medium text-gray-400 mb-2">Amount</label>
-                                    <div className="px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 text-center">
-                                      {formatCurrency(item.amount, editInvoice.currency)}
+                                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                                    <div className="lg:col-span-5">
+                                      <label className="block text-sm font-medium text-gray-400 mb-2">Description *</label>
+                                      <input
+                                        type="text"
+                                        value={item.description}
+                                        onChange={(e) => handleEditItem(index, 'description', e.target.value)}
+                                        className={`w-full px-3 py-2 bg-gray-600 border rounded-lg focus:outline-none focus:ring-2 text-white ${
+                                          validationErrors[`item${index}Description`] 
+                                            ? 'border-red-500 focus:ring-red-500' 
+                                            : 'border-gray-500 focus:ring-blue-500'
+                                        }`}
+                                        placeholder="Item description"
+                                        required
+                                      />
+                                      {validationErrors[`item${index}Description`] && (
+                                        <p className="text-red-400 text-xs mt-1">{validationErrors[`item${index}Description`]}</p>
+                                      )}
+                                    </div>
+                                    
+                                    <div className="lg:col-span-2">
+                                      <label className="block text-sm font-medium text-gray-400 mb-2">Quantity *</label>
+                                      <input
+                                        type="number"
+                                        value={item.quantity}
+                                        onChange={(e) => handleEditItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                                        className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                        min="0.01"
+                                        step="0.01"
+                                        required
+                                      />
+                                    </div>
+                                    
+                                    <div className="lg:col-span-2">
+                                      <label className="block text-sm font-medium text-gray-400 mb-2">Rate *</label>
+                                      <input
+                                        type="number"
+                                        value={item.rate}
+                                        onChange={(e) => handleEditItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                                        className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                        min="0"
+                                        step="0.01"
+                                        required
+                                      />
+                                    </div>
+                                    
+                                    <div className="lg:col-span-2">
+                                      <label className="block text-sm font-medium text-gray-400 mb-2">Tax %</label>
+                                      <input
+                                        type="number"
+                                        value={item.taxRate || 0}
+                                        onChange={(e) => handleEditItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
+                                        className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                        min="0"
+                                        max="100"
+                                        step="0.01"
+                                      />
+                                    </div>
+                                    
+                                    <div className="lg:col-span-1">
+                                      <label className="block text-sm font-medium text-gray-400 mb-2">Amount</label>
+                                      <div className="px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 text-center">
+                                        {formatCurrency(item.amount, editInvoice.currency)}
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
 
-                                {/* Item Note */}
-                                <div className="mt-4">
-                                  <label className="block text-sm font-medium text-gray-400 mb-2">Notes (Optional)</label>
-                                  <textarea
-                                    value={item.note || ''}
-                                    onChange={(e) => handleEditItem(index, 'note', e.target.value)}
-                                    className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                                    rows={2}
-                                    placeholder="Add notes for this item..."
-                                  />
+                                  {/* Item Note */}
+                                  <div className="mt-4">
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Notes (Optional)</label>
+                                    <textarea
+                                      value={item.note || ''}
+                                      onChange={(e) => handleEditItem(index, 'note', e.target.value)}
+                                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                      rows={2}
+                                      placeholder="Add notes for this item..."
+                                    />
+                                  </div>
                                 </div>
-                              </div>
+                              )}
                             </SortableItem>
                           ))}
                         </SortableContext>
@@ -2898,7 +2916,7 @@ const InvoicesPage: React.FC = () => {
                       <Eye className="h-5 w-5 mr-2 text-blue-600" />
                       Live Preview
                     </h3>
-                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="border border-gray-200 rounded-lg overflow-auto">
                       <InvoicePreview
                         invoice={{
                           ...editInvoice,
