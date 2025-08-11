@@ -154,7 +154,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       theme.borderRadius === 'lg' ? '0.75rem' : '0.5rem'
     );
     
-    // Set dark/light mode class
+    // Set dark/light mode class - this is the key for Tailwind dark mode
     if (theme.mode === 'dark') {
       document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
@@ -183,7 +183,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // Save to localStorage
     localStorage.setItem('afterink-theme', JSON.stringify(theme));
     
-    console.log(`Theme applied: ${theme.mode} mode`);
+    console.log(`Theme applied: ${theme.mode} mode with colors:`, theme.colors);
   }, [theme]);
 
   // Save personalization to localStorage

@@ -160,7 +160,7 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <ToastProvider>
-          <div className="min-h-screen bg-secondary-50">
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
             <Suspense fallback={<PageLoader message="Loading application..." />}>
               <Routes>
               {/* 
