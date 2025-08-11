@@ -1593,26 +1593,28 @@ const InvoicesPage: React.FC = () => {
                 </div>
               </div>
               <div className="bg-white rounded-lg p-4 shadow-md">
-                <h3 className="text-lg font-semibold mb-2 text-gray-800">Live Preview</h3>
-                <InvoicePreview
-                  invoice={{
-                    ...newInvoice,
-                    items: newInvoice.items,
-                    subtotal: calculateTotal(),
-                    totalAmount: calculateTotal(),
-                    dueDate: newInvoice.dueDate || new Date().toISOString(),
-                    status: 'draft',
-                    createdAt: new Date().toISOString(),
-                    _id: 'preview',
-                    client: clients.find(c => c._id === newInvoice.clientId) || { companyName: '', contactPerson: { firstName: '', lastName: '', email: '' }, address: { street: '', city: '', state: '', zipCode: '', country: '' } },
-                    project: projects.find(p => p._id === newInvoice.projectId),
-                    currency: newInvoice.currency || 'INR'
-                  }}
-                  customization={invoiceCustomization}
-                  template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
-                  isPreview={true}
-                  showClientAddress={showClientAddress}
-                />
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Live Preview</h3>
+                <div className="invoice-preview-container">
+                  <InvoicePreview
+                    invoice={{
+                      ...newInvoice,
+                      items: newInvoice.items,
+                      subtotal: calculateTotal(),
+                      totalAmount: calculateTotal(),
+                      dueDate: newInvoice.dueDate || new Date().toISOString(),
+                      status: 'draft',
+                      createdAt: new Date().toISOString(),
+                      _id: 'preview',
+                      client: clients.find(c => c._id === newInvoice.clientId) || { companyName: '', contactPerson: { firstName: '', lastName: '', email: '' }, address: { street: '', city: '', state: '', zipCode: '', country: '' } },
+                      project: projects.find(p => p._id === newInvoice.projectId),
+                      currency: newInvoice.currency || 'INR'
+                    }}
+                    customization={invoiceCustomization}
+                    template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
+                    isPreview={true}
+                    showClientAddress={showClientAddress}
+                  />
+                </div>
               </div>
             </div>
             {/* Sticky action buttons remain outside the grid */}
@@ -2507,47 +2509,49 @@ const InvoicesPage: React.FC = () => {
             </div>
             
             {/* Scrollable Content */}
-            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 8rem)' }}>
+            <div className="modal-invoice-preview">
               <div className="p-6">
                 <div className="bg-gray-50 rounded-xl p-6">
-                  <InvoicePreview
-                    invoice={{
-                      _id: selectedInvoice._id,
-                      invoiceNumber: selectedInvoice.invoiceNumber,
-                      client: selectedInvoice.client || { 
-                        companyName: 'Unknown Client', 
-                        contactPerson: { firstName: '', lastName: '', email: '' }, 
-                        address: { street: '', city: '', state: '', zipCode: '', country: '' } 
-                      },
-                      project: selectedInvoice.project || undefined,
-                      items: selectedInvoice.items || [{ 
-                        description: 'Professional Services', 
-                        quantity: 1, 
-                        rate: selectedInvoice.totalAmount, 
-                        amount: selectedInvoice.totalAmount, 
-                        taxRate: 0,
-                        note: selectedInvoice.notes || ''
-                      }],
-                      subtotal: selectedInvoice.totalAmount || 0,
-                      taxAmount: 0,
-                      totalAmount: selectedInvoice.totalAmount || 0,
-                      dueDate: selectedInvoice.dueDate,
-                      status: selectedInvoice.status || 'draft',
-                      notes: selectedInvoice.notes || '',
-                      terms: selectedInvoice.terms || '',
-                      createdAt: selectedInvoice.createdAt || new Date().toISOString(),
-                      currency: selectedInvoice.currency || 'INR',
-                    }}
-                    customization={Object.assign({}, invoiceCustomization, {
-                      paymentTermsText: invoiceCustomization.paymentTermsText || 'Payment is due within 30 days of invoice date. Late payments may incur additional charges.',
-                      dateFormat: invoiceCustomization.dateFormat || 'DD/MM/YYYY',
-                      termsAndConditions: ((appSettings as any)?.termsAndConditions) || invoiceCustomization.termsAndConditions || '',
-                      currency: selectedInvoice.currency || invoiceCustomization.currency || 'INR',
-                    }) as InvoiceCustomization}
-                    template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
-                    showClientAddress={showClientAddress}
-                    ref={invoicePreviewRef}
-                  />
+                  <div className="invoice-preview-container">
+                    <InvoicePreview
+                      invoice={{
+                        _id: selectedInvoice._id,
+                        invoiceNumber: selectedInvoice.invoiceNumber,
+                        client: selectedInvoice.client || { 
+                          companyName: 'Unknown Client', 
+                          contactPerson: { firstName: '', lastName: '', email: '' }, 
+                          address: { street: '', city: '', state: '', zipCode: '', country: '' } 
+                        },
+                        project: selectedInvoice.project || undefined,
+                        items: selectedInvoice.items || [{ 
+                          description: 'Professional Services', 
+                          quantity: 1, 
+                          rate: selectedInvoice.totalAmount, 
+                          amount: selectedInvoice.totalAmount, 
+                          taxRate: 0,
+                          note: selectedInvoice.notes || ''
+                        }],
+                        subtotal: selectedInvoice.totalAmount || 0,
+                        taxAmount: 0,
+                        totalAmount: selectedInvoice.totalAmount || 0,
+                        dueDate: selectedInvoice.dueDate,
+                        status: selectedInvoice.status || 'draft',
+                        notes: selectedInvoice.notes || '',
+                        terms: selectedInvoice.terms || '',
+                        createdAt: selectedInvoice.createdAt || new Date().toISOString(),
+                        currency: selectedInvoice.currency || 'INR',
+                      }}
+                      customization={Object.assign({}, invoiceCustomization, {
+                        paymentTermsText: invoiceCustomization.paymentTermsText || 'Payment is due within 30 days of invoice date. Late payments may incur additional charges.',
+                        dateFormat: invoiceCustomization.dateFormat || 'DD/MM/YYYY',
+                        termsAndConditions: ((appSettings as any)?.termsAndConditions) || invoiceCustomization.termsAndConditions || '',
+                        currency: selectedInvoice.currency || invoiceCustomization.currency || 'INR',
+                      }) as InvoiceCustomization}
+                      template={defaultTemplates.find(t => t.id === invoiceCustomization.template) || defaultTemplates[0]}
+                      showClientAddress={showClientAddress}
+                      ref={invoicePreviewRef}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -2909,14 +2913,14 @@ const InvoicesPage: React.FC = () => {
               </div>
 
               {/* Right Side - Live Preview */}
-              <div className="w-1/2 border-l border-gray-700 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 8rem)' }}>
+              <div className="w-1/2 border-l border-gray-700 modal-invoice-preview">
                 <div className="p-6">
                   <div className="bg-white rounded-lg p-4 shadow-lg">
                     <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
                       <Eye className="h-5 w-5 mr-2 text-blue-600" />
                       Live Preview
                     </h3>
-                    <div className="border border-gray-200 rounded-lg overflow-auto">
+                    <div className="invoice-preview-container">
                       <InvoicePreview
                         invoice={{
                           ...editInvoice,

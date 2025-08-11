@@ -244,6 +244,14 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
 }, ref) => {
   console.log('Invoice data:', invoice);
   const invoiceRef = useRef<HTMLDivElement>(null);
+  const [zoomLevel, setZoomLevel] = React.useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('invoicePreviewZoom');
+      return saved ? parseFloat(saved) : 1;
+    }
+    return 1;
+  });
+  
   const setRefs = (node: HTMLDivElement | null) => {
     invoiceRef.current = node;
     if (typeof ref === 'function') {
@@ -304,18 +312,39 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
     ? 'rounded-lg overflow-hidden shadow-sm'
     : '';
 
-  // A4 size: 210mm x 297mm (convert to px for web: 794px x 1123px at 96dpi)
-  const A4_STYLE = {
-    width: '794px',
-    minHeight: '1123px',
-    maxWidth: '794px',
-    background: customization.colors.background,
-    margin: '0 auto',
-    boxShadow: isPreview ? '0 0 0 1px #e5e7eb' : 'none',
-    padding: '48px',
-    position: 'relative' as 'relative',
-    fontFamily: template.fonts.body,
-    color: customization.colors.text,
+  // Responsive A4 style that adapts to container
+  const getResponsiveStyle = () => {
+    const baseStyle = {
+      width: '100%',
+      maxWidth: '794px',
+      minHeight: '1123px',
+      background: customization.colors.background,
+      margin: '0 auto',
+      boxShadow: isPreview ? '0 4px 32px rgba(0,0,0,0.08)' : 'none',
+      border: isPreview ? '1px solid #e5e7eb' : 'none',
+      borderRadius: isPreview ? '16px' : '0',
+      padding: '40px',
+      position: 'relative' as 'relative',
+      fontFamily: template.fonts.body,
+      color: customization.colors.text,
+      overflow: 'hidden',
+      transform: `scale(${zoomLevel})`,
+      transformOrigin: 'top center',
+      boxSizing: 'border-box' as 'border-box',
+      transition: 'transform 0.3s ease',
+    };
+
+    // For smaller screens, adjust padding and sizing
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      return {
+        ...baseStyle,
+        padding: '20px',
+        minHeight: 'auto',
+        maxWidth: '100%',
+      };
+    }
+
+    return baseStyle;
   };
 
   // Download PDF handler (sticky button)
@@ -341,56 +370,129 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
       .save();
   };
 
+  // Zoom controls with localStorage persistence
+  const handleZoomIn = () => {
+    const newZoom = Math.min(zoomLevel + 0.1, 2);
+    setZoomLevel(newZoom);
+    localStorage.setItem('invoicePreviewZoom', newZoom.toString());
+  };
+  
+  const handleZoomOut = () => {
+    const newZoom = Math.max(zoomLevel - 0.1, 0.5);
+    setZoomLevel(newZoom);
+    localStorage.setItem('invoicePreviewZoom', newZoom.toString());
+  };
+  
+  const handleZoomReset = () => {
+    setZoomLevel(1);
+    localStorage.setItem('invoicePreviewZoom', '1');
+  };
+
+  // Keyboard shortcuts for zoom
+  React.useEffect(() => {
+    if (!isPreview) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case '=':
+          case '+':
+            e.preventDefault();
+            handleZoomIn();
+            break;
+          case '-':
+            e.preventDefault();
+            handleZoomOut();
+            break;
+          case '0':
+            e.preventDefault();
+            handleZoomReset();
+            break;
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isPreview, zoomLevel]);
+
   return (
     <>
-      <div style={{ position: 'sticky', top: 0, zIndex: 50, background: '#fff', padding: '12px 0' }} className="no-print w-full flex justify-end">
-        <button onClick={handleDownloadPDF} className="btn btn-primary mb-4">Download PDF</button>
-      </div>
+      {isPreview && (
+        <div style={{ position: 'sticky', top: 0, zIndex: 50, background: '#fff', padding: '12px 0' }} className="no-print w-full flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700">Zoom:</span>
+            <button 
+              onClick={handleZoomOut}
+              className="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors text-sm"
+              title="Zoom Out (Ctrl+-)"
+            >
+              -
+            </button>
+            <span className="text-sm text-gray-600 min-w-[40px] text-center">
+              {Math.round(zoomLevel * 100)}%
+            </span>
+            <button 
+              onClick={handleZoomIn}
+              className="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors text-sm"
+              title="Zoom In (Ctrl+=)"
+            >
+              +
+            </button>
+            <button 
+              onClick={handleZoomReset}
+              className="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-sm"
+              title="Reset Zoom (Ctrl+0)"
+            >
+              Reset
+            </button>
+          </div>
+          <button 
+            onClick={handleDownloadPDF} 
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          >
+            Download PDF
+          </button>
+        </div>
+      )}
       <div 
         ref={setRefs}
-        className={`invoice-a4 max-w-none mx-auto p-0`}
-        style={{
-          ...A4_STYLE,
-          fontFamily: 'Inter, Poppins, Merriweather, Roboto, sans-serif',
-          borderRadius: '16px',
-          boxShadow: '0 4px 32px rgba(0,0,0,0.08)',
-          border: '1px solid #e5e7eb',
-          padding: '40px',
-          background: customization.colors.background,
-        }}
+        className="invoice-a4"
+        style={getResponsiveStyle()}
       >
         {/* Header */}
-        <div className="flex justify-between items-start mb-8 pb-6 border-b-2" style={{ borderColor: customization.colors.primary }}>
-          <div className="flex flex-col gap-2">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-8 pb-6 border-b-2" style={{ borderColor: customization.colors.primary }}>
+          <div className="flex flex-col gap-2 flex-1">
             {customization.showLogo && customization.companyLogo && (
               <img 
                 src={customization.companyLogo} 
                 alt="Company Logo"
-                className="h-16 w-auto mb-2 rounded-lg shadow"
+                className="h-12 lg:h-16 w-auto mb-2 rounded-lg shadow"
+                style={{ maxWidth: '200px' }}
               />
             )}
             <h1 
-              className="text-3xl font-bold mb-1"
+              className="text-2xl lg:text-3xl font-bold mb-1"
               style={{ fontFamily: template.fonts.heading, color: customization.colors.primary }}
             >
               {customization.companyName || 'Your Company Name'}
             </h1>
             {customization.showCompanyDetails && (
-              <div className="text-sm space-y-1" style={{ color: customization.colors.secondary }}>
+              <div className="text-xs lg:text-sm space-y-1" style={{ color: customization.colors.secondary }}>
                 <p>{customization.companyAddress || 'Company Address'}</p>
                 <p>{customization.companyPhone || ''} • {customization.companyEmail || ''}</p>
                 {customization.companyWebsite && <p>{customization.companyWebsite}</p>}
               </div>
             )}
           </div>
-          <div className="text-right flex flex-col gap-2">
+          <div className="text-left lg:text-right flex flex-col gap-2">
             <h2 
-              className="text-2xl font-bold mb-2 tracking-wide"
+              className="text-xl lg:text-2xl font-bold mb-2 tracking-wide"
               style={{ fontFamily: template.fonts.heading, color: customization.colors.primary }}
             >
               INVOICE
             </h2>
-            <div className="text-sm space-y-1">
+            <div className="text-xs lg:text-sm space-y-1">
               <p><span className="font-medium">Invoice #:</span> {invoice.invoiceNumber || '-'}</p>
               <p><span className="font-medium">Date:</span> {formatDate(invoice.createdAt)}</p>
               <p><span className="font-medium">Due Date:</span> {formatDate(invoice.dueDate)}</p>
@@ -409,48 +511,55 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
         </div>
 
         {/* Bill To & Project */}
-        <div className="flex flex-col md:flex-row md:justify-between gap-8 mb-8">
+        <div className="flex flex-col lg:flex-row lg:justify-between gap-6 mb-8">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold mb-1" style={{ color: customization.colors.primary }}>Bill To:</h3>
+            <h3 className="text-base lg:text-lg font-semibold mb-2" style={{ color: customization.colors.primary }}>Bill To:</h3>
             <div>
-              <p className="font-medium text-base">{invoice.client?.companyName || 'Unknown Client'}</p>
-              <span className="block text-sm">{invoice.client?.contactPerson?.firstName || ''} {invoice.client?.contactPerson?.lastName || ''}</span>
+              <p className="font-medium text-sm lg:text-base">{invoice.client?.companyName || 'Unknown Client'}</p>
+              <span className="block text-xs lg:text-sm">{invoice.client?.contactPerson?.firstName || ''} {invoice.client?.contactPerson?.lastName || ''}</span>
               <span className="block text-xs" style={{ color: customization.colors.secondary }}>{invoice.client?.contactPerson?.email || ''}</span>
+              {showClientAddress && invoice.client?.address && (
+                <div className="text-xs mt-1" style={{ color: customization.colors.secondary }}>
+                  <p>{invoice.client.address.street}</p>
+                  <p>{invoice.client.address.city}, {invoice.client.address.state} {invoice.client.address.zipCode}</p>
+                  <p>{invoice.client.address.country}</p>
+                </div>
+              )}
             </div>
           </div>
           {invoice.project && (
             <div className="flex-1">
-              <h3 className="text-lg font-semibold mb-2" style={{ color: customization.colors.primary }}>Project:</h3>
-              <span className="text-base" style={{ color: customization.colors.secondary }}>{invoice.project.name}</span>
+              <h3 className="text-base lg:text-lg font-semibold mb-2" style={{ color: customization.colors.primary }}>Project:</h3>
+              <span className="text-sm lg:text-base" style={{ color: customization.colors.secondary }}>{invoice.project.name}</span>
             </div>
           )}
         </div>
 
         {/* Items Table */}
         <div className="overflow-x-auto rounded-lg border border-gray-200 mb-8">
-          <table className="w-full text-sm">
+          <table className="w-full text-xs lg:text-sm">
             <thead>
               <tr className="bg-gray-50" style={{ backgroundColor: customization.colors.accent }}>
-                <th className="p-3 font-semibold text-left">Description</th>
-                <th className="p-3 font-semibold text-center">Qty</th>
-                <th className="p-3 font-semibold text-right">Rate</th>
-                <th className="p-3 font-semibold text-right">Tax</th>
-                <th className="p-3 font-semibold text-right">Amount</th>
+                <th className="p-2 lg:p-3 font-semibold text-left">Description</th>
+                <th className="p-2 lg:p-3 font-semibold text-center">Qty</th>
+                <th className="p-2 lg:p-3 font-semibold text-right">Rate</th>
+                <th className="p-2 lg:p-3 font-semibold text-right">Tax</th>
+                <th className="p-2 lg:p-3 font-semibold text-right">Amount</th>
               </tr>
             </thead>
             <tbody>
               {invoice.items.map((item, index) => (
                 <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="p-3">
-                    {item.description}
+                  <td className="p-2 lg:p-3">
+                    <div className="text-xs lg:text-sm">{item.description}</div>
                     {item.note && (
                       <div className="text-xs text-gray-500 mt-1 italic">{item.note}</div>
                     )}
                   </td>
-                  <td className="p-3 text-center">{item.quantity}</td>
-                  <td className="p-3 text-right">{formatCurrency(item.rate)}</td>
-                  <td className="p-3 text-right">{item.taxRate || 0}%</td>
-                  <td className="p-3 text-right font-medium">{formatCurrency(item.amount)}</td>
+                  <td className="p-2 lg:p-3 text-center">{item.quantity}</td>
+                  <td className="p-2 lg:p-3 text-right">{formatCurrency(item.rate)}</td>
+                  <td className="p-2 lg:p-3 text-right">{item.taxRate || 0}%</td>
+                  <td className="p-2 lg:p-3 text-right font-medium">{formatCurrency(item.amount)}</td>
                 </tr>
               ))}
             </tbody>
@@ -459,21 +568,21 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
 
         {/* Totals */}
         <div className="flex flex-col items-end mb-8">
-          <div className="w-full md:w-1/2 lg:w-1/3">
+          <div className="w-full lg:w-1/2 xl:w-1/3">
             {invoice.subtotal && (
-              <div className="flex justify-between py-2 border-b border-gray-200">
+              <div className="flex justify-between py-2 border-b border-gray-200 text-sm lg:text-base">
                 <span>Subtotal:</span>
                 <span>{formatCurrency(invoice.subtotal)}</span>
               </div>
             )}
             {invoice.taxAmount && invoice.taxAmount > 0 && (
-              <div className="flex justify-between py-2 border-b border-gray-200">
+              <div className="flex justify-between py-2 border-b border-gray-200 text-sm lg:text-base">
                 <span>Tax:</span>
                 <span>{formatCurrency(invoice.taxAmount)}</span>
               </div>
             )}
             <div 
-              className="flex justify-between py-3 font-bold text-lg border-t-2"
+              className="flex justify-between py-3 font-bold text-base lg:text-lg border-t-2"
               style={{ borderColor: customization.colors.primary, color: customization.colors.primary }}
             >
               <span>Total:</span>
@@ -483,10 +592,10 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
         </div>
 
         {/* Payment Methods Section */}
-        <div className="mb-8 flex justify-between items-start gap-8">
+        <div className="mb-8 flex flex-col lg:flex-row justify-between items-start gap-6">
           <div className="flex-1">
-            <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>Payment Details</h4>
-            <div className="text-sm space-y-1">
+            <h4 className="font-medium mb-2 text-sm lg:text-base" style={{ color: customization.colors.primary }}>Payment Details</h4>
+            <div className="text-xs lg:text-sm space-y-1">
               <p><span className="font-medium">Bank Name:</span> {bankDetails.bankName}</p>
               <p><span className="font-medium">Account Name:</span> {bankDetails.accountName}</p>
               <p><span className="font-medium">Account Number:</span> {bankDetails.accountNumber}</p>
@@ -498,13 +607,13 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
           {/* QR Code Section */}
           {isIndianClient && (
             <div className="flex flex-col items-center">
-              <h4 className="font-medium mb-2 text-center" style={{ color: customization.colors.primary }}>
+              <h4 className="font-medium mb-2 text-center text-sm lg:text-base" style={{ color: customization.colors.primary }}>
                 Pay via UPI
               </h4>
               <div className="p-2 bg-white border-2 border-gray-200 rounded-lg">
                 <QRCodeSVG
                   value={upiString}
-                  size={120}
+                  size={80}
                   level="M"
                   includeMargin={true}
                   fgColor={customization.colors.text}
@@ -512,7 +621,7 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
                   className="qr-code-svg"
                 />
               </div>
-              <p className="text-xs text-center mt-2 max-w-32" style={{ color: customization.colors.secondary }}>
+              <p className="text-xs text-center mt-2 max-w-24" style={{ color: customization.colors.secondary }}>
                 Scan to pay {formatCurrency(invoice.totalAmount)}
               </p>
             </div>
@@ -520,37 +629,37 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
         </div>
 
         {/* Notes, Terms, and Footer */}
-        <div className="space-y-6">
+        <div className="space-y-4 lg:space-y-6">
           {invoice.notes && (
             <div>
-              <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>
+              <h4 className="font-medium mb-2 text-sm lg:text-base" style={{ color: customization.colors.primary }}>
                 Notes:
               </h4>
-              <div className="text-sm" style={{ color: customization.colors.secondary }}
+              <div className="text-xs lg:text-sm" style={{ color: customization.colors.secondary }}
                 dangerouslySetInnerHTML={{ __html: (invoice.notes || '').replace(/\n/g, '<br/>') }}
               />
             </div>
           )}
           {customization.showPaymentTerms && (
             <div>
-              <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>
+              <h4 className="font-medium mb-2 text-sm lg:text-base" style={{ color: customization.colors.primary }}>
                 Payment Terms:
               </h4>
-              <p className="text-sm" style={{ color: customization.colors.secondary }}>
+              <p className="text-xs lg:text-sm" style={{ color: customization.colors.secondary }}>
                 {customization.paymentTermsText || invoice.terms || 'Payment is due within 30 days of invoice date.'}
               </p>
             </div>
           )}
           <div>
-            <h4 className="font-medium mb-2" style={{ color: customization.colors.primary }}>
+            <h4 className="font-medium mb-2 text-sm lg:text-base" style={{ color: customization.colors.primary }}>
               Terms & Conditions:
             </h4>
-            <p className="text-sm" style={{ color: customization.colors.secondary }}>
+            <p className="text-xs lg:text-sm" style={{ color: customization.colors.secondary }}>
               {customization.termsAndConditions || invoice.termsAndConditions || 'All services are subject to our standard terms and conditions.'}
             </p>
           </div>
         </div>
-        <div className="mt-10 pt-6 border-t border-gray-200 text-center text-xs text-gray-400">
+        <div className="mt-8 lg:mt-10 pt-4 lg:pt-6 border-t border-gray-200 text-center text-xs text-gray-400">
           {customization.footerText || 'Thank you for your business!'}
         </div>
       </div>
