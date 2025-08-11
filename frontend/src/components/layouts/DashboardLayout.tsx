@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { 
   LayoutDashboard, 
@@ -14,57 +14,94 @@ import {
   Palette,
   Gift,
   Receipt,
-  List
+  List,
+  Bell,
+  Search,
+  Sun,
+  Moon,
+  ChevronDown
 } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { useTheme } from '../../contexts/ThemeContext'
 import Avatar from '../Avatar'
+import { useToast } from '../Toast'
+import Button from '../Button'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Clients', href: '/clients', icon: Users },
-  { name: 'Invoices', href: '/invoices', icon: FileText },
-  { name: 'Projects', href: '/projects', icon: FolderOpen },
-  { name: 'Bonuses', href: '/bonuses', icon: Gift },
-  { name: 'Expenses', href: '/expenses', icon: Receipt },
-  { name: 'Expense Reasons', href: '/expense-reasons', icon: List },
-  { name: 'Reports', href: '/reports', icon: BarChart3 },
-  { name: 'Settings', href: '/settings', icon: Settings },
-  { name: 'Profile', href: '/profile', icon: User },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, badge: null },
+  { name: 'Clients', href: '/clients', icon: Users, badge: null },
+  { name: 'Invoices', href: '/invoices', icon: FileText, badge: null },
+  { name: 'Projects', href: '/projects', icon: FolderOpen, badge: null },
+  { name: 'Bonuses', href: '/bonuses', icon: Gift, badge: null },
+  { name: 'Expenses', href: '/expenses', icon: Receipt, badge: null },
+  { name: 'Expense Reasons', href: '/expense-reasons', icon: List, badge: null },
+  { name: 'Reports', href: '/reports', icon: BarChart3, badge: null },
+  { name: 'Settings', href: '/settings', icon: Settings, badge: null },
+  { name: 'Profile', href: '/profile', icon: User, badge: null },
 ]
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const location = useLocation()
   const { user, logout } = useAuthStore()
   const { theme, setThemeMode } = useTheme()
+  const { addToast } = useToast()
 
   const handleLogout = () => {
     logout()
+    addToast({
+      type: 'success',
+      title: 'Logged out successfully',
+      message: 'You have been logged out of your account.'
+    })
   }
 
+  // Close mobile sidebar when route changes
+  useEffect(() => {
+    setSidebarOpen(false)
+  }, [location.pathname])
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element
+      if (!target.closest('.user-menu') && !target.closest('.notifications-menu')) {
+        setUserMenuOpen(false)
+        setNotificationsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const currentPage = navigation.find(item => item.href === location.pathname)
+
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-900">
+    <div className="h-screen flex overflow-hidden bg-gray-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 flex z-40 md:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
+        <div className="fixed inset-0 flex z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
           <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm" 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300" 
             onClick={() => setSidebarOpen(false)}
             aria-hidden="true"
           />
-          <div className="relative flex-1 flex flex-col max-w-xs w-full sidebar-modern">
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-xl transform transition-transform duration-300 ease-in-out">
             <div className="absolute top-0 right-0 -mr-12 pt-2">
               <button
-                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full bg-white shadow-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
                 onClick={() => setSidebarOpen(false)}
                 aria-label="Close navigation menu"
               >
-                <X className="h-6 w-6 text-white" aria-hidden="true" />
+                <X className="h-6 w-6 text-gray-500" aria-hidden="true" />
               </button>
             </div>
             <SidebarContent currentPath={location.pathname} />
@@ -73,8 +110,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       )}
 
       {/* Desktop sidebar */}
-      <div className="hidden md:flex md:flex-shrink-0">
-        <div className="flex flex-col w-64 sidebar-modern">
+      <div className="hidden lg:flex lg:flex-shrink-0">
+        <div className="flex flex-col w-64 bg-white shadow-lg border-r border-gray-200">
           <SidebarContent currentPath={location.pathname} />
         </div>
       </div>
@@ -82,9 +119,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       {/* Main content */}
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         {/* Top header */}
-        <header className="dashboard-header relative z-10 flex-shrink-0 flex h-16" role="banner">
+        <header className="relative z-10 flex-shrink-0 flex h-16 bg-white shadow-sm border-b border-gray-200" role="banner">
           <button
-            className="px-4 text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 md:hidden rounded-lg mx-2"
+            className="px-4 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 lg:hidden rounded-lg mx-2 transition-colors"
             onClick={() => setSidebarOpen(true)}
             aria-label="Open navigation menu"
             aria-expanded={sidebarOpen}
@@ -93,70 +130,112 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           </button>
           
           <div className="flex-1 px-4 flex justify-between items-center">
-            <div className="flex-1 flex">
-              <h1 className="text-2xl font-semibold text-white">
-                {navigation.find(item => item.href === location.pathname)?.name || 'Dashboard'}
+            <div className="flex-1 flex items-center">
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+                {currentPage?.icon && <currentPage.icon className="h-6 w-6 mr-3 text-blue-600" />}
+                {currentPage?.name || 'Dashboard'}
               </h1>
             </div>
-            
-            <div className="ml-4 flex items-center md:ml-6 space-x-4">
-              {/* Theme Toggle */}
+
+            <div className="flex items-center space-x-4">
+              {/* Search */}
               <button
-                onClick={() => {
-                  const newMode = theme.mode === 'dark' ? 'light' : 'dark';
-                  setThemeMode(newMode);
-                  console.log(`Theme switched to: ${newMode}`);
-                }}
-                className={`relative p-2 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                  theme.mode === 'dark' 
-                    ? 'text-blue-400 bg-blue-900/20 hover:bg-blue-900/30' 
-                    : 'text-yellow-400 bg-yellow-900/20 hover:bg-yellow-900/30'
-                }`}
-                aria-label={`Switch to ${theme.mode === 'dark' ? 'light' : 'dark'} mode`}
-                title={`Current: ${theme.mode} mode - Click to switch to ${theme.mode === 'dark' ? 'light' : 'dark'} mode`}
+                className="p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-colors"
+                onClick={() => setSearchOpen(!searchOpen)}
+                aria-label="Search"
               >
-                {theme.mode === 'dark' ? (
-                  <div className="relative">
-                    <Palette className="h-5 w-5" aria-hidden="true" />
-                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <Palette className="h-5 w-5" aria-hidden="true" />
-                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                <Search className="h-5 w-5" />
+              </button>
+
+              {/* Theme toggle */}
+              <button
+                className="p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-colors"
+                onClick={() => setThemeMode(theme === 'dark' ? 'light' : 'dark')}
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </button>
+
+              {/* Notifications */}
+              <div className="relative notifications-menu">
+                <button
+                  className="p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-colors relative"
+                  onClick={() => setNotificationsOpen(!notificationsOpen)}
+                  aria-label="Notifications"
+                >
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+                </button>
+
+                {notificationsOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    <div className="px-4 py-2 border-b border-gray-200">
+                      <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      <div className="px-4 py-3 hover:bg-gray-50 cursor-pointer">
+                        <p className="text-sm text-gray-900">New invoice created</p>
+                        <p className="text-xs text-gray-500 mt-1">2 minutes ago</p>
+                      </div>
+                      <div className="px-4 py-3 hover:bg-gray-50 cursor-pointer">
+                        <p className="text-sm text-gray-900">Payment received</p>
+                        <p className="text-xs text-gray-500 mt-1">1 hour ago</p>
+                      </div>
+                    </div>
                   </div>
                 )}
-              </button>
-              
-              <div className="flex items-center space-x-2" role="img" aria-label={`User: ${user?.firstName} ${user?.lastName}, Role: ${user?.role}`}>
-                <Avatar
-                  firstName={user?.firstName}
-                  lastName={user?.lastName}
-                  size="sm"
-                />
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-200">
-                    {user?.firstName} {user?.lastName}
-                  </p>
-                  <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
-                </div>
               </div>
-              
-              <button
-                onClick={handleLogout}
-                className="text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg p-2 transition-colors"
-                aria-label="Log out"
-              >
-                <LogOut className="h-5 w-5" aria-hidden="true" />
-              </button>
+
+              {/* User menu */}
+              <div className="relative user-menu">
+                <button
+                  className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  aria-label="User menu"
+                  aria-expanded={userMenuOpen}
+                >
+                  <Avatar user={user} size="sm" />
+                  <div className="hidden md:block text-left">
+                    <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
+                    <p className="text-xs text-gray-500">{user?.email || 'user@example.com'}</p>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                </button>
+
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    <Link
+                      to="/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      Your Profile
+                    </Link>
+                    <Link
+                      to="/settings"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      Settings
+                    </Link>
+                    <hr className="my-2" />
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 relative overflow-y-auto focus:outline-none page-container" id="main-content" role="main">
+        {/* Main content area */}
+        <main className="flex-1 relative overflow-y-auto focus:outline-none">
           <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               {children}
             </div>
           </div>
@@ -167,44 +246,68 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 }
 
 const SidebarContent: React.FC<{ currentPath: string }> = ({ currentPath }) => {
+  const { user } = useAuthStore()
+
   return (
-    <div className="flex flex-col h-0 flex-1">
-      <div className="relative flex items-center h-16 flex-shrink-0 px-6">
-        <h2 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-          Afterink Studio
-        </h2>
+    <>
+      {/* Logo */}
+      <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200">
+        <div className="flex items-center">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+            <span className="text-white font-bold text-lg">A</span>
+          </div>
+          <span className="text-xl font-bold text-gray-900">Afterink</span>
+        </div>
       </div>
-      
-      <div className="flex-1 flex flex-col overflow-y-auto">
-        <nav className="flex-1 px-3 py-6 space-y-2" role="navigation" aria-label="Main navigation">
-          {navigation.map((item) => {
-            const isActive = currentPath === item.href
-            const Icon = item.icon
-            
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`menu-item-modern group flex items-center px-4 py-3 text-sm font-semibold transition-all duration-300 ${
-                  isActive ? 'active text-blue-400' : 'text-gray-300 hover:text-white'
-                }`}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                <Icon
-                  className={`mr-3 h-5 w-5 transition-all duration-300 ${
-                    isActive ? 'text-blue-400' : 'text-gray-400 group-hover:text-blue-400 group-hover:scale-110'
-                  }`}
-                  aria-hidden="true"
-                />
-                <span className="relative">
-                  {item.name}
+
+      {/* Navigation */}
+      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+        {navigation.map((item) => {
+          const isActive = currentPath === item.href
+          return (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={`
+                group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200
+                ${isActive 
+                  ? 'bg-blue-100 text-blue-900 border-r-2 border-blue-600' 
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                }
+              `}
+            >
+              <item.icon 
+                className={`
+                  mr-3 h-5 w-5 flex-shrink-0 transition-colors
+                  ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'}
+                `} 
+              />
+              {item.name}
+              {item.badge && (
+                <span className="ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                  {item.badge}
                 </span>
-              </Link>
-            )
-          })}
-        </nav>
+              )}
+            </Link>
+          )
+        })}
+      </nav>
+
+      {/* User info */}
+      <div className="flex-shrink-0 p-4 border-t border-gray-200">
+        <div className="flex items-center">
+          <Avatar user={user} size="sm" />
+          <div className="ml-3 flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {user?.name || 'User'}
+            </p>
+            <p className="text-xs text-gray-500 truncate">
+              {user?.email || 'user@example.com'}
+            </p>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
