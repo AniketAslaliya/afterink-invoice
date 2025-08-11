@@ -85,7 +85,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const currentPage = navigation.find(item => item.href === location.pathname)
 
   return (
-    <div className={`h-screen flex overflow-hidden ${theme.mode === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className="h-screen flex overflow-hidden bg-gray-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 flex z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
@@ -94,14 +94,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             onClick={() => setSidebarOpen(false)}
             aria-hidden="true"
           />
-          <div className={`relative flex-1 flex flex-col max-w-xs w-full ${theme.mode === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-xl transform transition-transform duration-300 ease-in-out`}>
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-xl transform transition-transform duration-300 ease-in-out">
             <div className="absolute top-0 right-0 -mr-12 pt-2">
               <button
-                className={`ml-1 flex items-center justify-center h-10 w-10 rounded-full ${theme.mode === 'dark' ? 'bg-gray-700' : 'bg-white'} shadow-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500`}
+                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full bg-white shadow-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
                 onClick={() => setSidebarOpen(false)}
                 aria-label="Close navigation menu"
               >
-                <X className={`h-6 w-6 ${theme.mode === 'dark' ? 'text-gray-300' : 'text-gray-500'}`} aria-hidden="true" />
+                <X className="h-6 w-6 text-gray-500" aria-hidden="true" />
               </button>
             </div>
             <SidebarContent currentPath={location.pathname} />
@@ -111,7 +111,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:flex lg:flex-shrink-0">
-        <div className={`flex flex-col w-64 ${theme.mode === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-lg border-r`}>
+        <div className="flex flex-col w-64 bg-white shadow-lg border-r border-gray-200">
           <SidebarContent currentPath={location.pathname} />
         </div>
       </div>
@@ -119,9 +119,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       {/* Main content */}
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         {/* Top header */}
-        <header className={`relative z-10 flex-shrink-0 flex h-16 ${theme.mode === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-sm border-b`} role="banner">
+        <header className="relative z-10 flex-shrink-0 flex h-16 bg-white shadow-sm border-b border-gray-200" role="banner">
           <button
-            className={`px-4 ${theme.mode === 'dark' ? 'text-gray-300 hover:text-gray-100' : 'text-gray-500 hover:text-gray-700'} focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 lg:hidden rounded-lg mx-2 transition-colors`}
+            className="px-4 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 lg:hidden rounded-lg mx-2 transition-colors"
             onClick={() => setSidebarOpen(true)}
             aria-label="Open navigation menu"
             aria-expanded={sidebarOpen}
@@ -131,7 +131,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           
           <div className="flex-1 px-4 flex justify-between items-center">
             <div className="flex-1 flex items-center">
-              <h1 className={`text-2xl font-bold ${theme.mode === 'dark' ? 'text-white' : 'text-gray-900'} flex items-center`}>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center">
                 {currentPage?.icon && <currentPage.icon className="h-6 w-6 mr-3 text-blue-600" />}
                 {currentPage?.name || 'Dashboard'}
               </h1>
@@ -140,7 +140,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             <div className="flex items-center space-x-4">
               {/* Search */}
               <button
-                className={`p-2 ${theme.mode === 'dark' ? 'text-gray-300 hover:text-gray-100' : 'text-gray-400 hover:text-gray-600'} focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-colors`}
+                className="p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-colors"
                 onClick={() => setSearchOpen(!searchOpen)}
                 aria-label="Search"
               >
@@ -149,17 +149,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
               {/* Theme toggle */}
               <button
-                className={`p-2 ${theme.mode === 'dark' ? 'text-gray-300 hover:text-gray-100' : 'text-gray-400 hover:text-gray-600'} focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-colors`}
-                onClick={() => setThemeMode(theme.mode === 'dark' ? 'light' : 'dark')}
+                className="p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-colors"
+                onClick={() => setThemeMode(theme === 'dark' ? 'light' : 'dark')}
                 aria-label="Toggle theme"
               >
-                {theme.mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
 
               {/* Notifications */}
               <div className="relative notifications-menu">
                 <button
-                  className={`p-2 ${theme.mode === 'dark' ? 'text-gray-300 hover:text-gray-100' : 'text-gray-400 hover:text-gray-600'} focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-colors relative`}
+                  className="p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-colors relative"
                   onClick={() => setNotificationsOpen(!notificationsOpen)}
                   aria-label="Notifications"
                 >
@@ -168,18 +168,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 </button>
 
                 {notificationsOpen && (
-                  <div className={`absolute right-0 mt-2 w-80 ${theme.mode === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-lg border py-2 z-50`}>
-                    <div className={`px-4 py-2 border-b ${theme.mode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
-                      <h3 className={`text-sm font-semibold ${theme.mode === 'dark' ? 'text-white' : 'text-gray-900'}`}>Notifications</h3>
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    <div className="px-4 py-2 border-b border-gray-200">
+                      <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
                     </div>
                     <div className="max-h-64 overflow-y-auto">
-                      <div className={`px-4 py-3 ${theme.mode === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} cursor-pointer`}>
-                        <p className={`text-sm ${theme.mode === 'dark' ? 'text-white' : 'text-gray-900'}`}>New invoice created</p>
-                        <p className={`text-xs ${theme.mode === 'dark' ? 'text-gray-400' : 'text-gray-500'} mt-1`}>2 minutes ago</p>
+                      <div className="px-4 py-3 hover:bg-gray-50 cursor-pointer">
+                        <p className="text-sm text-gray-900">New invoice created</p>
+                        <p className="text-xs text-gray-500 mt-1">2 minutes ago</p>
                       </div>
-                      <div className={`px-4 py-3 ${theme.mode === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} cursor-pointer`}>
-                        <p className={`text-sm ${theme.mode === 'dark' ? 'text-white' : 'text-gray-900'}`}>Payment received</p>
-                        <p className={`text-xs ${theme.mode === 'dark' ? 'text-gray-400' : 'text-gray-500'} mt-1`}>1 hour ago</p>
+                      <div className="px-4 py-3 hover:bg-gray-50 cursor-pointer">
+                        <p className="text-sm text-gray-900">Payment received</p>
+                        <p className="text-xs text-gray-500 mt-1">1 hour ago</p>
                       </div>
                     </div>
                   </div>
@@ -189,39 +189,39 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               {/* User menu */}
               <div className="relative user-menu">
                 <button
-                  className={`flex items-center space-x-3 p-2 rounded-lg ${theme.mode === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors`}
+                  className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   aria-label="User menu"
                   aria-expanded={userMenuOpen}
                 >
                   <Avatar user={user} size="sm" />
                   <div className="hidden md:block text-left">
-                    <p className={`text-sm font-medium ${theme.mode === 'dark' ? 'text-white' : 'text-gray-900'}`}>{user?.name || 'User'}</p>
-                    <p className={`text-xs ${theme.mode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{user?.email || 'user@example.com'}</p>
+                    <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
+                    <p className="text-xs text-gray-500">{user?.email || 'user@example.com'}</p>
                   </div>
-                  <ChevronDown className={`h-4 w-4 ${theme.mode === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} />
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
                 </button>
 
                 {userMenuOpen && (
-                  <div className={`absolute right-0 mt-2 w-48 ${theme.mode === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-lg border py-2 z-50`}>
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     <Link
                       to="/profile"
-                      className={`block px-4 py-2 text-sm ${theme.mode === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} transition-colors`}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                       onClick={() => setUserMenuOpen(false)}
                     >
                       Your Profile
                     </Link>
                     <Link
                       to="/settings"
-                      className={`block px-4 py-2 text-sm ${theme.mode === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} transition-colors`}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                       onClick={() => setUserMenuOpen(false)}
                     >
                       Settings
                     </Link>
-                    <hr className={`my-2 ${theme.mode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
+                    <hr className="my-2" />
                     <button
                       onClick={handleLogout}
-                      className={`block w-full text-left px-4 py-2 text-sm text-red-600 ${theme.mode === 'dark' ? 'hover:bg-red-900/20' : 'hover:bg-red-50'} transition-colors`}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                     >
                       Sign out
                     </button>
@@ -234,7 +234,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
         {/* Main content area */}
         <main className="flex-1 relative overflow-y-auto focus:outline-none">
-          <div className={`py-6 ${theme.mode === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+          <div className="py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               {children}
             </div>
@@ -247,17 +247,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
 const SidebarContent: React.FC<{ currentPath: string }> = ({ currentPath }) => {
   const { user } = useAuthStore()
-  const { theme } = useTheme()
 
   return (
     <>
       {/* Logo */}
-      <div className={`flex items-center justify-center h-16 px-4 border-b ${theme.mode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200">
         <div className="flex items-center">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
             <span className="text-white font-bold text-lg">A</span>
           </div>
-          <span className={`text-xl font-bold ${theme.mode === 'dark' ? 'text-white' : 'text-gray-900'}`}>Afterink</span>
+          <span className="text-xl font-bold text-gray-900">Afterink</span>
         </div>
       </div>
 
@@ -273,16 +272,14 @@ const SidebarContent: React.FC<{ currentPath: string }> = ({ currentPath }) => {
                 group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200
                 ${isActive 
                   ? 'bg-blue-100 text-blue-900 border-r-2 border-blue-600' 
-                  : theme.mode === 'dark' 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 }
               `}
             >
               <item.icon 
                 className={`
                   mr-3 h-5 w-5 flex-shrink-0 transition-colors
-                  ${isActive ? 'text-blue-600' : theme.mode === 'dark' ? 'text-gray-400 group-hover:text-gray-300' : 'text-gray-400 group-hover:text-gray-500'}
+                  ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'}
                 `} 
               />
               {item.name}
@@ -297,14 +294,14 @@ const SidebarContent: React.FC<{ currentPath: string }> = ({ currentPath }) => {
       </nav>
 
       {/* User info */}
-      <div className={`flex-shrink-0 p-4 border-t ${theme.mode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div className="flex-shrink-0 p-4 border-t border-gray-200">
         <div className="flex items-center">
           <Avatar user={user} size="sm" />
           <div className="ml-3 flex-1 min-w-0">
-            <p className={`text-sm font-medium ${theme.mode === 'dark' ? 'text-white' : 'text-gray-900'} truncate`}>
+            <p className="text-sm font-medium text-gray-900 truncate">
               {user?.name || 'User'}
             </p>
-            <p className={`text-xs ${theme.mode === 'dark' ? 'text-gray-400' : 'text-gray-500'} truncate`}>
+            <p className="text-xs text-gray-500 truncate">
               {user?.email || 'user@example.com'}
             </p>
           </div>
