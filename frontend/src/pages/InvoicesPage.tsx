@@ -1202,20 +1202,20 @@ const InvoicesPage: React.FC = () => {
             >
               &times;
             </button>
-            <h2 className="text-2xl font-bold mb-6 text-white">Create New Invoice</h2>
+            <h2 className="text-2xl font-bold mb-8 text-white">Create New Invoice</h2>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
                 {/* Client Details Section */}
-                <div className="bg-gray-800 rounded-lg p-4 mb-4">
-                  <div className="flex items-center mb-2">
-                    <label className="block text-sm font-medium text-gray-300 mr-2">Client *</label>
+                <div className="bg-gray-800 rounded-lg p-6 mb-6">
+                  <div className="flex items-center mb-4">
+                    <label className="block text-sm font-medium text-gray-300 mr-3">Client *</label>
                     <select
                       value={showNewClientFields ? '' : newInvoice.clientId}
                       onChange={(e) => {
                         setShowNewClientFields(false);
                         setNewInvoice({ ...newInvoice, clientId: e.target.value, projectId: '' });
                       }}
-                      className="px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      className="px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white flex-1"
                     >
                       <option value="">Select a client</option>
                       {clients.map((client) => (
@@ -1224,7 +1224,7 @@ const InvoicesPage: React.FC = () => {
                     </select>
                     <button
                       type="button"
-                      className="ml-4 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                      className="ml-4 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm transition-colors"
                       onClick={() => {
                         setShowNewClientFields(true);
                         setNewInvoice({ ...newInvoice, clientId: '' });
@@ -1368,38 +1368,38 @@ const InvoicesPage: React.FC = () => {
                 </div>
 
                 {/* Invoice Details Section */}
-                <div className="bg-gray-800 rounded-lg p-4 mb-4">
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <div className="bg-gray-800 rounded-lg p-6 mb-6">
+                  <h3 className="text-lg font-semibold text-white mb-6 flex items-center">
                     <FileText className="h-5 w-5 mr-2 text-blue-400" />
                     Invoice Details
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Invoice Number</label>
+                      <label className="block text-sm font-medium text-gray-300 mb-3">Invoice Number</label>
                       <input
                         type="text"
                         value={newInvoice.invoiceNumber}
                         onChange={(e) => setNewInvoice({ ...newInvoice, invoiceNumber: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                         placeholder="Auto-generated if empty"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Due Date *</label>
+                      <label className="block text-sm font-medium text-gray-300 mb-3">Due Date *</label>
                       <input
                         type="date"
                         value={newInvoice.dueDate}
                         onChange={(e) => setNewInvoice({ ...newInvoice, dueDate: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Project (Optional)</label>
+                      <label className="block text-sm font-medium text-gray-300 mb-3">Project (Optional)</label>
                       <select
                         value={newInvoice.projectId}
                         onChange={(e) => setNewInvoice({ ...newInvoice, projectId: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                       >
                         <option value="">Select a project</option>
                         {getFilteredProjects().map((project: any) => (
@@ -1408,11 +1408,11 @@ const InvoicesPage: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Currency</label>
+                      <label className="block text-sm font-medium text-gray-300 mb-3">Currency</label>
                       <select
                         value={newInvoice.currency}
                         onChange={(e) => setNewInvoice({ ...newInvoice, currency: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                       >
                         <option value="INR">INR (₹)</option>
                         <option value="USD">USD ($)</option>
@@ -1426,8 +1426,8 @@ const InvoicesPage: React.FC = () => {
                 </div>
 
                 {/* Invoice Items Section */}
-                <div className="bg-gray-800 rounded-lg p-4 mb-4">
-                  <div className="flex justify-between items-center mb-4">
+                <div className="bg-gray-800 rounded-lg p-6 mb-6">
+                  <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-semibold text-white flex items-center">
                       <Package className="h-5 w-5 mr-2 text-green-400" />
                       Invoice Items
@@ -1435,7 +1435,7 @@ const InvoicesPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={addItem}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                      className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
                     >
                       <Plus className="h-4 w-4" />
                       <span>Add Item</span>
@@ -1447,24 +1447,33 @@ const InvoicesPage: React.FC = () => {
                       {newInvoice.items.map((item, index) => (
                         <SortableItem key={index} id={index.toString()}>
                           {({ attributes, listeners, setNodeRef, style }) => (
-                            <div ref={setNodeRef} style={style} className="bg-gray-700 rounded-lg p-4 mb-4 border border-gray-600">
-                              <div className="flex justify-between items-center mb-4">
+                            <div ref={setNodeRef} style={style} className="bg-gray-700 rounded-lg p-6 mb-6 border border-gray-600">
+                              <div className="flex justify-between items-center mb-6">
                                 <h4 className="font-medium text-gray-200 flex items-center">
-                                  <button type="button" className="p-1 mr-2 text-gray-400 hover:text-gray-300 cursor-grab" aria-label="Reorder item" {...attributes} {...listeners}>
+                                  <button type="button" className="p-2 mr-3 text-gray-400 hover:text-gray-300 cursor-grab transition-colors" aria-label="Reorder item" {...attributes} {...listeners}>
                                     <GripVertical className="h-4 w-4" />
                                   </button>
                                   Item {index + 1}
                                 </h4>
+                                {newInvoice.items.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeItem(index)}
+                                    className="text-red-400 hover:text-red-300 p-2 rounded transition-colors"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                )}
                               </div>
                               <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
                                 <div className="lg:col-span-3">
                                   <label className="block text-sm font-medium text-gray-400 mb-2">Description *</label>
-                                  <input
-                                    type="text"
+                                  <textarea
                                     value={item.description}
                                     onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                    className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                                    placeholder="Item description"
+                                    className="w-full px-3 py-3 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white resize-none"
+                                    placeholder="Enter detailed item description..."
+                                    rows={3}
                                     required
                                   />
                                 </div>
@@ -1474,7 +1483,7 @@ const InvoicesPage: React.FC = () => {
                                     type="number"
                                     value={item.quantity}
                                     onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                                    className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                    className="w-full px-3 py-3 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                                     min="0.01"
                                     step="0.01"
                                     required
@@ -1486,7 +1495,7 @@ const InvoicesPage: React.FC = () => {
                                     type="number"
                                     value={item.rate}
                                     onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                                    className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                    className="w-full px-3 py-3 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                                     min="0"
                                     step="0.01"
                                     required
@@ -1498,7 +1507,7 @@ const InvoicesPage: React.FC = () => {
                                     type="number"
                                     value={item.taxRate || 0}
                                     onChange={(e) => updateItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
-                                    className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                    className="w-full px-3 py-3 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                                     min="0"
                                     max="100"
                                     step="0.01"
@@ -1506,7 +1515,7 @@ const InvoicesPage: React.FC = () => {
                                 </div>
                                 <div>
                                   <label className="block text-sm font-medium text-gray-400 mb-2">Amount</label>
-                                  <div className="px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 text-center">
+                                  <div className="px-3 py-3 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 text-center font-medium">
                                     {formatCurrency(item.amount, newInvoice.currency)}
                                   </div>
                                 </div>
@@ -1517,21 +1526,11 @@ const InvoicesPage: React.FC = () => {
                                 <textarea
                                   value={item.note || ''}
                                   onChange={(e) => updateItem(index, 'note', e.target.value)}
-                                  className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                  className="w-full px-3 py-3 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white resize-none"
+                                  placeholder="Additional notes for this item..."
                                   rows={2}
-                                  placeholder="Add notes for this item..."
                                 />
                               </div>
-                              
-                              {newInvoice.items.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeItem(index)}
-                                  className="mt-3 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
-                                >
-                                  Remove Item
-                                </button>
-                              )}
                             </div>
                           )}
                         </SortableItem>
@@ -2752,10 +2751,10 @@ const InvoicesPage: React.FC = () => {
                           {editInvoice.items.map((item, index) => (
                             <SortableItem key={index} id={index.toString()}>
                               {({ attributes, listeners, setNodeRef, style }) => (
-                                <div ref={setNodeRef} style={style} className="bg-gray-700 rounded-lg p-4 border border-gray-600">
-                                  <div className="flex justify-between items-center mb-4">
+                                <div ref={setNodeRef} style={style} className="bg-gray-700 rounded-lg p-6 mb-6 border border-gray-600">
+                                  <div className="flex justify-between items-center mb-6">
                                     <h4 className="font-medium text-gray-200 flex items-center">
-                                      <button type="button" className="p-1 mr-2 text-gray-400 hover:text-gray-300 cursor-grab" aria-label="Reorder item" {...attributes} {...listeners}>
+                                      <button type="button" className="p-2 mr-3 text-gray-400 hover:text-gray-300 cursor-grab transition-colors" aria-label="Reorder item" {...attributes} {...listeners}>
                                         <GripVertical className="h-4 w-4" />
                                       </button>
                                       Item {index + 1}
@@ -2764,26 +2763,25 @@ const InvoicesPage: React.FC = () => {
                                       <button
                                         type="button"
                                         onClick={() => handleEditRemoveItem(index)}
-                                        className="text-red-400 hover:text-red-300 p-1 rounded transition-colors"
+                                        className="text-red-400 hover:text-red-300 p-2 rounded transition-colors"
                                       >
                                         <Trash2 className="h-4 w-4" />
                                       </button>
                                     )}
                                   </div>
-                                  
                                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                                     <div className="lg:col-span-5">
                                       <label className="block text-sm font-medium text-gray-400 mb-2">Description *</label>
-                                      <input
-                                        type="text"
+                                      <textarea
                                         value={item.description}
                                         onChange={(e) => handleEditItem(index, 'description', e.target.value)}
-                                        className={`w-full px-3 py-2 bg-gray-600 border rounded-lg focus:outline-none focus:ring-2 text-white ${
+                                        className={`w-full px-3 py-3 bg-gray-600 border rounded-lg focus:outline-none focus:ring-2 text-white resize-none ${
                                           validationErrors[`item${index}Description`] 
                                             ? 'border-red-500 focus:ring-red-500' 
                                             : 'border-gray-500 focus:ring-blue-500'
                                         }`}
-                                        placeholder="Item description"
+                                        placeholder="Enter detailed item description..."
+                                        rows={3}
                                         required
                                       />
                                       {validationErrors[`item${index}Description`] && (
@@ -2797,7 +2795,7 @@ const InvoicesPage: React.FC = () => {
                                         type="number"
                                         value={item.quantity}
                                         onChange={(e) => handleEditItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                                        className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                        className="w-full px-3 py-3 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                                         min="0.01"
                                         step="0.01"
                                         required
@@ -2810,7 +2808,7 @@ const InvoicesPage: React.FC = () => {
                                         type="number"
                                         value={item.rate}
                                         onChange={(e) => handleEditItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                                        className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                        className="w-full px-3 py-3 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                                         min="0"
                                         step="0.01"
                                         required
@@ -2823,7 +2821,7 @@ const InvoicesPage: React.FC = () => {
                                         type="number"
                                         value={item.taxRate || 0}
                                         onChange={(e) => handleEditItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
-                                        className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                        className="w-full px-3 py-3 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                                         min="0"
                                         max="100"
                                         step="0.01"
@@ -2832,7 +2830,7 @@ const InvoicesPage: React.FC = () => {
                                     
                                     <div className="lg:col-span-1">
                                       <label className="block text-sm font-medium text-gray-400 mb-2">Amount</label>
-                                      <div className="px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 text-center">
+                                      <div className="px-3 py-3 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 text-center font-medium text-sm">
                                         {formatCurrency(item.amount, editInvoice.currency)}
                                       </div>
                                     </div>
@@ -2844,7 +2842,7 @@ const InvoicesPage: React.FC = () => {
                                     <textarea
                                       value={item.note || ''}
                                       onChange={(e) => handleEditItem(index, 'note', e.target.value)}
-                                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                                      className="w-full px-3 py-3 bg-gray-600 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                                       rows={2}
                                       placeholder="Add notes for this item..."
                                     />
